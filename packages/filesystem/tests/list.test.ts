@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -30,8 +30,28 @@ describe("listDir", () => {
     expect(entries).toHaveLength(2);
     const byName = new Map(entries.map((entry) => [entry.name, entry]));
     expect(byName.get("file.txt")?.isFile).toBe(true);
+    expect(byName.get("file.txt")?.isSymlink).toBe(false);
     expect(byName.get("file.txt")?.path).toBe(join(dir, "file.txt"));
     expect(byName.get("sub")?.isDirectory).toBe(true);
+  });
+
+  it("reports symlinks via isSymlink (not as their target type)", async () => {
+    const dir = await makeTempDir();
+    const target = join(dir, "target.txt");
+    await writeFile(target, "x");
+    const link = join(dir, "link.txt");
+
+    try {
+      await symlink(target, link, "file");
+    } catch {
+      return;
+    }
+
+    const entries = await listDir(dir);
+    const byName = new Map(entries.map((entry) => [entry.name, entry]));
+    expect(byName.get("link.txt")?.isSymlink).toBe(true);
+    expect(byName.get("link.txt")?.isFile).toBe(false);
+    expect(byName.get("target.txt")?.isFile).toBe(true);
   });
 
   it("throws ENOENT for missing directories", async () => {

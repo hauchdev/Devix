@@ -8,6 +8,7 @@ export interface DirEntry {
   path: string;
   isDirectory: boolean;
   isFile: boolean;
+  isSymlink: boolean;
 }
 
 export async function listDir(dir: string): Promise<DirEntry[]> {
@@ -18,6 +19,7 @@ export async function listDir(dir: string): Promise<DirEntry[]> {
       path: join(dir, entry.name),
       isDirectory: entry.isDirectory(),
       isFile: entry.isFile(),
+      isSymlink: entry.isSymbolicLink(),
     }));
   } catch (error) {
     throw toFilesystemError(dir, error);

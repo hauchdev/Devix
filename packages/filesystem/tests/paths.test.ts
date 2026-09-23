@@ -4,7 +4,7 @@ import { join, resolve, sep } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { findUp, isAbsolutePath, resolveWithin, walkUp } from "../src/paths.js";
+import { findUp, resolveWithin, walkUp } from "../src/paths.js";
 
 const tempDirs: string[] = [];
 
@@ -87,11 +87,16 @@ describe("resolveWithin", () => {
       /escapes the base directory/,
     );
   });
-});
 
-describe("isAbsolutePath", () => {
-  it("follows platform rules", () => {
-    expect(isAbsolutePath(resolve("x"))).toBe(true);
-    expect(isAbsolutePath("relative/path")).toBe(false);
+  it("allows relative paths that climb but stay inside the base", () => {
+    const base = resolve("base-dir");
+
+    expect(resolveWithin(base, join("sub", "..", "file.txt"))).toBe(join(base, "file.txt"));
+  });
+
+  it("accepts absolute paths pointing inside the base", () => {
+    const base = resolve("base-dir");
+
+    expect(resolveWithin(base, join(base, "inside.txt"))).toBe(join(base, "inside.txt"));
   });
 });

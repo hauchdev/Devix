@@ -1,7 +1,7 @@
 import { stat } from "node:fs/promises";
-import { dirname, isAbsolute, resolve, sep } from "node:path";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
-import { toFilesystemError } from "./errors.js";
+import { FilesystemError } from "./errors.js";
 
 export async function* walkUp(startDir: string): AsyncGenerator<string> {
   let current = resolve(startDir);
@@ -31,14 +31,11 @@ export async function findUp(startDir: string, entry: string): Promise<string | 
 export function resolveWithin(dir: string, entry: string): string {
   const base = resolve(dir);
   const target = resolve(base, entry);
+  const rel = relative(base, target);
 
-  if (target !== base && !target.startsWith(base + sep)) {
-    throw toFilesystemError(target, new Error("path escapes the base directory"));
+  if (rel !== "" && rel !== "." && (rel.startsWith("..") || isAbsolute(rel))) {
+    throw FilesystemError.pathEscape(target);
   }
 
   return target;
-}
-
-export function isAbsolutePath(path: string): boolean {
-  return isAbsolute(path);
 }

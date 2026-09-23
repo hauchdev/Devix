@@ -5,6 +5,7 @@ export type FilesystemErrorCode =
   | "ENOTDIR"
   | "EEXIST"
   | "EINVALID_JSON"
+  | "EPATH_ESCAPE"
   | "EIO";
 
 export class FilesystemError extends Error {
@@ -43,6 +44,10 @@ export class FilesystemError extends Error {
     return new FilesystemError("EINVALID_JSON", `File does not contain valid JSON: ${path}`, path, {
       cause,
     });
+  }
+
+  static pathEscape(path: string): FilesystemError {
+    return new FilesystemError("EPATH_ESCAPE", `Path escapes the base directory: ${path}`, path);
   }
 
   static io(path: string | undefined, cause: unknown): FilesystemError {
