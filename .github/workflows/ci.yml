@@ -28,7 +28,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        # Lee la versión del campo `packageManager` de package.json
 
       - name: Install Node.js
         uses: actions/setup-node@v4
