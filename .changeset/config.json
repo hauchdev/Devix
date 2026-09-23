@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/changeset.config.json",
+  "unfixed": [],
+  "linked": [],
+  "access": "restricted",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

@@ -2,19 +2,24 @@
   "name": "devix",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10",
-
+  "packageManager": "pnpm@12.5.1",
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
     "test": "turbo test",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "format": "prettier --write .",
     "clean": "turbo clean"
   },
-
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "@eslint/js": "9.39.1",
+    "eslint": "9.39.1",
+    "prettier": "3.6.2",
     "turbo": "2.11.2",
-    "typescript": "7.0.2"
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.46.4",
+    "vitest": "3.2.4"
   }
 }
