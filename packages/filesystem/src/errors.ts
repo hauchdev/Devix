@@ -1,4 +1,3 @@
-
 export type FilesystemErrorCode =
   | "ENOENT"
   | "EISDIR"

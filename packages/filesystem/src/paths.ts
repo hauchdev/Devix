@@ -23,6 +23,7 @@ export async function findUp(startDir: string, entry: string): Promise<string | 
       await stat(candidate);
       return dir;
     } catch {
+      // Keep walking up.
     }
   }
   return undefined;
