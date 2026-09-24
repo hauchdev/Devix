@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/hauchdev/Devix/security/advisories
+    about: For safety reasons, vulnerabilities are reported privately, not through issues.
