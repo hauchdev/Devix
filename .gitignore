@@ -1,6 +1,11 @@
 node_modules/
 .pnpm-store/
 
+/DEVELOPMENT.md
+/ROADMAP.md
+/packages/filesystem/AGENTS.md
+/packages/shell/AGENTS.md
+
 dist/
 build/
 out/
