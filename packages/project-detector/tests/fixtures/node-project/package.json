@@ -1,0 +1,10 @@
+{
+  "name": "devix-fixture-node-project",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fixture for @devix/project-detector tests: a plain Node.js project.",
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": ">=22"
+  }
+}
