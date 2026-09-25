@@ -1,0 +1,1 @@
+# Fixture requirements for @devix/project-detector tests.
