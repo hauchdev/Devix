@@ -200,13 +200,13 @@ importers:
   apps/cli:
     dependencies:
       '@devix-cli/core':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: link:../../packages/core
       '@devix-cli/deps':
         specifier: ^0.1.0
         version: link:../../packages/deps
       '@devix-cli/docker':
-        specifier: ^0.1.0
+        specifier: ^0.1.1
         version: link:../../plugins/docker
       '@devix-cli/doctor':
         specifier: ^0.1.0
