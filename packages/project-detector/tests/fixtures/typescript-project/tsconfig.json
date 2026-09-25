@@ -1,0 +1,8 @@
+{
+  // Fixture for @devix/project-detector tests.
+  "compilerOptions": {
+    /* Strict by default. */
+    "strict": true,
+    "target": "ES2022"
+  }
+}

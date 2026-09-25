@@ -1,0 +1,9 @@
+{
+  "name": "devix-fixture-typescript-project",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Fixture for @devix/project-detector tests: a TypeScript project.",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
