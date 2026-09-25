@@ -2,4 +2,4 @@
 "@devix/project-detector": patch
 ---
 
-Añade el paquete `@devix/project-detector` (FASE 2): arquitectura extensible de detectores (`DetectorRegistry` + interfaz `Detector`, sin if/else central), resolución de raíz de proyecto con `findProjectRoot` (markers declarados, el más cercano gana) y API `detectProject(registry, { cwd })` que agrega resultados por detector. Incluye el primer detector (`node`: package.json con name, packageManager, engines y workspaces) y fixtures commitadas para tests.
+Adds the `@devix/project-detector` package (PHASE 2): extensible detector architecture (`DetectorRegistry` + `Detector` interface, no central if/else), project root resolution with `findProjectRoot` (declared markers, nearest one wins) and a `detectProject(registry, { cwd })` API that aggregates results per detector. Includes the first detector (`node`: package.json with name, packageManager, engines and workspaces) and committed fixtures for tests.
