@@ -20,7 +20,7 @@ describe("devix CLI (compiled binary)", () => {
   it("prints the version with --version", async () => {
     const { stdout } = await runCli(["--version"]);
 
-    expect(stdout).toMatch(/^@devix\/cli\/\d+\.\d+\.\d+/);
+    expect(stdout).toMatch(/^devix-cli\/\d+\.\d+\.\d+/);
   });
 
   it("prints usage with --help", async () => {

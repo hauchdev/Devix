@@ -20,5 +20,23 @@
   },
   "devDependencies": {
     "eslint": "9.39.1"
-  }
+  },
+  "description": "Cross-platform filesystem abstractions for Devix.",
+  "license": "MIT",
+  "author": "hauchdev <hauch8bingo@proton.me>",
+  "homepage": "https://github.com/hauchdev/Devix#readme",
+  "bugs": "https://github.com/hauchdev/Devix/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hauchdev/Devix.git",
+    "directory": "packages/filesystem"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }

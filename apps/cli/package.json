@@ -1,15 +1,37 @@
 {
-  "name": "@devix/cli",
+  "name": "devix-cli",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
-  "description": "The Devix CLI: understands your environment and your project, so you don't have to memorize it.",
+  "description": "The Devix CLI: understands your environment (Node, pnpm, Git, Docker) and your project, so you don't have to memorize it.",
+  "license": "MIT",
+  "author": "hauchdev <hauch8bingo@proton.me>",
+  "homepage": "https://github.com/hauchdev/Devix#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hauchdev/Devix.git",
+    "directory": "apps/cli"
+  },
+  "bugs": "https://github.com/hauchdev/Devix/issues",
+  "keywords": [
+    "cli",
+    "developer-tools",
+    "devops",
+    "project-detection",
+    "environment",
+    "git",
+    "docker"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "bin": {
     "devix": "./bin/run.js"
   },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -19,12 +41,12 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "@devix/core": "workspace:*",
-    "@devix/deps": "workspace:*",
-    "@devix/docker": "workspace:*",
-    "@devix/doctor": "workspace:*",
-    "@devix/git": "workspace:*",
-    "@devix/project-detector": "workspace:*",
+    "@devix/core": "^0.0.1",
+    "@devix/deps": "^0.0.1",
+    "@devix/docker": "^0.0.1",
+    "@devix/doctor": "^0.0.1",
+    "@devix/git": "^0.0.1",
+    "@devix/project-detector": "^0.0.1",
     "@oclif/core": "^5.0.0"
   },
   "devDependencies": {

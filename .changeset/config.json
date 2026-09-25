@@ -1,8 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/changeset.config.json",
   "unfixed": [],
-  "linked": [],
-  "access": "restricted",
+  "linked": [
+    [
+      "@devix/core",
+      "@devix/filesystem",
+      "@devix/shell",
+      "@devix/config",
+      "@devix/logger",
+      "@devix/project-detector",
+      "@devix/git",
+      "@devix/doctor",
+      "@devix/deps",
+      "@devix/docker",
+      "devix-cli"
+    ]
+  ],
+  "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": []

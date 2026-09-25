@@ -4,3 +4,5 @@ packages:
   - "plugins/*"
 allowBuilds:
   esbuild: true
+linkWorkspacePackages: true
+preferWorkspacePackages: true

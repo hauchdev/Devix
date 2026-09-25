@@ -20,11 +20,28 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "@devix/filesystem": "workspace:*",
-    "@devix/project-detector": "workspace:*",
-    "@devix/shell": "workspace:*"
+    "@devix/filesystem": "^0.0.1",
+    "@devix/project-detector": "^0.0.1",
+    "@devix/shell": "^0.0.1"
   },
   "devDependencies": {
     "eslint": "9.39.1"
-  }
+  },
+  "license": "MIT",
+  "author": "hauchdev <hauch8bingo@proton.me>",
+  "homepage": "https://github.com/hauchdev/Devix#readme",
+  "bugs": "https://github.com/hauchdev/Devix/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hauchdev/Devix.git",
+    "directory": "packages/doctor"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }
