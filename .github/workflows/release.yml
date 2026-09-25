@@ -15,6 +15,9 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      # The changesets action opens the "Version Packages" PR when there are
+      # pending changesets, which needs pull request write access.
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
