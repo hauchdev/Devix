@@ -17,7 +17,7 @@ Devix is a monorepo of small, focused packages. Each one solves a concrete probl
 | [`@devix/config`](./packages/config)         | Configuration loading (`devix.config.json` / `devix.json`) | ✅         |
 | `@devix/project-detector`                    | Automatic project stack detection                          | 🔵 PHASE 2 |
 | `@devix/git`                                 | Safe Git operations                                        | 🔜         |
-| `apps/cli`                                   | The `devix` CLI (`doctor`, `git`, `deps`…)                 | 🔜         |
+| [`apps/cli`](./apps/cli)                     | The `devix` CLI (`detect`, and `doctor`/`git`/`deps` soon) | 🔵 PHASE 3 |
 
 ## Getting started (development)
 
@@ -34,12 +34,21 @@ pnpm install
 
 ## Usage
 
-No publishable CLI yet. In the future:
+From the repository, run the CLI from source:
 
 ```bash
-devix doctor    # environment and project diagnostics
-devix git sync  # safe Git operations
-devix deps      # dependencies with the detected package manager
+pnpm --filter @devix/cli build
+node apps/cli/bin/run.js --help
+node apps/cli/bin/run.js detect          # summarize the current project stack
+node apps/cli/bin/run.js detect --json   # machine-readable output
+```
+
+More commands are on the roadmap:
+
+```bash
+devix doctor    # environment and project diagnostics (soon)
+devix git sync  # safe Git operations (soon)
+devix deps      # dependencies with the detected package manager (soon)
 ```
 
 ## Development
