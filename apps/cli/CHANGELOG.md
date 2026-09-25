@@ -1,5 +1,11 @@
 # devix-cli
 
+## 0.3.2
+
+### Patch Changes
+
+- `devix minecraft init` now creates a project subfolder named after the project (kebab-case) inside the target directory instead of scattering files into it, with `--here` to keep scaffolding directly into the directory. The folder name and next steps are shown in the command output.
+
 ## 0.3.0
 
 ### Minor Changes

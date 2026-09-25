@@ -1,5 +1,5 @@
 import { Command, Args, Flags } from "@oclif/core";
-import { isAbsolute, resolve } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 
 import {
   MINECRAFT_PLATFORMS,
@@ -8,6 +8,16 @@ import {
   scaffold,
   summarizeScaffold,
 } from "@devix-cli/minecraft";
+
+/** `Cool Sword!` -> `cool-sword`: a filesystem-friendly folder name. */
+function folderName(name: string): string {
+  const folder = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return folder.length > 0 ? folder : "project";
+}
 
 export default class Minecraft extends Command {
   static override description =
@@ -32,8 +42,14 @@ export default class Minecraft extends Command {
   static override flags = {
     cwd: Flags.string({
       char: "d",
-      description: "Target directory for init. Defaults to the current directory.",
+      description:
+        "Parent directory where the project folder is created. Defaults to the current directory.",
       default: process.cwd(),
+    }),
+    here: Flags.boolean({
+      description:
+        "Scaffold directly into the target directory instead of creating a project subfolder.",
+      default: false,
     }),
     package: Flags.string({
       description: "Java package for init, e.g. com.example.mymod.",
@@ -76,7 +92,8 @@ export default class Minecraft extends Command {
       });
     }
 
-    const root = isAbsolute(flags.cwd) ? flags.cwd : resolve(flags.cwd);
+    const parent = isAbsolute(flags.cwd) ? flags.cwd : resolve(flags.cwd);
+    const root = flags.here ? parent : join(parent, folderName(args.name));
 
     try {
       const result = await scaffold({
@@ -115,7 +132,9 @@ export default class Minecraft extends Command {
       } else {
         this.log("");
         this.log(
-          "Next steps: open the directory, review the build files and run your first build.",
+          result.root === parent
+            ? "Next steps: review the build files and run your first build."
+            : `Next steps: cd ${folderName(args.name)} and run your first build.`,
         );
       }
     } catch (error) {
