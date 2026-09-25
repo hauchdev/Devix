@@ -1,0 +1,38 @@
+{
+  "name": "@devix/cli",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "The Devix CLI: understands your environment and your project, so you don't have to memorize it.",
+  "bin": {
+    "devix": "./bin/run.js"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@devix/core": "workspace:*",
+    "@devix/project-detector": "workspace:*",
+    "@oclif/core": "^5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "9.39.1"
+  },
+  "oclif": {
+    "bin": "devix",
+    "dirname": "devix",
+    "commands": {
+      "strategy": "pattern",
+      "target": "./dist/commands"
+    },
+    "topicSeparator": " "
+  }
+}
