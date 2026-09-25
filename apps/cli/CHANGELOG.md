@@ -1,5 +1,14 @@
 # devix-cli
 
+## 0.1.1
+
+### Patch Changes
+
+- 3a98d3f: Advertised versions no longer drift from releases: `DEVIX_VERSION` and the docker plugin version are now read from each package's own manifest instead of hardcoded literals. Docker plugin tests get generous timeouts and concurrent probes so slow Windows CI runners no longer time out.
+- Updated dependencies [3a98d3f]
+  - @devix-cli/core@0.1.1
+  - @devix-cli/docker@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
