@@ -205,6 +205,9 @@ importers:
       '@devix/deps':
         specifier: workspace:*
         version: link:../../packages/deps
+      '@devix/docker':
+        specifier: workspace:*
+        version: link:../../plugins/docker
       '@devix/doctor':
         specifier: workspace:*
         version: link:../../packages/doctor

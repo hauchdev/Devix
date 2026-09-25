@@ -21,6 +21,7 @@
   "dependencies": {
     "@devix/core": "workspace:*",
     "@devix/deps": "workspace:*",
+    "@devix/docker": "workspace:*",
     "@devix/doctor": "workspace:*",
     "@devix/git": "workspace:*",
     "@devix/project-detector": "workspace:*",
