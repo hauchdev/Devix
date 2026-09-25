@@ -11,6 +11,7 @@ import type { DetectContext, DetectionResult, Detector } from "../types.js";
 export const npmDetector: Detector = {
   id: "npm",
   name: "npm",
+  category: "packageManager",
   markers: ["package-lock.json"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

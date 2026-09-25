@@ -12,6 +12,7 @@ import type { DetectContext, Detection, DetectionResult, Detector } from "../typ
 export const bunDetector: Detector = {
   id: "bun",
   name: "Bun",
+  category: "packageManager",
   markers: ["bun.lockb", "bun.lock", "bunfig.toml"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

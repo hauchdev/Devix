@@ -19,6 +19,7 @@ function parseLockfileVersion(content: string): string | undefined {
 export const yarnDetector: Detector = {
   id: "yarn",
   name: "Yarn",
+  category: "packageManager",
   markers: ["yarn.lock", ".yarnrc.yml"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

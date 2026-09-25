@@ -19,6 +19,7 @@ function parseLockfileVersion(content: string): string | undefined {
 export const pnpmDetector: Detector = {
   id: "pnpm",
   name: "pnpm",
+  category: "packageManager",
   markers: ["pnpm-lock.yaml", "pnpm-workspace.yaml"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {
