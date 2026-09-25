@@ -308,6 +308,16 @@ importers:
         specifier: 9.39.1
         version: 9.39.1(supports-color@7.2.0)
 
+  plugins/docker:
+    dependencies:
+      '@devix/shell':
+        specifier: workspace:*
+        version: link:../../packages/shell
+    devDependencies:
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(supports-color@8.1.1)
+
 packages:
 
   '@changesets/apply-release-plan@8.1.1':
