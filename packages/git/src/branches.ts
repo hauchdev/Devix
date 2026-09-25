@@ -1,3 +1,4 @@
+import { GitError } from "./errors.js";
 import { defaultGitRunner, type GitRunner } from "./runner.js";
 import { repositoryRoot } from "./root.js";
 
@@ -35,6 +36,48 @@ export async function branches(
       const commit = line.slice(separator + 1);
       return { name, commit, current: name === currentBranchName };
     });
+}
+
+/** Sync state of the checked-out branch against its upstream. */
+export interface SyncState {
+  /** Upstream ref, e.g. "origin/main". */
+  readonly upstream: string;
+  /** Commits on the local branch missing upstream. */
+  readonly ahead: number;
+  /** Commits on the upstream missing locally. */
+  readonly behind: number;
+}
+
+/**
+ * Reads the ahead/behind state of the current branch via
+ * `git status --porcelain=v2 --branch` (ab/behind lines).
+ */
+export async function syncState(
+  directory: string,
+  runner: GitRunner = defaultGitRunner,
+): Promise<SyncState> {
+  const root = await repositoryRoot(directory, runner);
+  const { stdout } = await runner.run(["status", "--porcelain=v2", "--branch"], root);
+
+  let upstream: string | undefined;
+  let ahead = 0;
+  let behind = 0;
+
+  for (const line of stdout.split("\n")) {
+    if (line.startsWith("# branch.upstream ")) {
+      upstream = line.slice("# branch.upstream ".length).trim();
+    } else if (line.startsWith("# branch.ab ")) {
+      const match = /\+(\d+)\s-(\d+)/.exec(line);
+      ahead = Number.parseInt(match?.[1] ?? "0", 10);
+      behind = Number.parseInt(match?.[2] ?? "0", 10);
+    }
+  }
+
+  if (upstream === undefined) {
+    throw GitError.invalid("current branch has no upstream to sync with");
+  }
+
+  return { upstream, ahead, behind };
 }
 
 /**
