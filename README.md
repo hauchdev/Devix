@@ -15,9 +15,10 @@ Devix is a monorepo of small, focused packages. Each one solves a concrete probl
 | [`@devix/filesystem`](./packages/filesystem) | Cross-platform filesystem abstractions                     | ✅         |
 | [`@devix/shell`](./packages/shell)           | Safe, controlled external process execution                | ✅         |
 | [`@devix/config`](./packages/config)         | Configuration loading (`devix.config.json` / `devix.json`) | ✅         |
-| `@devix/project-detector`                    | Automatic project stack detection                          | 🔵 PHASE 2 |
+| `@devix/project-detector`                    | Automatic project stack detection                          | ✅         |
+| `@devix/doctor`                              | Environment and project diagnostics service                | 🔵 PHASE 4 |
 | `@devix/git`                                 | Safe Git operations                                        | 🔜         |
-| [`apps/cli`](./apps/cli)                     | The `devix` CLI (`detect`, and `doctor`/`git`/`deps` soon) | 🔵 PHASE 3 |
+| [`apps/cli`](./apps/cli)                     | The `devix` CLI (`detect`, `doctor`; `git`/`deps` soon)    | ✅ core    |
 
 ## Getting started (development)
 
@@ -41,12 +42,13 @@ pnpm --filter @devix/cli build
 node apps/cli/bin/run.js --help
 node apps/cli/bin/run.js detect          # summarize the current project stack
 node apps/cli/bin/run.js detect --json   # machine-readable output
+node apps/cli/bin/run.js doctor          # environment + project diagnostics
+node apps/cli/bin/run.js doctor --json   # machine-readable report
 ```
 
 More commands are on the roadmap:
 
 ```bash
-devix doctor    # environment and project diagnostics (soon)
 devix git sync  # safe Git operations (soon)
 devix deps      # dependencies with the detected package manager (soon)
 ```
