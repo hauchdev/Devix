@@ -59,4 +59,25 @@ describe("devix CLI (compiled binary)", () => {
       await rm(empty, { recursive: true, force: true });
     }
   });
+
+  it("doctor prints an environment section with node present", async () => {
+    const { stdout } = await runCli(["doctor"]);
+
+    expect(stdout).toContain("Environment:");
+    expect(stdout).toMatch(/✓ Node\.js \d+\.\d+/);
+    expect(stdout).toContain("Project:");
+  });
+
+  it("doctor --json emits parseable report", async () => {
+    const { stdout } = await runCli(["doctor", "--json"]);
+
+    const parsed = JSON.parse(stdout) as {
+      environment: { checks: { id: string; status: string }[] };
+      project: { isProject: boolean };
+    };
+    const ids = parsed.environment.checks.map((c) => c.id);
+    expect(ids).toEqual(["node", "pnpm", "npm", "yarn", "bun", "git"]);
+    const node = parsed.environment.checks.find((c) => c.id === "node");
+    expect(node?.status).toBe("ok");
+  }, 30_000);
 });
