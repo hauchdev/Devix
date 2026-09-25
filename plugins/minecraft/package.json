@@ -1,6 +1,6 @@
 {
   "name": "@devix-cli/minecraft",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "Minecraft platform scaffolding for Devix: generate mod and plugin skeletons for Fabric, Forge, Architectury, Spigot, Paper, Folia, Velocity and BungeeCord.",
   "main": "./dist/index.js",
@@ -21,7 +21,7 @@
   "dependencies": {
     "@devix-cli/core": "^0.1.0",
     "@devix-cli/filesystem": "^0.1.0",
-    "@devix-cli/project-detector": "^0.1.0"
+    "@devix-cli/project-detector": "^0.2.0"
   },
   "devDependencies": {
     "eslint": "9.39.1"

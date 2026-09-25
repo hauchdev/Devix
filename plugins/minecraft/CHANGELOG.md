@@ -1,5 +1,11 @@
 # @devix-cli/minecraft
 
+## 0.3.1
+
+### Patch Changes
+
+- Fixes the internal dependency range: the plugin requires `@devix-cli/project-detector` 0.2.0 (the release that ships the Minecraft detectors), which the previous `^0.1.0` range excluded under strict 0.x semver.
+
 ## 0.3.0
 
 ### Minor Changes
