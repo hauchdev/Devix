@@ -12,6 +12,7 @@ const fixturesDir = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 /** Expected primary detector id per fixture directory name. */
 const EXPECTED_DETECTOR: Record<string, string> = {
   "node-project": "node",
+  "pnpm-project": "pnpm",
   "yarn-project": "yarn",
   "bun-project": "bun",
   "typescript-project": "typescript",
