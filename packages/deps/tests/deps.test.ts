@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { detectPackageManager } from "../src/detect.js";
-import { DepsError } from "../src/errors.js";
 import { runDepsCommand } from "../src/run.js";
 import type { CommandOutput, DepsRunner } from "../src/run.js";
 
