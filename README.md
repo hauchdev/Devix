@@ -80,19 +80,23 @@ The search walks up parent directories (nearest file wins). No file means no err
 `@devix/project-detector` identifies Node.js, TypeScript, Java, Rust, Python, npm, pnpm, Yarn, Bun, Git and Docker projects from their marker files:
 
 ```ts
-import { createDefaultRegistry, detectProject } from "@devix/project-detector";
+import { createDefaultRegistry, summarizeProject } from "@devix/project-detector";
 
-const detection = await detectProject(createDefaultRegistry());
+const summary = await summarizeProject(createDefaultRegistry());
 
-console.log(detection.root, detection.isProject);
-for (const [id, result] of detection.detectors) {
-  if (result.detected) {
-    console.log(id, result.detections);
-  }
+console.log(summary.root, summary.isProject);
+for (const language of summary.languages) {
+  console.log(language.id, language.detection?.detail);
+}
+for (const pm of summary.packageManagers) {
+  console.log(pm.id);
+}
+for (const tool of summary.tools) {
+  console.log(tool.id);
 }
 ```
 
-Detectors are independent units with stable ids and declared markers: adding one never requires touching the others, and "not found" is never an error (`detected: false`).
+Detectors are independent units with stable ids, declared markers and a coarse `category` (language, packageManager, tool): adding one never requires touching the others, and "not found" is never an error (`detected: false`).
 
 ## Architecture in 10 seconds
 
