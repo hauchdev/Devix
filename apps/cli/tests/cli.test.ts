@@ -94,4 +94,27 @@ describe("devix CLI (compiled binary)", () => {
       await rm(empty, { recursive: true, force: true });
     }
   }, 30_000);
+
+  it("git status shows the branch of this repository", async () => {
+    const { stdout } = await runCli(["git", "status"]);
+
+    expect(stdout).toMatch(/Branch: \S+/);
+  });
+
+  it("git branches marks the current branch", async () => {
+    const { stdout } = await runCli(["git", "branches"]);
+
+    expect(stdout).toMatch(/^\* main /m);
+  });
+
+  it("git outside a repository fails with a clear message", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const empty = await mkdtemp(join(tmpdir(), "devix-cli-git-empty-"));
+    try {
+      await expect(runCli(["git", "status"], empty)).rejects.toThrow(/not a git repository/i);
+    } finally {
+      await rm(empty, { recursive: true, force: true });
+    }
+  }, 30_000);
 });
