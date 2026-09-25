@@ -2,7 +2,7 @@
 
 > A modular developer toolkit: a CLI that understands your environment (Node, pnpm, Git, Docker…) and your project, so you don't have to memorize it.
 
-**Status:** under active development — PHASE 1 (Core Architecture) complete, PHASE 2 (Project Detector) coming next. Package APIs are experimental and may change until 1.0.
+**Status:** under active development — PHASE 1 (Core Architecture) complete, PHASE 2 (Project Detector) nearly complete: all built-in detectors are implemented and tested. Package APIs are experimental and may change until 1.0.
 
 ## What is it
 
@@ -15,7 +15,7 @@ Devix is a monorepo of small, focused packages. Each one solves a concrete probl
 | [`@devix/filesystem`](./packages/filesystem) | Cross-platform filesystem abstractions                     | ✅         |
 | [`@devix/shell`](./packages/shell)           | Safe, controlled external process execution                | ✅         |
 | [`@devix/config`](./packages/config)         | Configuration loading (`devix.config.json` / `devix.json`) | ✅         |
-| `@devix/project-detector`                    | Automatic project stack detection                          | 🔜 PHASE 2 |
+| `@devix/project-detector`                    | Automatic project stack detection                          | 🔵 PHASE 2 |
 | `@devix/git`                                 | Safe Git operations                                        | 🔜         |
 | `apps/cli`                                   | The `devix` CLI (`doctor`, `git`, `deps`…)                 | 🔜         |
 
@@ -74,6 +74,25 @@ Create a `devix.config.json` (or `devix.json`) at your project root:
 ```
 
 The search walks up parent directories (nearest file wins). No file means no error: configuration is optional by design.
+
+### Detecting a project's stack
+
+`@devix/project-detector` identifies Node.js, TypeScript, Java, Rust, Python, npm, pnpm, Yarn, Bun, Git and Docker projects from their marker files:
+
+```ts
+import { createDefaultRegistry, detectProject } from "@devix/project-detector";
+
+const detection = await detectProject(createDefaultRegistry());
+
+console.log(detection.root, detection.isProject);
+for (const [id, result] of detection.detectors) {
+  if (result.detected) {
+    console.log(id, result.detections);
+  }
+}
+```
+
+Detectors are independent units with stable ids and declared markers: adding one never requires touching the others, and "not found" is never an error (`detected: false`).
 
 ## Architecture in 10 seconds
 
