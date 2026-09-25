@@ -1,7 +1,7 @@
 import { Command, Flags } from "@oclif/core";
 import { join } from "node:path";
 
-import type { CheckResult, DoctorReport } from "@devix/doctor";
+import type { CheckResult } from "@devix/doctor";
 
 export default class Doctor extends Command {
   static override description =
