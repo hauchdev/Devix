@@ -29,7 +29,9 @@ describe("which / commandExists", () => {
     expect(resolved?.toLowerCase()).toContain("node");
   });
 
-  it("returns undefined for unknown commands and empty strings", async () => {
+  // A full miss scans every PATH directory; on Windows runners this can take
+  // seconds, so give it headroom over the default 5s timeout.
+  it("returns undefined for unknown commands and empty strings", { timeout: 15_000 }, async () => {
     expect(await which("definitely-missing-cmd-xyz")).toBeUndefined();
     expect(await which("")).toBeUndefined();
     expect(await commandExists("definitely-missing-cmd-xyz")).toBe(false);
@@ -39,10 +41,14 @@ describe("which / commandExists", () => {
     expect(await commandExists("node")).toBe(true);
   });
 
-  it("does not resolve relative paths through the current directory", async () => {
-    expect(await which("./definitely-not-here")).toBeUndefined();
-    expect(await which(join("subdir", "definitely-not-here"))).toBeUndefined();
-  });
+  it(
+    "does not resolve relative paths through the current directory",
+    { timeout: 15_000 },
+    async () => {
+      expect(await which("./definitely-not-here")).toBeUndefined();
+      expect(await which(join("subdir", "definitely-not-here"))).toBeUndefined();
+    },
+  );
 
   it("scans custom PATH directories", async () => {
     const dir = await makeTempDir();
