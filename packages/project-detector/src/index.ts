@@ -13,6 +13,9 @@ export { DetectorRegistry } from "./registry.js";
 export { findProjectRoot } from "./root.js";
 export { detectProject, type DetectProjectOptions } from "./detect.js";
 
+export { summarizeProject } from "./summary.js";
+export type { ProjectSummary, SummaryEntry } from "./summary.js";
+
 export { nodeDetector } from "./detectors/node.js";
 export { npmDetector } from "./detectors/npm.js";
 export { pnpmDetector } from "./detectors/pnpm.js";
@@ -24,4 +27,4 @@ export { dockerDetector } from "./detectors/docker.js";
 export { javaDetector } from "./detectors/java.js";
 export { rustDetector } from "./detectors/rust.js";
 export { pythonDetector } from "./detectors/python.js";
-export { createDefaultRegistry } from "./defaults.js";
+export { createDefaultRegistry, defaultDetectors } from "./defaults.js";
