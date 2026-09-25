@@ -18,6 +18,10 @@ function fakeRunner(outputs: Record<string, GitCommandOutput>): GitRunner {
   };
 }
 
+import { resolve } from "node:path";
+
+/** repositoryRoot resolves the printed path through node:path. */
+const repoRoot = resolve("/repo");
 const revParse = { stdout: "/repo\n", stderr: "" };
 
 describe("status (porcelain v2 parsing)", () => {
@@ -38,7 +42,7 @@ describe("status (porcelain v2 parsing)", () => {
 
     const result = await status("/repo", runner);
 
-    expect(result.root).toBe("/repo");
+    expect(result.root).toBe(repoRoot);
     expect(result.branch).toBe("main");
     expect(result.hasCommits).toBe(true);
     expect(result.entries).toHaveLength(3);

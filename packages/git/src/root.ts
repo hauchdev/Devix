@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 import { defaultGitRunner, type GitRunner } from "./runner.js";
 
 /**
@@ -13,7 +15,9 @@ export async function repositoryRoot(
 ): Promise<string> {
   try {
     const { stdout } = await runner.run(["rev-parse", "--show-toplevel"], directory);
-    return stdout.trim();
+    // Git prints forward slashes on every platform; normalize so the
+    // result compares equal to native paths (Windows backslashes).
+    return resolve(stdout.trim());
   } catch (error) {
     if (
       error instanceof Error &&
