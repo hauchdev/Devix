@@ -18,6 +18,7 @@ export type GitMarkerKind = "directory" | "file";
 export const gitDetector: Detector = {
   id: "git",
   name: "Git",
+  category: "tool",
   markers: [".git"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

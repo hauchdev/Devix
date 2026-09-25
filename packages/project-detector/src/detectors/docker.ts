@@ -32,6 +32,7 @@ const DOCKER_MARKERS = [
 export const dockerDetector: Detector = {
   id: "docker",
   name: "Docker",
+  category: "tool",
   markers: DOCKER_MARKERS,
 
   async detect(context: DetectContext): Promise<DetectionResult> {
