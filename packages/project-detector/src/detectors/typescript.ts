@@ -114,6 +114,7 @@ function parseTypeScriptVersion(packageJsonContent: string): string | undefined 
 export const typescriptDetector: Detector = {
   id: "typescript",
   name: "TypeScript",
+  category: "language",
   markers: ["tsconfig.json"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

@@ -38,6 +38,7 @@ function parseGradleProjectName(content: string): string | undefined {
 export const javaDetector: Detector = {
   id: "java",
   name: "Java",
+  category: "language",
   markers: [...MAVEN_MARKERS, ...GRADLE_MARKERS],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

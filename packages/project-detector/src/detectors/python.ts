@@ -44,6 +44,7 @@ function parsePyProjectName(content: string): string | undefined {
 export const pythonDetector: Detector = {
   id: "python",
   name: "Python",
+  category: "language",
   markers: PYTHON_MARKERS,
 
   async detect(context: DetectContext): Promise<DetectionResult> {

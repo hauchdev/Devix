@@ -29,6 +29,7 @@ function parseCargoPackageField(content: string, field: string): string | undefi
 export const rustDetector: Detector = {
   id: "rust",
   name: "Rust",
+  category: "language",
   markers: ["Cargo.toml", "Cargo.lock"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

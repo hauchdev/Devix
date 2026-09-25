@@ -27,6 +27,7 @@ function parsePackageJson(path: string, content: string): PackageJsonInfo | unde
 export const nodeDetector: Detector = {
   id: "node",
   name: "Node.js",
+  category: "language",
   markers: ["package.json"],
 
   async detect(context: DetectContext): Promise<DetectionResult> {

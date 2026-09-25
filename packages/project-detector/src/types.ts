@@ -23,6 +23,11 @@ export interface Detector {
   /** Display name, e.g. "Node.js". */
   readonly name: string;
   /**
+   * Coarse classification used to group detection results in the
+   * composed API (e.g. "language", "packageManager", "tool").
+   */
+  readonly category: string;
+  /**
    * The marker names this detector looks for, relative to a directory
    * (used by `findProjectRoot` to delimit the project).
    */
