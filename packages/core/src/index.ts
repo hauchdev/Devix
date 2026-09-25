@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 
-const manifest = JSON.parse(
-  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-) as { version?: string };
+const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+  version?: string;
+};
 
 /**
  * The Devix version this build of core ships with, read from this

@@ -10,7 +10,9 @@ describe("@devix-cli/core", () => {
   });
 
   it("keeps DEVIX_VERSION in sync with the package manifest", () => {
-    const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+    const manifest = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+    ) as {
       version?: string;
     };
 

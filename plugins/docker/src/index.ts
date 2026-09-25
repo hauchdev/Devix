@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 
 import { runCommand } from "@devix-cli/shell";
 
-const manifest = JSON.parse(
-  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-) as { version?: string };
+const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+  version?: string;
+};
 
 /**
  * The version of the docker plugin, read from this package's own
