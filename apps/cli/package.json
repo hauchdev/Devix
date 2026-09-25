@@ -1,6 +1,6 @@
 {
   "name": "devix-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "The Devix CLI: understands your environment (Node, pnpm, Git, Docker) and your project, so you don't have to memorize it.",
   "license": "MIT",
@@ -46,6 +46,7 @@
     "@devix-cli/docker": "^0.1.1",
     "@devix-cli/doctor": "^0.2.0",
     "@devix-cli/git": "^0.1.0",
+    "@devix-cli/minecraft": "^0.3.0",
     "@devix-cli/project-detector": "^0.2.0",
     "@oclif/core": "^5.0.0"
   },

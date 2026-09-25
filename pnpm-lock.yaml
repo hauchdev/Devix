@@ -214,6 +214,9 @@ importers:
       '@devix-cli/git':
         specifier: ^0.1.0
         version: link:../../packages/git
+      '@devix-cli/minecraft':
+        specifier: ^0.3.0
+        version: link:../../plugins/minecraft
       '@devix-cli/project-detector':
         specifier: ^0.2.0
         version: link:../../packages/project-detector
@@ -321,6 +324,22 @@ importers:
         specifier: 9.39.1
         version: 9.39.1(supports-color@8.1.1)
 
+  plugins/minecraft:
+    dependencies:
+      '@devix-cli/core':
+        specifier: ^0.1.0
+        version: link:../../packages/core
+      '@devix-cli/filesystem':
+        specifier: ^0.1.0
+        version: link:../../packages/filesystem
+      '@devix-cli/project-detector':
+        specifier: ^0.1.0
+        version: 0.1.0
+    devDependencies:
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(supports-color@8.1.1)
+
 packages:
 
   '@changesets/apply-release-plan@8.1.1':
@@ -391,6 +410,14 @@ packages:
   '@clack/prompts@1.8.1':
     resolution: {integrity: sha512-dlT1m5e/0yUL0kRNcQn7yGLVThkgbB0Ga/1AmfDDC/8ik6AIiSf2QLQO2zPYvefsHP0aFgxO93cVLCCfDp7kzQ==}
     engines: {node: '>= 20.12.0'}
+
+  '@devix-cli/filesystem@0.1.0':
+    resolution: {integrity: sha512-AHKPAEjviQUVYblYuHZSDmuIn0sLqKsd/g2gPN7hd77m5HX6Vac1n/BjZfctFg7QL8Cu0WUTQAxyqcDEHgdrEw==}
+    engines: {node: '>=22'}
+
+  '@devix-cli/project-detector@0.1.0':
+    resolution: {integrity: sha512-BDRUbGirOlJq76BV9zrcSyxxYR1enlkgMt0jXVWSqou6tlPXP/3ncCcdAUhGt7QFx0Ac3FCeI3zNuueJzdFnxQ==}
+    engines: {node: '>=22'}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -1770,6 +1797,12 @@ snapshots:
       fast-string-width: 3.0.2
       fast-wrap-ansi: 0.2.2
       sisteransi: 1.0.5
+
+  '@devix-cli/filesystem@0.1.0': {}
+
+  '@devix-cli/project-detector@0.1.0':
+    dependencies:
+      '@devix-cli/filesystem': 0.1.0
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true

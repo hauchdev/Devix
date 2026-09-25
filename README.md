@@ -65,7 +65,15 @@ devix deps list         # also: outdated, audit
 devix docker status     # also: ps, images
 
 # What is installed?
-devix plugin list
+devix plugin list       # docker, minecraft
+```
+
+### Scaffold a Minecraft project
+
+```bash
+devix minecraft list                          # fabric, forge, architectury, spigot, paper, folia, velocity, bungeecord
+devix minecraft init fabric "Cool Sword" --dry-run
+devix minecraft init paper "QueueBoard" --cwd ./projects/queueboard
 ```
 
 Most commands accept `--json` for machine-readable output and `--cwd` to inspect another directory. Errors are one line and actionable; exit codes are `0` on success and `1` on failure. Every command is in [docs/cli.md](./docs/cli.md).
@@ -74,19 +82,19 @@ Most commands accept `--json` for machine-readable output and `--cwd` to inspect
 
 Everything the CLI uses is a small, standalone npm package you can reuse in your own tools.
 
-| Package                                                      | What it does                                               | Docs                                             |
-| ------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------ |
-| [`@devix-cli/core`](./packages/core)                         | Foundations: version constant, plugin API                  |                                                  |
-| [`@devix-cli/filesystem`](./packages/filesystem)             | Cross-platform filesystem abstractions                     |                                                  |
-| [`@devix-cli/shell`](./packages/shell)                       | Safe, controlled external process execution                |                                                  |
-| [`@devix-cli/config`](./packages/config)                     | Configuration loading (`devix.config.json` / `devix.json`) |                                                  |
-| [`@devix-cli/logger`](./packages/logger)                     | Centralized logging                                        |                                                  |
-| [`@devix-cli/project-detector`](./packages/project-detector) | Automatic project stack detection                          | [project-detection](./docs/project-detection.md) |
-| [`@devix-cli/git`](./packages/git)                           | Safe, read-first Git operations                            |                                                  |
-| [`@devix-cli/doctor`](./packages/doctor)                     | Environment and project diagnostics service                |                                                  |
-| [`@devix-cli/deps`](./packages/deps)                         | Package manager detection and delegation                   |                                                  |
-| [`@devix-cli/docker`](./plugins/docker)                      | Docker integration with graceful degradation               |                                                  |
-| [`devix-cli`](./apps/cli)                                    | The `devix` CLI                                            | [cli](./docs/cli.md)                             |
+| Package                                                      | What it does                                                                                          | Docs                                             |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------ | --- | --------------------------------------- | -------------------------------------------- | --- |
+| [`@devix-cli/core`](./packages/core)                         | Foundations: version constant, plugin API                                                             |                                                  |
+| [`@devix-cli/filesystem`](./packages/filesystem)             | Cross-platform filesystem abstractions                                                                |                                                  |
+| [`@devix-cli/shell`](./packages/shell)                       | Safe, controlled external process execution                                                           |                                                  |
+| [`@devix-cli/config`](./packages/config)                     | Configuration loading (`devix.config.json` / `devix.json`)                                            |                                                  |
+| [`@devix-cli/logger`](./packages/logger)                     | Centralized logging                                                                                   |                                                  |
+| [`@devix-cli/project-detector`](./packages/project-detector) | Automatic project stack detection                                                                     | [project-detection](./docs/project-detection.md) |
+| [`@devix-cli/git`](./packages/git)                           | Safe, read-first Git operations                                                                       |                                                  |
+| [`@devix-cli/doctor`](./packages/doctor)                     | Environment and project diagnostics service                                                           |                                                  |
+| [`@devix-cli/deps`](./packages/deps)                         | Package manager detection and delegation                                                              |                                                  |     | [`@devix-cli/docker`](./plugins/docker) | Docker integration with graceful degradation |     |
+| [`@devix-cli/minecraft`](./plugins/minecraft)                | Scaffolds Minecraft projects: fabric, forge, architectury, spigot, paper, folia, velocity, bungeecord |                                                  |
+| [`devix-cli`](./apps/cli)                                    | The `devix` CLI                                                                                       | [cli](./docs/cli.md)                             |
 
 ## Why Devix
 

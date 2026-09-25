@@ -5,4 +5,7 @@ packages:
 allowBuilds:
   esbuild: true
 linkWorkspacePackages: true
+minimumReleaseAgeExclude:
+  - "@devix-cli/filesystem@0.1.0"
+  - "@devix-cli/project-detector@0.1.0"
 preferWorkspacePackages: true

@@ -1,0 +1,55 @@
+{
+  "name": "@devix-cli/minecraft",
+  "version": "0.3.0",
+  "type": "module",
+  "description": "Minecraft platform scaffolding for Devix: generate mod and plugin skeletons for Fabric, Forge, Architectury, Spigot, Paper, Folia, Velocity and BungeeCord.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@devix-cli/core": "^0.1.0",
+    "@devix-cli/filesystem": "^0.1.0",
+    "@devix-cli/project-detector": "^0.1.0"
+  },
+  "devDependencies": {
+    "eslint": "9.39.1"
+  },
+  "license": "MIT",
+  "author": "hauchdev <hauch8bingo@proton.me>",
+  "homepage": "https://github.com/hauchdev/Devix#readme",
+  "bugs": "https://github.com/hauchdev/Devix/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hauchdev/Devix.git",
+    "directory": "plugins/minecraft"
+  },
+  "keywords": [
+    "minecraft",
+    "fabric",
+    "forge",
+    "paper",
+    "velocity",
+    "scaffolding",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}

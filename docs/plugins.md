@@ -5,8 +5,9 @@ Devix plugins extend the CLI with optional integrations. The system is intention
 ## Design principles
 
 1. **Plugins are metadata, not dynamic code.** The core API (`@devix-cli/core`) registers and validates manifests; it never `eval`s, never `new Function`s and never dynamically imports plugin code. Loading third-party code is a deliberate human decision, out of scope for the registry.
-2. **The CLI owns dispatch.** A plugin declares which commands it contributes; the CLI decides how they are exposed.
-3. **Graceful degradation.** Integrations like Docker report their unavailability instead of throwing.
+2. **Plugins ship their own typed errors and degrade gracefully.** See [`@devix-cli/docker`](../plugins/docker) (probe first, report availability) and [`@devix-cli/minecraft`](../plugins/minecraft) (validate first, refuse to overwrite, `dryRun` support) for the two recurring plugin shapes: diagnostics and scaffolding.
+3. **The CLI owns dispatch.** A plugin declares which commands it contributes; the CLI decides how they are exposed.
+4. **Graceful degradation.** Integrations like Docker report their unavailability instead of throwing.
 
 ## The manifest
 

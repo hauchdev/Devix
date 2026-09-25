@@ -13,6 +13,7 @@
       "@devix-cli/doctor",
       "@devix-cli/deps",
       "@devix-cli/docker",
+      "@devix-cli/minecraft",
       "devix-cli"
     ]
   ],
