@@ -1,7 +1,6 @@
 {
   "name": "@devix/filesystem",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

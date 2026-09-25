@@ -1,7 +1,6 @@
 {
   "name": "@devix/git",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "description": "Safe, read-first Git operations for Devix, built on @devix/shell.",
   "main": "./dist/index.js",
@@ -20,7 +19,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "@devix/shell": "^0.0.1"
+    "@devix/shell": "^0.1.0"
   },
   "devDependencies": {
     "eslint": "9.39.1"

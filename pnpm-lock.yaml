@@ -200,22 +200,22 @@ importers:
   apps/cli:
     dependencies:
       '@devix/core':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../../packages/core
       '@devix/deps':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../../packages/deps
       '@devix/docker':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../../plugins/docker
       '@devix/doctor':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../../packages/doctor
       '@devix/git':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../../packages/git
       '@devix/project-detector':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../../packages/project-detector
       '@oclif/core':
         specifier: ^5.0.0
@@ -228,7 +228,7 @@ importers:
   packages/config:
     dependencies:
       '@devix/filesystem':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../filesystem
     devDependencies:
       eslint:
@@ -244,13 +244,13 @@ importers:
   packages/deps:
     dependencies:
       '@devix/filesystem':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../filesystem
       '@devix/project-detector':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../project-detector
       '@devix/shell':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../shell
     devDependencies:
       eslint:
@@ -260,13 +260,13 @@ importers:
   packages/doctor:
     dependencies:
       '@devix/filesystem':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../filesystem
       '@devix/project-detector':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../project-detector
       '@devix/shell':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../shell
     devDependencies:
       eslint:
@@ -282,7 +282,7 @@ importers:
   packages/git:
     dependencies:
       '@devix/shell':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../shell
     devDependencies:
       eslint:
@@ -298,7 +298,7 @@ importers:
   packages/project-detector:
     dependencies:
       '@devix/filesystem':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../filesystem
     devDependencies:
       eslint:
@@ -314,7 +314,7 @@ importers:
   plugins/docker:
     dependencies:
       '@devix/shell':
-        specifier: ^0.0.1
+        specifier: ^0.1.0
         version: link:../../packages/shell
     devDependencies:
       eslint:

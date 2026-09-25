@@ -1,7 +1,6 @@
 {
   "name": "@devix/deps",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "description": "Dependency operations for Devix: detect the package manager and delegate to it.",
   "main": "./dist/index.js",
@@ -20,9 +19,9 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "@devix/filesystem": "^0.0.1",
-    "@devix/project-detector": "^0.0.1",
-    "@devix/shell": "^0.0.1"
+    "@devix/filesystem": "^0.1.0",
+    "@devix/project-detector": "^0.1.0",
+    "@devix/shell": "^0.1.0"
   },
   "devDependencies": {
     "eslint": "9.39.1"
