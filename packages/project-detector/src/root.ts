@@ -10,6 +10,11 @@ import type { Detector } from "./types.js";
  * marker declared by any detector. The starting directory itself is
  * considered first. If no marker is found anywhere, returns the
  * starting directory: callers treat that as "not a project".
+ *
+ * Marker checks are issued in parallel per directory: they are
+ * independent reads, and sequential probing of every marker on every
+ * ancestor is measurably slow on Windows (the no-marker worst case
+ * walks the whole path tree).
  */
 export async function findProjectRoot(
   startDir: string,
@@ -18,11 +23,8 @@ export async function findProjectRoot(
   const markers = collectMarkers(detectors);
 
   for await (const dir of walkUp(startDir)) {
-    for (const marker of markers) {
-      const candidate = join(dir, marker);
-      if (await isMarker(candidate)) {
-        return dir;
-      }
+    if (await hasAnyMarker(dir, markers)) {
+      return dir;
     }
   }
 
@@ -37,6 +39,12 @@ function collectMarkers(detectors: readonly Detector[]): string[] {
     }
   }
   return [...markers];
+}
+
+/** True when any marker exists in `dir`, checking candidates in parallel. */
+async function hasAnyMarker(dir: string, markers: readonly string[]): Promise<boolean> {
+  const results = await Promise.all(markers.map((marker) => isMarker(join(dir, marker))));
+  return results.some((found) => found);
 }
 
 async function isMarker(candidate: string): Promise<boolean> {

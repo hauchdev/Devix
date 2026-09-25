@@ -39,19 +39,26 @@ function customCategoryDetector(id: string): Detector {
 }
 
 describe("summarizeProject", () => {
-  it("returns empty groups and isProject false on an empty directory", async () => {
-    const dir = await makeTempDir();
+  // The no-marker worst case walks every ancestor probing all markers;
+  // on Windows runners this is measurably slower than on Linux, so the
+  // CI timeout is raised well above the usual default.
+  it(
+    "returns empty groups and isProject false on an empty directory",
+    { timeout: 30_000 },
+    async () => {
+      const dir = await makeTempDir();
 
-    const summary = await summarizeProject(createDefaultRegistry(), { cwd: dir });
+      const summary = await summarizeProject(createDefaultRegistry(), { cwd: dir });
 
-    expect(summary).toEqual({
-      root: dir,
-      isProject: false,
-      languages: [],
-      packageManagers: [],
-      tools: [],
-    });
-  });
+      expect(summary).toEqual({
+        root: dir,
+        isProject: false,
+        languages: [],
+        packageManagers: [],
+        tools: [],
+      });
+    },
+  );
 
   it("groups a node+pnpm project into languages and packageManagers", async () => {
     const dir = await makeTempDir();
