@@ -58,10 +58,11 @@ function stripJsonComments(content: string): string {
 
     if (char === ",") {
       let j = i + 1;
-      while (j < content.length && /\s/.test(content[j])) {
+      while (j < content.length && /\s/.test(content[j] ?? "")) {
         j++;
       }
-      if (content[j] === "}" || content[j] === "]") {
+      const nextChar: string | undefined = content[j];
+      if (nextChar === "}" || nextChar === "]") {
         // Trailing comma before a closing bracket: drop it.
         continue;
       }

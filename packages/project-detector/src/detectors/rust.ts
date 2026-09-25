@@ -40,7 +40,11 @@ export const rustDetector: Detector = {
       const name = content === undefined ? undefined : parseCargoPackageField(content, "name");
       const edition =
         content === undefined ? undefined : parseCargoPackageField(content, "edition");
-      detections.push({ marker: "Cargo.toml", path: manifestPath, detail: name });
+      detections.push(
+        name === undefined
+          ? { marker: "Cargo.toml", path: manifestPath }
+          : { marker: "Cargo.toml", path: manifestPath, detail: name },
+      );
       if (edition !== undefined) {
         detections.push({ marker: "Cargo.toml#edition", path: manifestPath, detail: edition });
       }
