@@ -1,12 +1,13 @@
 import { PluginError, PluginRegistry } from "@devix-cli/core";
 import type { PluginManifest } from "@devix-cli/core";
+import { PLUGIN_VERSION } from "@devix-cli/docker";
 
 /** Manifests of the plugins shipped with Devix. */
 export const BUILTIN_PLUGIN_MANIFESTS: readonly PluginManifest[] = [
   {
     id: "docker",
     name: "Docker",
-    version: "0.0.1",
+    version: PLUGIN_VERSION,
     description: "Docker diagnostics: availability, containers and images.",
     commands: ["docker"],
   },
