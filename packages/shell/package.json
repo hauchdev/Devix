@@ -1,5 +1,5 @@
 {
-  "name": "@devix/shell",
+  "name": "@devix-cli/shell",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",

@@ -24,8 +24,8 @@ export default class Deps extends Command {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Deps);
 
-    const { runDepsCommand } = await import("@devix/deps");
-    const { DepsError } = await import("@devix/deps");
+    const { runDepsCommand } = await import("@devix-cli/deps");
+    const { DepsError } = await import("@devix-cli/deps");
 
     try {
       const { manager, output } = await runDepsCommand(

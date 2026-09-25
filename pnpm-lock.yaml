@@ -199,22 +199,22 @@ importers:
 
   apps/cli:
     dependencies:
-      '@devix/core':
+      '@devix-cli/core':
         specifier: ^0.1.0
         version: link:../../packages/core
-      '@devix/deps':
+      '@devix-cli/deps':
         specifier: ^0.1.0
         version: link:../../packages/deps
-      '@devix/docker':
+      '@devix-cli/docker':
         specifier: ^0.1.0
         version: link:../../plugins/docker
-      '@devix/doctor':
+      '@devix-cli/doctor':
         specifier: ^0.1.0
         version: link:../../packages/doctor
-      '@devix/git':
+      '@devix-cli/git':
         specifier: ^0.1.0
         version: link:../../packages/git
-      '@devix/project-detector':
+      '@devix-cli/project-detector':
         specifier: ^0.1.0
         version: link:../../packages/project-detector
       '@oclif/core':
@@ -227,7 +227,7 @@ importers:
 
   packages/config:
     dependencies:
-      '@devix/filesystem':
+      '@devix-cli/filesystem':
         specifier: ^0.1.0
         version: link:../filesystem
     devDependencies:
@@ -243,13 +243,13 @@ importers:
 
   packages/deps:
     dependencies:
-      '@devix/filesystem':
+      '@devix-cli/filesystem':
         specifier: ^0.1.0
         version: link:../filesystem
-      '@devix/project-detector':
+      '@devix-cli/project-detector':
         specifier: ^0.1.0
         version: link:../project-detector
-      '@devix/shell':
+      '@devix-cli/shell':
         specifier: ^0.1.0
         version: link:../shell
     devDependencies:
@@ -259,13 +259,13 @@ importers:
 
   packages/doctor:
     dependencies:
-      '@devix/filesystem':
+      '@devix-cli/filesystem':
         specifier: ^0.1.0
         version: link:../filesystem
-      '@devix/project-detector':
+      '@devix-cli/project-detector':
         specifier: ^0.1.0
         version: link:../project-detector
-      '@devix/shell':
+      '@devix-cli/shell':
         specifier: ^0.1.0
         version: link:../shell
     devDependencies:
@@ -281,7 +281,7 @@ importers:
 
   packages/git:
     dependencies:
-      '@devix/shell':
+      '@devix-cli/shell':
         specifier: ^0.1.0
         version: link:../shell
     devDependencies:
@@ -297,7 +297,7 @@ importers:
 
   packages/project-detector:
     dependencies:
-      '@devix/filesystem':
+      '@devix-cli/filesystem':
         specifier: ^0.1.0
         version: link:../filesystem
     devDependencies:
@@ -313,7 +313,7 @@ importers:
 
   plugins/docker:
     dependencies:
-      '@devix/shell':
+      '@devix-cli/shell':
         specifier: ^0.1.0
         version: link:../../packages/shell
     devDependencies:

@@ -31,7 +31,7 @@ Paste the relevant output here (full command, stacktrace…)
 - OS: (Windows / Linux / macOS + version)
 - Node: (output of `node --version`)
 - pnpm: (output of `pnpm --version`)
-- Affected package(s): (e.g. `@devix/config`)
+- Affected package(s): (e.g. `@devix-cli/config`)
 
 **Additional context**
 

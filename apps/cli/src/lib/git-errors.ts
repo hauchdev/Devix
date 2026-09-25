@@ -1,4 +1,4 @@
-import { GitError } from "@devix/git";
+import { GitError } from "@devix-cli/git";
 
 /**
  * Maps a GitError to a short user-facing message. Unknown errors are

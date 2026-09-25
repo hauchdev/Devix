@@ -29,7 +29,7 @@ export default class Docker extends Command {
     const { args, flags } = await this.parse(Docker);
     void join(flags.cwd);
 
-    const docker = await import("@devix/docker");
+    const docker = await import("@devix-cli/docker");
     const availability = await docker.dockerAvailability();
 
     if (args.operation === "status") {

@@ -41,12 +41,12 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "@devix/core": "^0.1.0",
-    "@devix/deps": "^0.1.0",
-    "@devix/docker": "^0.1.0",
-    "@devix/doctor": "^0.1.0",
-    "@devix/git": "^0.1.0",
-    "@devix/project-detector": "^0.1.0",
+    "@devix-cli/core": "^0.1.0",
+    "@devix-cli/deps": "^0.1.0",
+    "@devix-cli/docker": "^0.1.0",
+    "@devix-cli/doctor": "^0.1.0",
+    "@devix-cli/git": "^0.1.0",
+    "@devix-cli/project-detector": "^0.1.0",
     "@oclif/core": "^5.0.0"
   },
   "devDependencies": {

@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { runDoctor } from "../src/doctor.js";
 import { checkEnvironment } from "../src/environment.js";
 import type { DoctorServices } from "../src/types.js";
-import { createDefaultRegistry } from "@devix/project-detector";
+import { createDefaultRegistry } from "@devix-cli/project-detector";
 
 const tempDirs: string[] = [];
 

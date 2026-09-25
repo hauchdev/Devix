@@ -22,7 +22,7 @@ export default class GitDiff extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(GitDiff);
 
-    const { diffStat } = await import("@devix/git");
+    const { diffStat } = await import("@devix-cli/git");
 
     try {
       const result = await diffStat(join(flags.cwd));

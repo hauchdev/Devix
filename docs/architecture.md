@@ -16,7 +16,7 @@ core                (foundamentals, no internal deps)
 
 ## Layers
 
-### `@devix/core`
+### `@devix-cli/core`
 
 Foundations with zero internal dependencies: the Devix version constant and the plugin API (`PluginRegistry`, `PluginManifest`, `PluginError`). The plugin API is metadata-only — it never loads dynamic code.
 
@@ -24,21 +24,21 @@ Foundations with zero internal dependencies: the Devix version constant and the 
 
 Cross-platform building blocks. Each one owns a typed error hierarchy and never leaks raw Node errors:
 
-- **`@devix/filesystem`** — read/write, existence checks, `walkUp`/`findUp`, safe path resolution (`resolveWithin` guards against traversal).
-- **`@devix/shell`** — controlled process execution: argv arrays only, no `shell: true`, output limits, timeouts, abort support, and a Windows guard (`EUNSAFE_ARG`) for `.cmd`/`.bat` shims.
-- **`@devix/config`** — `devix.config.json` / `devix.json` loading with upward search. JSON is data, never code: no `eval`, no dynamic `import()` of user files.
-- **`@devix/logger`** — centralized logging.
+- **`@devix-cli/filesystem`** — read/write, existence checks, `walkUp`/`findUp`, safe path resolution (`resolveWithin` guards against traversal).
+- **`@devix-cli/shell`** — controlled process execution: argv arrays only, no `shell: true`, output limits, timeouts, abort support, and a Windows guard (`EUNSAFE_ARG`) for `.cmd`/`.bat` shims.
+- **`@devix-cli/config`** — `devix.config.json` / `devix.json` loading with upward search. JSON is data, never code: no `eval`, no dynamic `import()` of user files.
+- **`@devix-cli/logger`** — centralized logging.
 
 ### Services
 
-- **`@devix/project-detector`** — extensible detector registry. Each detector is a self-contained unit with a stable id, declared markers and a category; "not found" is never an error.
-- **`@devix/git`** — read-first Git operations over `@devix/shell` through an injectable `GitRunner`.
-- **`@devix/doctor`** — environment and project diagnostics as a pure service, with injectable tool-version resolution.
-- **`@devix/deps`** — package manager detection plus delegation of read-only commands.
+- **`@devix-cli/project-detector`** — extensible detector registry. Each detector is a self-contained unit with a stable id, declared markers and a category; "not found" is never an error.
+- **`@devix-cli/git`** — read-first Git operations over `@devix-cli/shell` through an injectable `GitRunner`.
+- **`@devix-cli/doctor`** — environment and project diagnostics as a pure service, with injectable tool-version resolution.
+- **`@devix-cli/deps`** — package manager detection plus delegation of read-only commands.
 
 ### `plugins/*`
 
-Optional integrations decoupled from core services. **`@devix/docker`** degrades gracefully: a missing CLI or stopped daemon is an availability report, not a thrown error.
+Optional integrations decoupled from core services. **`@devix-cli/docker`** degrades gracefully: a missing CLI or stopped daemon is an availability report, not a thrown error.
 
 ### `apps/cli`
 

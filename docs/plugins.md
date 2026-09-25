@@ -4,14 +4,14 @@ Devix plugins extend the CLI with optional integrations. The system is intention
 
 ## Design principles
 
-1. **Plugins are metadata, not dynamic code.** The core API (`@devix/core`) registers and validates manifests; it never `eval`s, never `new Function`s and never dynamically imports plugin code. Loading third-party code is a deliberate human decision, out of scope for the registry.
+1. **Plugins are metadata, not dynamic code.** The core API (`@devix-cli/core`) registers and validates manifests; it never `eval`s, never `new Function`s and never dynamically imports plugin code. Loading third-party code is a deliberate human decision, out of scope for the registry.
 2. **The CLI owns dispatch.** A plugin declares which commands it contributes; the CLI decides how they are exposed.
 3. **Graceful degradation.** Integrations like Docker report their unavailability instead of throwing.
 
 ## The manifest
 
 ```ts
-import type { PluginManifest } from "@devix/core";
+import type { PluginManifest } from "@devix-cli/core";
 
 const dockerPlugin: PluginManifest = {
   id: "docker", // kebab-case, stable
@@ -25,7 +25,7 @@ const dockerPlugin: PluginManifest = {
 ## The registry
 
 ```ts
-import { PluginRegistry, PluginError } from "@devix/core";
+import { PluginRegistry, PluginError } from "@devix-cli/core";
 
 const registry = new PluginRegistry((message) => PluginError.invalid(message));
 registry.register(dockerPlugin);
@@ -46,7 +46,7 @@ Registration validates the manifest shape (id pattern, semver version, non-empty
 
 A plugin ships two parts:
 
-1. **A service package** under `plugins/<name>` with the business logic, typed errors and tests. See [`@devix/docker`](../plugins/docker) for the graceful-degradation pattern: probe first, return `undefined` or an availability report when the tool is absent.
+1. **A service package** under `plugins/<name>` with the business logic, typed errors and tests. See [`@devix-cli/docker`](../plugins/docker) for the graceful-degradation pattern: probe first, return `undefined` or an availability report when the tool is absent.
 2. **A manifest** added to the CLI's builtin registry (`apps/cli/src/lib/builtin-plugins.ts`) and, when user-facing, a command under `apps/cli/src/commands/`.
 
 ## Roadmap

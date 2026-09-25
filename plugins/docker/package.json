@@ -1,5 +1,5 @@
 {
-  "name": "@devix/docker",
+  "name": "@devix-cli/docker",
   "version": "0.1.0",
   "type": "module",
   "description": "Docker integration for Devix with graceful degradation when the daemon is unavailable.",
@@ -19,7 +19,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "@devix/shell": "^0.1.0"
+    "@devix-cli/shell": "^0.1.0"
   },
   "devDependencies": {
     "eslint": "9.39.1"

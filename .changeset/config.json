@@ -3,16 +3,16 @@
   "unfixed": [],
   "linked": [
     [
-      "@devix/core",
-      "@devix/filesystem",
-      "@devix/shell",
-      "@devix/config",
-      "@devix/logger",
-      "@devix/project-detector",
-      "@devix/git",
-      "@devix/doctor",
-      "@devix/deps",
-      "@devix/docker",
+      "@devix-cli/core",
+      "@devix-cli/filesystem",
+      "@devix-cli/shell",
+      "@devix-cli/config",
+      "@devix-cli/logger",
+      "@devix-cli/project-detector",
+      "@devix-cli/git",
+      "@devix-cli/doctor",
+      "@devix-cli/deps",
+      "@devix-cli/docker",
       "devix-cli"
     ]
   ],

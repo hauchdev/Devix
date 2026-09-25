@@ -25,6 +25,6 @@ If you find a vulnerability in Devix or any of its packages:
 
 ## Scope
 
-In scope: unexpected code execution, information disclosure, external process manipulation (`@devix/shell`), path traversal (`@devix/filesystem`), injection through config files (`@devix/config`), and any bypass of the documented security guarantees of the packages.
+In scope: unexpected code execution, information disclosure, external process manipulation (`@devix-cli/shell`), path traversal (`@devix-cli/filesystem`), injection through config files (`@devix-cli/config`), and any bypass of the documented security guarantees of the packages.
 
 Out of scope: vulnerabilities in dependencies without concrete exploitation through Devix, hardening issues with no demonstrable impact, and attacks that require prior control of the user's environment.

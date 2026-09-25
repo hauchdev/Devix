@@ -1,5 +1,5 @@
 {
-  "name": "@devix/filesystem",
+  "name": "@devix-cli/filesystem",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",

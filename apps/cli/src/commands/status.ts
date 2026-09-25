@@ -22,9 +22,9 @@ export default class Status extends Command {
     const cwd = join(flags.cwd);
 
     const [{ runDoctor }, git, docker] = await Promise.all([
-      import("@devix/doctor"),
-      import("@devix/git"),
-      import("@devix/docker"),
+      import("@devix-cli/doctor"),
+      import("@devix-cli/git"),
+      import("@devix-cli/docker"),
     ]);
 
     const [report, sync, availability] = await Promise.all([

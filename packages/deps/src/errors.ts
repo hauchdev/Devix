@@ -1,5 +1,5 @@
 /**
- * Typed error hierarchy for the @devix/deps package.
+ * Typed error hierarchy for the @devix-cli/deps package.
  */
 
 export type DepsErrorCode = "EPM_NOT_FOUND" | "EPM_UNDETECTED" | "ECOMMAND_FAILED" | "EINVALID";

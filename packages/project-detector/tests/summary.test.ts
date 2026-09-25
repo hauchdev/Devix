@@ -28,7 +28,7 @@ function customCategoryDetector(id: string): Detector {
     category: "custom",
     markers: [`${id}.marker`],
     async detect(context): Promise<DetectionResult> {
-      const { isFile } = await import("@devix/filesystem");
+      const { isFile } = await import("@devix-cli/filesystem");
       const path = join(context.root, `${id}.marker`);
       if (await isFile(path)) {
         return { detected: true, detections: [{ marker: `${id}.marker`, path }] };

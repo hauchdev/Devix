@@ -1,5 +1,5 @@
 {
-  // Fixture for @devix/project-detector tests.
+  // Fixture for @devix-cli/project-detector tests.
   "compilerOptions": {
     /* Strict by default. */
     "strict": true,

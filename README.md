@@ -33,7 +33,7 @@ Or run it without installing:
 node apps/cli/bin/run.js --help
 ```
 
-> The global command is a link to the repository: run `pnpm build` after pulling changes. To remove it: `pnpm remove -g @devix/cli`.
+> The global command is a link to the repository: run `pnpm build` after pulling changes. To remove it: `pnpm remove -g devix-cli`.
 
 ## What can it do?
 
@@ -67,19 +67,19 @@ Most commands accept `--json` for machine-readable output and `--cwd` to inspect
 
 ## Packages
 
-| Package                                                  | What it does                                               | Docs                                             |
-| -------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
-| [`@devix/core`](./packages/core)                         | Foundations: version, plugin API                           |                                                  |
-| [`@devix/filesystem`](./packages/filesystem)             | Cross-platform filesystem abstractions                     |                                                  |
-| [`@devix/shell`](./packages/shell)                       | Safe, controlled external process execution                |                                                  |
-| [`@devix/config`](./packages/config)                     | Configuration loading (`devix.config.json` / `devix.json`) |                                                  |
-| [`@devix/logger`](./packages/logger)                     | Centralized logging                                        |                                                  |
-| [`@devix/project-detector`](./packages/project-detector) | Automatic project stack detection                          | [project-detection](./docs/project-detection.md) |
-| [`@devix/git`](./packages/git)                           | Safe, read-first Git operations                            |                                                  |
-| [`@devix/doctor`](./packages/doctor)                     | Environment and project diagnostics service                |                                                  |
-| [`@devix/deps`](./packages/deps)                         | Package manager detection and delegation                   |                                                  |
-| [`@devix/docker`](./plugins/docker)                      | Docker integration with graceful degradation               |                                                  |
-| [`apps/cli`](./apps/cli)                                 | The `devix` CLI                                            | [cli](./docs/cli.md)                             |
+| Package                                                      | What it does                                               | Docs                                             |
+| ------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------ |
+| [`@devix-cli/core`](./packages/core)                         | Foundations: version, plugin API                           |                                                  |
+| [`@devix-cli/filesystem`](./packages/filesystem)             | Cross-platform filesystem abstractions                     |                                                  |
+| [`@devix-cli/shell`](./packages/shell)                       | Safe, controlled external process execution                |                                                  |
+| [`@devix-cli/config`](./packages/config)                     | Configuration loading (`devix.config.json` / `devix.json`) |                                                  |
+| [`@devix-cli/logger`](./packages/logger)                     | Centralized logging                                        |                                                  |
+| [`@devix-cli/project-detector`](./packages/project-detector) | Automatic project stack detection                          | [project-detection](./docs/project-detection.md) |
+| [`@devix-cli/git`](./packages/git)                           | Safe, read-first Git operations                            |                                                  |
+| [`@devix-cli/doctor`](./packages/doctor)                     | Environment and project diagnostics service                |                                                  |
+| [`@devix-cli/deps`](./packages/deps)                         | Package manager detection and delegation                   |                                                  |
+| [`@devix-cli/docker`](./plugins/docker)                      | Docker integration with graceful degradation               |                                                  |
+| [`apps/cli`](./apps/cli)                                     | The `devix` CLI                                            | [cli](./docs/cli.md)                             |
 
 ## Documentation
 
@@ -101,7 +101,7 @@ pnpm format     # Prettier
 Work on a single package:
 
 ```bash
-pnpm --filter @devix/config test
+pnpm --filter @devix-cli/config test
 ```
 
 ## Architecture in 10 seconds

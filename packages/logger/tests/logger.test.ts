@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { log } from "../src/index.js";
 
-describe("@devix/logger", () => {
+describe("@devix-cli/logger", () => {
   const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   afterEach(() => {
     consoleSpy.mockClear();

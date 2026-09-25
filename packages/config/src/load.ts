@@ -1,4 +1,4 @@
-import { isFile, readFileString, walkUp } from "@devix/filesystem";
+import { isFile, readFileString, walkUp } from "@devix-cli/filesystem";
 import { join } from "node:path";
 
 import { ConfigError } from "./errors.js";

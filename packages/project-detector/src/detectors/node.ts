@@ -1,4 +1,4 @@
-import { readFileString } from "@devix/filesystem";
+import { readFileString } from "@devix-cli/filesystem";
 import { join } from "node:path";
 
 import type { DetectContext, Detection, DetectionResult, Detector } from "../types.js";

@@ -18,8 +18,8 @@ export default class GitSync extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(GitSync);
 
-    const { syncState } = await import("@devix/git");
-    const { GitError } = await import("@devix/git");
+    const { syncState } = await import("@devix-cli/git");
+    const { GitError } = await import("@devix-cli/git");
 
     try {
       const state = await syncState(join(flags.cwd));

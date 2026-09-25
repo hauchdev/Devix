@@ -20,8 +20,8 @@ export default class GitStatus extends Command {
   async run(): Promise<void> {
     const { flags } = await this.parse(GitStatus);
 
-    const { status } = await import("@devix/git");
-    const { GitError } = await import("@devix/git");
+    const { status } = await import("@devix-cli/git");
+    const { GitError } = await import("@devix-cli/git");
 
     try {
       const result = await status(join(flags.cwd));

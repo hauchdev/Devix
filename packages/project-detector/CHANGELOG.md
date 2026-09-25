@@ -1,14 +1,14 @@
-# @devix/project-detector
+# @devix-cli/project-detector
 
 ## 0.1.0
 
 ### Minor Changes
 
-- First public release: the Devix CLI (`npm i -g devix-cli`) with `status`, `detect`, `doctor`, read-only `git` commands, dependency delegation through the detected package manager, Docker diagnostics with graceful degradation, and the `@devix/*` service packages powering them.
+- First public release: the Devix CLI (`npm i -g devix-cli`) with `status`, `detect`, `doctor`, read-only `git` commands, dependency delegation through the detected package manager, Docker diagnostics with graceful degradation, and the `@devix-cli/*` service packages powering them.
 
 ### Patch Changes
 
-- b4cb6b8: Adds the `@devix/project-detector` package (PHASE 2): extensible detector architecture (`DetectorRegistry` + `Detector` interface, no central if/else), project root resolution with `findProjectRoot` (declared markers, nearest one wins) and a `detectProject(registry, { cwd })` API that aggregates results per detector. Includes the first detector (`node`: package.json with name, packageManager, engines and workspaces) and committed fixtures for tests.
+- b4cb6b8: Adds the `@devix-cli/project-detector` package (PHASE 2): extensible detector architecture (`DetectorRegistry` + `Detector` interface, no central if/else), project root resolution with `findProjectRoot` (declared markers, nearest one wins) and a `detectProject(registry, { cwd })` API that aggregates results per detector. Includes the first detector (`node`: package.json with name, packageManager, engines and workspaces) and committed fixtures for tests.
 - 3dff093: Adds a `category` field to every detector (language, packageManager, tool) and a new `summarizeProject` API that composes a project detection into grouped `languages`, `packageManagers` and `tools` lists, closing the phase 2 final API. `defaultDetectors` and the summary types are now exported from the package entry point.
 - 74372b7: Exports every built-in detector from the package entry point and adds `createDefaultRegistry` (plus the `defaultDetectors` list), which bundles node, typescript, java, rust, python, npm, pnpm, yarn, bun, git and docker in a deterministic order.
 - 74372b7: Adds the git and docker detectors. Git is detected via a `.git` directory or file (worktrees and submodules), with the entry kind as detail; Docker via Dockerfile variants, compose files (classic and Compose v2) and `.dockerignore`.
@@ -18,4 +18,4 @@
 - 74372b7: Adds the TypeScript detector via `tsconfig.json`, tolerating JSONC syntax (comments and trailing commas). Extracts `compilerOptions.target` and the typescript version declared in `package.json` as detection details.
 - 74372b7: Adds the yarn and bun detectors. Yarn is detected via `yarn.lock` and/or `.yarnrc.yml`, with the lockfile version from the header comment as detail; Bun via `bun.lockb`, `bun.lock` and/or `bunfig.toml`.
 - Updated dependencies
-  - @devix/filesystem@0.1.0
+  - @devix-cli/filesystem@0.1.0

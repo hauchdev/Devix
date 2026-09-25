@@ -27,7 +27,7 @@ function gitDetector(): Detector {
     name: "Git",
     markers: [".git"],
     async detect(context: DetectContext): Promise<DetectionResult> {
-      const { isDirectory } = await import("@devix/filesystem");
+      const { isDirectory } = await import("@devix-cli/filesystem");
       const path = join(context.root, ".git");
       const detected = await isDirectory(path);
       return detected

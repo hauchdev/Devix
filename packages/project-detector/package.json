@@ -1,5 +1,5 @@
 {
-  "name": "@devix/project-detector",
+  "name": "@devix-cli/project-detector",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -21,7 +21,7 @@
     "eslint": "9.39.1"
   },
   "dependencies": {
-    "@devix/filesystem": "^0.1.0"
+    "@devix-cli/filesystem": "^0.1.0"
   },
   "description": "Automatic project stack detection for Devix.",
   "license": "MIT",

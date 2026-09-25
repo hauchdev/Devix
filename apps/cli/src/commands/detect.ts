@@ -22,7 +22,7 @@ export default class Detect extends Command {
 
     // Loaded lazily so `devix --help` / `--version` never pay for the
     // detector stack at import time.
-    const { createDefaultRegistry, summarizeProject } = await import("@devix/project-detector");
+    const { createDefaultRegistry, summarizeProject } = await import("@devix-cli/project-detector");
 
     const summary = await summarizeProject(createDefaultRegistry(), {
       cwd: join(flags.cwd),

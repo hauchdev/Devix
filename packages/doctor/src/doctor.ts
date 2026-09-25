@@ -1,4 +1,4 @@
-import { createDefaultRegistry, type DetectorRegistry } from "@devix/project-detector";
+import { createDefaultRegistry, type DetectorRegistry } from "@devix-cli/project-detector";
 
 import { checkEnvironment } from "./environment.js";
 import { defaultServices } from "./defaults.js";
@@ -12,7 +12,7 @@ export interface RunDoctorOptions {
   registry?: DetectorRegistry;
   /**
    * Injectable tool-version resolver. Defaults to probing real
-   * executables via `@devix/shell` (see `defaultServices`).
+   * executables via `@devix-cli/shell` (see `defaultServices`).
    */
   services?: DoctorServices;
 }

@@ -65,12 +65,12 @@ export async function runDepsCommand(
 }
 
 /**
- * Default execution over @devix/shell: argv arrays only, bounded
+ * Default execution over @devix-cli/shell: argv arrays only, bounded
  * timeout, no shell concat.
  */
 export const defaultDepsRunner: DepsRunner = {
   async run(manager, args, cwd) {
-    const { commandExists, runCommand } = await import("@devix/shell");
+    const { commandExists, runCommand } = await import("@devix-cli/shell");
 
     if (!(await commandExists(manager))) {
       throw DepsError.pmNotFound(manager);

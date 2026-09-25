@@ -1,7 +1,7 @@
 import { Command, Flags } from "@oclif/core";
 import { join } from "node:path";
 
-import type { CheckResult } from "@devix/doctor";
+import type { CheckResult } from "@devix-cli/doctor";
 
 export default class Doctor extends Command {
   static override description =
@@ -23,7 +23,7 @@ export default class Doctor extends Command {
     const { flags } = await this.parse(Doctor);
 
     // Lazy: keep --help/--version free of the doctor dependency graph.
-    const { runDoctor } = await import("@devix/doctor");
+    const { runDoctor } = await import("@devix-cli/doctor");
 
     const report = await runDoctor({ cwd: join(flags.cwd) });
 

@@ -1,4 +1,4 @@
-import { runCommand } from "@devix/shell";
+import { runCommand } from "@devix-cli/shell";
 
 /** Availability of the Docker installation on this machine. */
 export interface DockerAvailability {
@@ -16,7 +16,7 @@ export interface DockerAvailability {
  * normal state to diagnose, not an exceptional error.
  */
 export async function dockerAvailability(): Promise<DockerAvailability> {
-  const { commandExists } = await import("@devix/shell");
+  const { commandExists } = await import("@devix-cli/shell");
 
   if (!(await commandExists("docker"))) {
     return { available: false, reason: "cli-missing" };

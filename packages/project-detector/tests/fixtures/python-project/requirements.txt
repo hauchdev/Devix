@@ -1,1 +1,1 @@
-# Fixture requirements for @devix/project-detector tests.
+# Fixture requirements for @devix-cli/project-detector tests.

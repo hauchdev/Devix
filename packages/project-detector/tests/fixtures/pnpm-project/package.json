@@ -2,6 +2,6 @@
   "name": "devix-fixture-pnpm-project",
   "version": "0.0.0",
   "private": true,
-  "description": "Fixture for @devix/project-detector tests: a pnpm workspace project.",
+  "description": "Fixture for @devix-cli/project-detector tests: a pnpm workspace project.",
   "packageManager": "pnpm@12.5.1"
 }

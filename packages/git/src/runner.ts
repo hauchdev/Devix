@@ -16,13 +16,13 @@ export interface GitRunner {
 }
 
 /**
- * Default runner over @devix/shell: no shell concat, argv array only,
+ * Default runner over @devix-cli/shell: no shell concat, argv array only,
  * generous but bounded timeout, and typed errors for git absence and
  * non-zero exits.
  */
 export const defaultGitRunner: GitRunner = {
   async run(args: readonly string[], cwd: string): Promise<GitCommandOutput> {
-    const { commandExists, runCommand } = await import("@devix/shell");
+    const { commandExists, runCommand } = await import("@devix-cli/shell");
 
     if (!(await commandExists("git"))) {
       throw GitError.gitNotFound();

@@ -1,5 +1,5 @@
-import { PluginError, PluginRegistry } from "@devix/core";
-import type { PluginManifest } from "@devix/core";
+import { PluginError, PluginRegistry } from "@devix-cli/core";
+import type { PluginManifest } from "@devix-cli/core";
 
 /** Manifests of the plugins shipped with Devix. */
 export const BUILTIN_PLUGIN_MANIFESTS: readonly PluginManifest[] = [

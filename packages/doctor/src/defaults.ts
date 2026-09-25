@@ -1,4 +1,4 @@
-import { runCommand, which } from "@devix/shell";
+import { runCommand, which } from "@devix-cli/shell";
 
 import type { DoctorServices } from "./types.js";
 

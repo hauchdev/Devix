@@ -1,6 +1,6 @@
 # Project detection
 
-`@devix/project-detector` identifies what a project is made of by reading marker files — no processes are executed, only filesystem reads through `@devix/filesystem`.
+`@devix-cli/project-detector` identifies what a project is made of by reading marker files — no processes are executed, only filesystem reads through `@devix-cli/filesystem`.
 
 ## Core concepts
 
@@ -27,7 +27,7 @@
 ## Usage
 
 ```ts
-import { createDefaultRegistry, summarizeProject } from "@devix/project-detector";
+import { createDefaultRegistry, summarizeProject } from "@devix-cli/project-detector";
 
 const summary = await summarizeProject(createDefaultRegistry());
 console.log(summary.languages, summary.packageManagers, summary.tools);
@@ -40,7 +40,7 @@ Lower-level APIs: `detectProject(registry, { cwd })` returns per-detector result
 Implement the `Detector` interface and register it — existing detectors are never touched:
 
 ```ts
-import type { Detector } from "@devix/project-detector";
+import type { Detector } from "@devix-cli/project-detector";
 
 const myDetector: Detector = {
   id: "elixir",

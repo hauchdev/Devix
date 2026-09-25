@@ -1,4 +1,4 @@
-import { summarizeProject, type DetectorRegistry } from "@devix/project-detector";
+import { summarizeProject, type DetectorRegistry } from "@devix-cli/project-detector";
 
 import { DepsError } from "./errors.js";
 
@@ -29,7 +29,7 @@ export async function detectPackageManager(
   directory: string,
   registry?: DetectorRegistry,
 ): Promise<PackageManager> {
-  const { createDefaultRegistry } = await import("@devix/project-detector");
+  const { createDefaultRegistry } = await import("@devix-cli/project-detector");
   const summary = await summarizeProject(registry ?? createDefaultRegistry(), {
     cwd: directory,
   });

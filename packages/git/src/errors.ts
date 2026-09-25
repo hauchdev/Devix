@@ -1,5 +1,5 @@
 /**
- * Typed error hierarchy for the @devix/git package.
+ * Typed error hierarchy for the @devix-cli/git package.
  */
 
 export type GitErrorCode = "EGIT_NOT_FOUND" | "EGIT_NOT_A_REPO" | "EGIT_FAILED" | "EINVALID";

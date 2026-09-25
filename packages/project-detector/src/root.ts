@@ -1,4 +1,4 @@
-import { isDirectory, isFile, walkUp } from "@devix/filesystem";
+import { isDirectory, isFile, walkUp } from "@devix-cli/filesystem";
 import { join } from "node:path";
 
 import type { Detector } from "./types.js";
