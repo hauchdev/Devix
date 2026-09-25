@@ -73,7 +73,10 @@ export async function runCommand(
     let abortHandler: (() => void) | undefined;
 
     const child = viaCmdShim
-      ? spawn("cmd.exe", ["/d", "/s", "/c", executable, ...args], buildSpawnOptions(options))
+      ? spawn("cmd.exe", buildCmdShimArgs(executable, args), {
+          ...buildSpawnOptions(options),
+          windowsVerbatimArguments: true,
+        })
       : spawn(executable, args, buildSpawnOptions(options));
 
     child.stdout?.on("data", (chunk: Buffer) => {
@@ -165,6 +168,22 @@ function buildSpawnOptions(options: RunCommandOptions): {
     // Never flash a console window when running windowless on Windows.
     windowsHide: true,
   };
+}
+
+/**
+ * Builds the cmd.exe invocation for .cmd/.bat shims.
+ *
+ * The shim path is quoted (it may contain spaces, e.g.
+ * C:\\Program Files\\nodejs\\npm.cmd) and the whole command line gets
+ * its own outer quote pair: with a single quote pair cmd /c strips the
+ * quotes after the first token and splits at the next space. The args
+ * are already validated as metacharacter-free by assertSafeCmdArgs,
+ * so embedding them in the verbatim command line is safe.
+ */
+function buildCmdShimArgs(executable: string, args: readonly string[]): string[] {
+  const commandArguments = args.join(" ");
+  const commandLine = `"${executable}"${commandArguments.length > 0 ? ` ${commandArguments}` : ""}`;
+  return ["/d", "/c", `"${commandLine}"`];
 }
 
 async function resolveExecutable(

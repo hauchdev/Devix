@@ -96,6 +96,27 @@ describe("runCommand — windows cmd shims", () => {
       await expect(runCommand(script, ["a&calc"])).rejects.toMatchObject({ code: "EUNSAFE_ARG" });
     },
   );
+
+  it.runIf(process.platform === "win32")(
+    "runs .cmd shims whose directory contains spaces",
+    async () => {
+      // Regression: a single-quoted cmd /c line strips its quotes after
+      // the first token, so 'C:\Program Files\...\npm.cmd --version'
+      // split at the space and failed. The command line needs an outer
+      // quote pair around the quoted executable + args.
+      const outer = await makeTempDir();
+      const dir = join(outer, "dir with spaces");
+      const { mkdir } = await import("node:fs/promises");
+      await mkdir(dir, { recursive: true });
+      const script = join(dir, "hello.cmd");
+      await writeFile(script, "@echo off\r\necho spaced-ok %~1\r\n");
+
+      const result = await runCommand(script, ["arg1"]);
+
+      expect(result.viaCmdShim).toBe(true);
+      expect(result.stdout).toContain("spaced-ok arg1");
+    },
+  );
 });
 
 describe("runCommand — extraPathDirectories", () => {
