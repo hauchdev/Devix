@@ -49,6 +49,14 @@ export default class Doctor extends Command {
     this.log(section("  Languages", report.project.languages));
     this.log(section("  Package managers", report.project.packageManagers));
     this.log(section("  Tools", report.project.tools));
+
+    this.log("");
+    const missing = report.environment.checks.filter((c) => c.status !== "ok").length;
+    this.log(
+      missing === 0
+        ? "Status: all environment tools detected."
+        : `Status: ${missing} environment tool(s) not found.`,
+    );
   }
 }
 

@@ -80,4 +80,18 @@ describe("devix CLI (compiled binary)", () => {
     const node = parsed.environment.checks.find((c) => c.id === "node");
     expect(node?.status).toBe("ok");
   }, 30_000);
+
+  it("doctor reports an empty directory without error", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const empty = await mkdtemp(join(tmpdir(), "devix-cli-doctor-empty-"));
+    try {
+      const { stdout } = await runCli(["doctor", "--json"], empty);
+
+      const parsed = JSON.parse(stdout) as { project: { isProject: boolean } };
+      expect(parsed.project.isProject).toBe(false);
+    } finally {
+      await rm(empty, { recursive: true, force: true });
+    }
+  }, 30_000);
 });
