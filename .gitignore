@@ -5,6 +5,8 @@ node_modules/
 /ROADMAP.md
 /AGENTS.md
 /packages/*/AGENTS.md
+/apps/*/AGENTS.md
+/plugins/*/AGENTS.md
 
 dist/
 build/
