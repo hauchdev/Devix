@@ -26,6 +26,14 @@ describe("createDefaultRegistry", () => {
       "bun",
       "git",
       "docker",
+      "fabric",
+      "quilt",
+      "forge",
+      "neoforge",
+      "bukkit",
+      "bungeecord",
+      "velocity",
+      "sponge",
     ]);
     expect(defaultDetectors).toHaveLength(registry.ids().length);
     expect(new Set(registry.ids()).size).toBe(registry.ids().length);
@@ -52,5 +60,7 @@ describe("createDefaultRegistry", () => {
     expect(detection.detectors.get("typescript")?.detected).toBe(true);
     expect(detection.detectors.get("rust")?.detected).toBe(false);
     expect(detection.detectors.get("python")?.detected).toBe(false);
+    expect(detection.detectors.get("fabric")?.detected).toBe(false);
+    expect(detection.detectors.get("bukkit")?.detected).toBe(false);
   });
 });

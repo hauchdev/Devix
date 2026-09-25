@@ -203,19 +203,19 @@ importers:
         specifier: ^0.1.1
         version: link:../../packages/core
       '@devix-cli/deps':
-        specifier: ^0.1.0
+        specifier: ^0.2.0
         version: link:../../packages/deps
       '@devix-cli/docker':
         specifier: ^0.1.1
         version: link:../../plugins/docker
       '@devix-cli/doctor':
-        specifier: ^0.1.0
+        specifier: ^0.2.0
         version: link:../../packages/doctor
       '@devix-cli/git':
         specifier: ^0.1.0
         version: link:../../packages/git
       '@devix-cli/project-detector':
-        specifier: ^0.1.0
+        specifier: ^0.2.0
         version: link:../../packages/project-detector
       '@oclif/core':
         specifier: ^5.0.0
@@ -247,7 +247,7 @@ importers:
         specifier: ^0.1.0
         version: link:../filesystem
       '@devix-cli/project-detector':
-        specifier: ^0.1.0
+        specifier: ^0.2.0
         version: link:../project-detector
       '@devix-cli/shell':
         specifier: ^0.1.0
@@ -263,7 +263,7 @@ importers:
         specifier: ^0.1.0
         version: link:../filesystem
       '@devix-cli/project-detector':
-        specifier: ^0.1.0
+        specifier: ^0.2.0
         version: link:../project-detector
       '@devix-cli/shell':
         specifier: ^0.1.0

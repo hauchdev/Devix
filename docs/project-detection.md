@@ -21,8 +21,18 @@
 | `pnpm`       | packageManager | `pnpm-lock.yaml`, `pnpm-workspace.yaml`                                                             | lockfileVersion                           |
 | `yarn`       | packageManager | `yarn.lock`, `.yarnrc.yml`                                                                          | lockfile version                          |
 | `bun`        | packageManager | `bun.lockb`, `bun.lock`, `bunfig.toml`                                                              | —                                         |
-| `git`        | tool           | `.git` (directory or file)                                                                          | entry kind                                |
-| `docker`     | tool           | `Dockerfile*`, compose files, `.dockerignore`                                                       | —                                         |
+
+Minecraft mod/plugin platforms (Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot/Paper, BungeeCord, Velocity, Sponge) use the dedicated `minecraft` category. `summarizeProject` groups them under `tools` while keeping `category: "minecraft"` on every entry, so renderers can split them out.
+| `git` | tool | `.git` (directory or file) | entry kind |
+| `docker` | tool | `Dockerfile*`, compose files, `.dockerignore` | — |
+| `fabric` | minecraft | `fabric.mod.json` (flat or `src/main/resources`) | mod id |
+| `quilt` | minecraft | `quilt.mod.json` (flat or `src/main/resources`) | loader id |
+| `forge` | minecraft | `META-INF/mods.toml`, `META-INF/neoforge.mods.toml` (flat or `src/main/resources`) | modId |
+| `neoforge` | minecraft | `META-INF/neoforge.mods.toml` (flat or `src/main/resources`) | modId |
+| `bukkit` | minecraft | `plugin.yml`, `paper-plugin.yml` (flat or `src/main/resources`) | plugin name |
+| `bungeecord` | minecraft | `bungee.yml`, legacy `plugin.yml` (flat or `src/main/resources`) | plugin name |
+| `velocity` | minecraft | `velocity-plugin.json` (flat or `src/main/resources`) | plugin id |
+| `sponge` | minecraft | `sponge_plugin.json`, legacy `mcmod.info` (flat or `src/main/resources`) | plugin id |
 
 ## Usage
 

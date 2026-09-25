@@ -40,11 +40,13 @@ detection.detectors.get("pnpm"); // { detected: true, detections: [...] }
 
 ## Default detectors
 
-| Category         | Ids                                            |
-| ---------------- | ---------------------------------------------- |
-| `language`       | `node`, `typescript`, `java`, `rust`, `python` |
-| `packageManager` | `npm`, `pnpm`, `yarn`, `bun`                   |
-| `tool`           | `git`, `docker`                                |
+| Category         | Ids                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------ | --- | ------ | --------------- |
+| `language`       | `node`, `typescript`, `java`, `rust`, `python`                                       |
+| `packageManager` | `npm`, `pnpm`, `yarn`, `bun`                                                         |     | `tool` | `git`, `docker` |
+| `minecraft`      | `fabric`, `quilt`, `forge`, `neoforge`, `bukkit`, `bungeecord`, `velocity`, `sponge` |
+
+Minecraft mod/plugin platforms (Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot/Paper, BungeeCord, Velocity, Sponge) use the dedicated `minecraft` category. `summarizeProject` groups them under `tools` while keeping `category: "minecraft"` on every entry, so renderers can split them out.
 
 ## Write your own detector
 
@@ -79,21 +81,21 @@ Rules of the architecture: detectors never throw for "not found" (they return an
 
 ## API
 
-| Export                                        | Description                                                                       |
-| --------------------------------------------- | --------------------------------------------------------------------------------- |
-| `createDefaultRegistry()`, `defaultDetectors` | The built-in detector set                                                         |
-| `detectProject(registry, options?)`           | Run every detector on the detected project root                                   |
-| `summarizeProject(registry, options?)`        | Category-grouped view (`languages`, `packageManagers`, `tools`)                   |
-| `findProjectRoot(registry, startDir?)`        | Nearest ancestor directory with any known marker                                  |
-| `DetectorRegistry`                            | Registration container (rejects duplicate ids)                                    |
-| `ProjectDetectorError`                        | Typed error (`EINVALID`, `EUNKNOWN_DETECTOR`)                                     |
-| Types                                         | `Detector`, `Detection`, `DetectionResult`, `ProjectDetection`, `ProjectSummary`… |
+| Export | Description |
+| --------------------------------------------- | --------------------------------------------------------------------------------- || `createDefaultRegistry()`, `defaultDetectors` | The built-in detector set (19 detectors) |
+| `detectProject(registry, options?)` | Run every detector on the detected project root |
+| `summarizeProject(registry, options?)` | Category-grouped view (`languages`, `packageManagers`, `tools`) |
+| `findProjectRoot(registry, startDir?)` | Nearest ancestor directory with any known marker |
+| `DetectorRegistry` | Registration container (rejects duplicate ids) |
+| `ProjectDetectorError` | Typed error (`EINVALID`, `EUNKNOWN_DETECTOR`) |
+| Types | `Detector`, `Detection`, `DetectionResult`, `ProjectDetection`, `ProjectSummary`… |
 
 Full guide: [docs/project-detection.md](https://github.com/hauchdev/Devix/blob/main/docs/project-detection.md).
 
 ## Guarantees
 
 - **Read-only.** Marker files are read; nothing is executed, nothing is written.
+- **Minecraft-aware.** Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot/Paper, BungeeCord, Velocity and Sponge mod/plugin projects are detected from their manifests (`fabric.mod.json`, `plugin.yml`, `velocity-plugin.json`, …), flat or under `src/main/resources`.
 - **"Not found" is never an error.** An empty directory yields an honest empty summary.
 - **Extensible without forks.** Register detectors; no core edits needed.
 

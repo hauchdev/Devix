@@ -1,5 +1,11 @@
 # @devix-cli/project-detector
 
+## 0.2.0
+
+### Minor Changes
+
+- Adds nine Minecraft platform detectors: `fabric`, `quilt`, `forge`, `neoforge`, `bukkit` (Spigot/Paper), `bungeecord`, `velocity` and `sponge`, under the new `minecraft` category. Each reads its platform manifest (`fabric.mod.json`, `quilt.mod.json`, `META-INF/mods.toml`, `neoforge.mods.toml`, `plugin.yml`/`paper-plugin.yml`, `bungee.yml`, `velocity-plugin.json`, `sponge_plugin.json`/`mcmod.info`), flat or under `src/main/resources`, extracting the mod/plugin id or name as the detection detail. Malformed manifests still count as detected, without details.
+
 ## 0.1.0
 
 ### Minor Changes

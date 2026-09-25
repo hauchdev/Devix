@@ -1,6 +1,6 @@
 {
   "name": "@devix-cli/doctor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Devix diagnostics service: environment and project health checks.",
   "main": "./dist/index.js",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@devix-cli/filesystem": "^0.1.0",
-    "@devix-cli/project-detector": "^0.1.0",
+    "@devix-cli/project-detector": "^0.2.0",
     "@devix-cli/shell": "^0.1.0"
   },
   "devDependencies": {
