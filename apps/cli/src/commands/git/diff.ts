@@ -23,7 +23,6 @@ export default class GitDiff extends Command {
     const { flags } = await this.parse(GitDiff);
 
     const { diffStat } = await import("@devix/git");
-    const { GitError } = await import("@devix/git");
 
     try {
       const result = await diffStat(join(flags.cwd));

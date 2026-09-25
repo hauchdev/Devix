@@ -18,7 +18,6 @@ export default class GitBranches extends Command {
     const { flags } = await this.parse(GitBranches);
 
     const { branches } = await import("@devix/git");
-    const { GitError } = await import("@devix/git");
 
     try {
       const list = await branches(join(flags.cwd));
