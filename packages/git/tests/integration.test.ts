@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, rm, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -51,7 +51,10 @@ describe("git integration (real repositories in tmpdir)", () => {
     const dir = await makeRealRepo();
 
     const root = await repositoryRoot(dir);
-    expect(root.toLowerCase()).toBe(dir.toLowerCase());
+    // CI tmpdirs can be reported as 8.3 short names (RUNNER~1) while git
+    // resolves the long form: compare both sides fully resolved.
+    const expected = await realpath(dir);
+    expect(root.toLowerCase()).toBe(expected.toLowerCase());
   });
 
   it("status reports a clean tree and the current branch", async () => {
