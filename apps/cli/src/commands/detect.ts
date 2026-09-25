@@ -1,5 +1,4 @@
 import { Command, Flags } from "@oclif/core";
-import { createDefaultRegistry, summarizeProject } from "@devix/project-detector";
 import { join } from "node:path";
 
 export default class Detect extends Command {
@@ -20,6 +19,11 @@ export default class Detect extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Detect);
+
+    // Loaded lazily so `devix --help` / `--version` never pay for the
+    // detector stack at import time.
+    const { createDefaultRegistry, summarizeProject } = await import("@devix/project-detector");
+
     const summary = await summarizeProject(createDefaultRegistry(), {
       cwd: join(flags.cwd),
     });

@@ -4,6 +4,15 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// oclif detects the user's shell to show help snippets. On Windows it
+// spawns PowerShell and queries Win32_Process via CIM, costing ~300ms
+// on every cold start. oclif trusts the SHELL env var when present, so
+// default it to COMSPEC on Windows and skip that probe entirely.
+// POSIX systems always have SHELL set, so they are unaffected.
+if (process.platform === "win32" && !process.env.SHELL) {
+  process.env.SHELL = process.env.COMSPEC ?? "cmd.exe";
+}
+
 const packageDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 await execute({
