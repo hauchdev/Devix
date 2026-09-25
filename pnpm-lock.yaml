@@ -235,6 +235,22 @@ importers:
         specifier: 9.39.1
         version: 9.39.1(supports-color@7.2.0)
 
+  packages/deps:
+    dependencies:
+      '@devix/filesystem':
+        specifier: workspace:*
+        version: link:../filesystem
+      '@devix/project-detector':
+        specifier: workspace:*
+        version: link:../project-detector
+      '@devix/shell':
+        specifier: workspace:*
+        version: link:../shell
+    devDependencies:
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(supports-color@8.1.1)
+
   packages/doctor:
     dependencies:
       '@devix/filesystem':
