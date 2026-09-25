@@ -21,6 +21,7 @@
   "dependencies": {
     "@devix/core": "workspace:*",
     "@devix/doctor": "workspace:*",
+    "@devix/git": "workspace:*",
     "@devix/project-detector": "workspace:*",
     "@oclif/core": "^5.0.0"
   },

@@ -205,6 +205,9 @@ importers:
       '@devix/doctor':
         specifier: workspace:*
         version: link:../../packages/doctor
+      '@devix/git':
+        specifier: workspace:*
+        version: link:../../packages/git
       '@devix/project-detector':
         specifier: workspace:*
         version: link:../../packages/project-detector

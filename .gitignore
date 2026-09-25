@@ -12,6 +12,7 @@ dist/
 build/
 out/
 lib/
+!**/src/lib/
 coverage/
 .nyc_output/
 
