@@ -16,13 +16,31 @@ git clone https://github.com/hauchdev/Devix.git
 cd Devix
 pnpm install
 pnpm build
+```
 
+### Install the `devix` command
+
+From the repository, link the CLI globally so `devix` works in cmd, PowerShell and POSIX shells:
+
+```bash
+cd apps/cli
+pnpm add -g .
+```
+
+Or run it without installing:
+
+```bash
 node apps/cli/bin/run.js --help
 ```
+
+> The global command is a link to the repository: run `pnpm build` after pulling changes. To remove it: `pnpm remove -g @devix/cli`.
 
 ## What can it do?
 
 ```bash
+# Everything at a glance
+devix status            # project + environment + git + docker, read-only
+
 # What is this project made of?
 devix detect            # languages, package managers, tools
 

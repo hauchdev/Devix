@@ -117,4 +117,28 @@ describe("devix CLI (compiled binary)", () => {
       await rm(empty, { recursive: true, force: true });
     }
   }, 30_000);
+
+  it("status combines project, environment, git and docker", async () => {
+    const { stdout } = await runCli(["status"]);
+
+    expect(stdout).toContain("Project:");
+    expect(stdout).toContain("Environment:");
+    expect(stdout).toContain("Git:");
+    expect(stdout).toContain("Docker:");
+  }, 30_000);
+
+  it("status --json emits all sections parseable", async () => {
+    const { stdout } = await runCli(["status", "--json"]);
+
+    const parsed = JSON.parse(stdout) as {
+      project: unknown;
+      environment: unknown;
+      git: unknown;
+      docker: unknown;
+    };
+    expect(parsed.project).toBeDefined();
+    expect(parsed.environment).toBeDefined();
+    expect(parsed.git).toBeDefined();
+    expect(parsed.docker).toBeDefined();
+  }, 30_000);
 });
