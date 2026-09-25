@@ -2,11 +2,28 @@
 
 > A modular developer toolkit: a CLI that understands your environment (Node, pnpm, Git, Docker…) and your project, so you don't have to memorize it.
 
-**Status:** v1.0 candidate — the core platform (project detection, doctor, git, deps, docker, plugins) is implemented and tested. Package APIs may still change until the 1.0.0 release.
+[![npm](https://img.shields.io/npm/v/devix-cli)](https://www.npmjs.com/package/devix-cli)
+[![CI](https://github.com/hauchdev/Devix/actions/workflows/ci.yml/badge.svg)](https://github.com/hauchdev/Devix/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/node/v/devix-cli)](https://www.npmjs.com/package/devix-cli)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
+**Status:** v0.1.0 is published on npm. The core platform (project detection, doctor, git, deps, docker, plugins) is implemented and tested; package APIs may still evolve toward 1.0 — see the [roadmap](./ROADMAP.md).
 
 ## Quick start
 
-Requirements: **Node.js 22 LTS**, **pnpm 12.5.1** (pinned via Corepack) and **Git**.
+```bash
+npm install -g devix-cli
+```
+
+Then run `devix` anywhere:
+
+```bash
+devix status            # everything at a glance, read-only
+```
+
+Requirements: **Node.js 22 LTS** or newer.
+
+### Run from the repository (contributors)
 
 ```bash
 corepack enable
@@ -16,21 +33,9 @@ git clone https://github.com/hauchdev/Devix.git
 cd Devix
 pnpm install
 pnpm build
-```
 
-### Install the `devix` command
-
-From the repository, link the CLI globally so `devix` works in cmd, PowerShell and POSIX shells:
-
-```bash
-cd apps/cli
-pnpm add -g .
-```
-
-Or run it without installing:
-
-```bash
-node apps/cli/bin/run.js --help
+# link the global command to your working copy
+cd apps/cli && pnpm add -g .
 ```
 
 > The global command is a link to the repository: run `pnpm build` after pulling changes. To remove it: `pnpm remove -g devix-cli`.
@@ -63,13 +68,15 @@ devix docker status     # also: ps, images
 devix plugin list
 ```
 
-Most commands accept `--json` for machine-readable output and `--cwd` to inspect another directory. Errors are one line and actionable; exit codes are `0` on success and `1` on failure.
+Most commands accept `--json` for machine-readable output and `--cwd` to inspect another directory. Errors are one line and actionable; exit codes are `0` on success and `1` on failure. Every command is in [docs/cli.md](./docs/cli.md).
 
 ## Packages
 
+Everything the CLI uses is a small, standalone npm package you can reuse in your own tools.
+
 | Package                                                      | What it does                                               | Docs                                             |
 | ------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------ |
-| [`@devix-cli/core`](./packages/core)                         | Foundations: version, plugin API                           |                                                  |
+| [`@devix-cli/core`](./packages/core)                         | Foundations: version constant, plugin API                  |                                                  |
 | [`@devix-cli/filesystem`](./packages/filesystem)             | Cross-platform filesystem abstractions                     |                                                  |
 | [`@devix-cli/shell`](./packages/shell)                       | Safe, controlled external process execution                |                                                  |
 | [`@devix-cli/config`](./packages/config)                     | Configuration loading (`devix.config.json` / `devix.json`) |                                                  |
@@ -79,7 +86,15 @@ Most commands accept `--json` for machine-readable output and `--cwd` to inspect
 | [`@devix-cli/doctor`](./packages/doctor)                     | Environment and project diagnostics service                |                                                  |
 | [`@devix-cli/deps`](./packages/deps)                         | Package manager detection and delegation                   |                                                  |
 | [`@devix-cli/docker`](./plugins/docker)                      | Docker integration with graceful degradation               |                                                  |
-| [`apps/cli`](./apps/cli)                                     | The `devix` CLI                                            | [cli](./docs/cli.md)                             |
+| [`devix-cli`](./apps/cli)                                    | The `devix` CLI                                            | [cli](./docs/cli.md)                             |
+
+## Why Devix
+
+- **Read-only by design.** Inspection never mutates your repository or your dependencies; mutating actions are printed for you to run, not executed.
+- **Safe process execution.** Commands run as argv arrays — never `shell: true` with external input — with output limits, timeouts and abort support built in.
+- **Windows is a first-class platform.** Every package and the CI matrix (ubuntu + windows, Node 22/24) treat Windows as a target, not an afterthought.
+- **Typed errors everywhere.** `FilesystemError`, `ShellError`, `ConfigError`, `GitError`, `DepsError`… with machine-readable codes; no raw `node:fs` errors leak out.
+- **Graceful degradation.** A missing Docker daemon or a non-project directory is a normal, reportable state — not a stack trace.
 
 ## Documentation
 
@@ -104,6 +119,8 @@ Work on a single package:
 pnpm --filter @devix-cli/config test
 ```
 
+Releases are managed with [Changesets](https://github.com/changesets/changesets): push to `main` and the [release workflow](./.github/workflows/release.yml) versions and publishes every changed package to npm automatically.
+
 ## Architecture in 10 seconds
 
 ```text
@@ -111,10 +128,6 @@ apps/cli  →  plugins  →  services  →  packages  →  core
 ```
 
 Dependencies only flow downward, always via `workspace:*`. Every package is ESM, strict TypeScript, cross-platform (Windows included) and ships its own typed errors (`FilesystemError`, `ShellError`, `ConfigError`, `GitError`, …). Details in [docs/architecture.md](./docs/architecture.md).
-
-## CI
-
-GitHub Actions on every push and PR: **format → lint → typecheck → test → build**, on an **ubuntu + windows** matrix (Node 22 and 24). Windows is always verified: it is a target platform for Devix.
 
 ## Security
 
