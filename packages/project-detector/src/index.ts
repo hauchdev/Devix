@@ -16,6 +16,13 @@ export { detectProject, type DetectProjectOptions } from "./detect.js";
 export { summarizeProject } from "./summary.js";
 export type { ProjectSummary, SummaryEntry } from "./summary.js";
 
+export { detectMinecraftPlatforms } from "./minecraft.js";
+export type {
+  DetectedMinecraftPlatform,
+  MinecraftDetection,
+  MinecraftDetectionOptions,
+} from "./minecraft.js";
+
 export { nodeDetector } from "./detectors/node.js";
 export { npmDetector } from "./detectors/npm.js";
 export { pnpmDetector } from "./detectors/pnpm.js";

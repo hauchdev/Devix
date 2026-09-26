@@ -12,6 +12,7 @@ describe("public API surface", () => {
       "bungeecordDetector",
       "createDefaultRegistry",
       "defaultDetectors",
+      "detectMinecraftPlatforms",
       "detectProject",
       "dockerDetector",
       "fabricDetector",
