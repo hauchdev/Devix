@@ -1,5 +1,11 @@
 /** Machine-readable failure reasons of the minecraft plugin. */
-export type MinecraftErrorCode = "EUNKNOWN_PLATFORM" | "EINVALID_INPUT" | "EEXISTS";
+export type MinecraftErrorCode =
+  | "EUNKNOWN_PLATFORM"
+  | "EUNKNOWN_VERSION"
+  | "EUNSUPPORTED_VERSION"
+  | "EUNKNOWN_MODULE"
+  | "EINVALID_INPUT"
+  | "EEXISTS";
 
 /** Typed error for the minecraft plugin. */
 export class MinecraftError extends Error {
@@ -28,6 +34,33 @@ export class MinecraftError extends Error {
       "EUNKNOWN_PLATFORM",
       `Unknown platform: ${platform}. Known platforms: ${known.join(", ")}`,
       { platform },
+    );
+  }
+
+  /** The Minecraft version (or alias) is not in the version catalog. */
+  static unknownVersion(version: string, known: readonly string[]): MinecraftError {
+    return new MinecraftError(
+      "EUNKNOWN_VERSION",
+      `Unknown Minecraft version: ${version}. Known versions: ${known.join(", ")} ` +
+        "(aliases: stable, legacy).",
+    );
+  }
+
+  /** The platform has no dependency line for the requested Minecraft version. */
+  static unsupportedVersion(loader: string, version: string, label: string): MinecraftError {
+    return new MinecraftError(
+      "EUNSUPPORTED_VERSION",
+      `${loader} has no dependency line for Minecraft ${version} (${label}). ` +
+        "Pick another version or platform combination.",
+      { platform: loader },
+    );
+  }
+
+  /** The module id is not in the module catalog. */
+  static unknownModule(module: string, known: readonly string[]): MinecraftError {
+    return new MinecraftError(
+      "EUNKNOWN_MODULE",
+      `Unknown module: ${module}. Known modules: ${known.join(", ")}`,
     );
   }
 

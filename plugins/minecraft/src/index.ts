@@ -13,7 +13,33 @@ export const PLUGIN_VERSION: string = manifest.version ?? "0.0.0";
 
 export { MinecraftError } from "./errors.js";
 export type { MinecraftErrorCode } from "./errors.js";
-export { MINECRAFT_PLATFORMS, PLATFORM_IDS, type MinecraftPlatform } from "./catalog.js";
+export {
+  MINECRAFT_PLATFORMS,
+  MINECRAFT_PROJECT_KINDS,
+  MINECRAFT_MODULES,
+  MODULE_IDS,
+  PLATFORM_IDS,
+  getModuleKind,
+  getPlatform,
+  getProjectKind,
+  platformsForKind,
+  platformsForLoader,
+} from "./catalog.js";
+export type {
+  MinecraftModuleKindInfo,
+  MinecraftPlatform,
+  MinecraftProjectKind,
+  MinecraftProjectKindInfo,
+} from "./catalog.js";
+export {
+  DEFAULT_MINECRAFT_VERSION,
+  MINECRAFT_VERSIONS,
+  isKnownMinecraftVersion,
+  resolveLoaderVersions,
+  resolveVersionSpec,
+  supportedLoaders,
+} from "./versions.js";
+export type { MinecraftVersionSpec, ResolvedVersions } from "./versions.js";
 export { scaffold, summarizeScaffold } from "./scaffold.js";
 export type { ScaffoldEntry, ScaffoldOptions, ScaffoldResult } from "./scaffold.js";
 export type { DetectedMinecraftPlatform } from "@devix-cli/project-detector";
@@ -27,6 +53,7 @@ export const MINECRAFT_PLUGIN_MANIFEST: PluginManifest = {
   id: "minecraft",
   name: "Minecraft",
   version: PLUGIN_VERSION,
-  description: "Scaffolds Minecraft mod and plugin projects for eight platforms.",
+  description:
+    "Scaffolds Minecraft projects: mods, plugins and proxies with multi-loader, multi-module and multi-version support.",
   commands: ["minecraft"],
 };

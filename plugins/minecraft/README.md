@@ -1,8 +1,8 @@
 # @devix-cli/minecraft
 
-> Minecraft platform scaffolding for Devix: generate mod and plugin skeletons for Fabric, Forge, Architectury, Spigot, Paper, Folia, Velocity and BungeeCord.
+> Minecraft project scaffolding for Devix: generate mods, plugins and proxy plugins for Fabric, Forge, NeoForge, Architectury, Paper, Folia, Spigot, Velocity and BungeeCord — with multi-loader, multi-module and multi-version support.
 
-Part of [Devix](https://github.com/hauchdev/Devix) — a modular developer toolkit. Ships as a Devix plugin: `devix minecraft list` and `devix minecraft init`.
+Part of [Devix](https://github.com/hauchdev/Devix) — a modular developer toolkit. Ships as a Devix plugin: `devix minecraft list`, `devix minecraft init` and `devix minecraft check`.
 
 ## Install
 
@@ -18,18 +18,40 @@ npm install @devix-cli/minecraft
 | -------------- | ------------ | ------------ | --------------------------------------------------------- |
 | `fabric`       | mod          | Gradle       | Loom setup, `fabric.mod.json`, main entrypoint            |
 | `forge`        | mod          | Gradle       | ForgeGradle, `mods.toml`, `@Mod` main class               |
-| `architectury` | mod          | Gradle       | `common` + `fabric` + `forge` multi-project wired up      |
+| `neoforge`     | mod          | Gradle       | NeoGradle, `neoforge.mods.toml`, `@Mod` main class        |
+| `architectury` | mod          | Gradle       | `common` + `fabric` + second-loader subprojects wired up  |
 | `spigot`       | plugin       | Maven        | `spigot-api` pom, `plugin.yml`, `JavaPlugin` main class   |
 | `paper`        | plugin       | Gradle       | `paper-api`, `paper-plugin.yml` with bootstrap + loader   |
 | `folia`        | plugin       | Gradle       | `folia-api`, `plugin.yml` with `folia-supported: true`    |
 | `velocity`     | proxy-plugin | Gradle       | `velocity-api`, `@Plugin` class with annotation processor |
 | `bungeecord`   | proxy-plugin | Maven        | `bungeecord-api` pom, `bungee.yml`, `Plugin` main class   |
 
+### Project kinds
+
+The interactive flow (and the API) starts from the kind of project:
+
+| Kind           | Platforms                             |
+| -------------- | ------------------------------------- |
+| `mod`          | fabric, forge, neoforge, architectury |
+| `plugin`       | paper, folia, spigot                  |
+| `proxy-plugin` | velocity, bungeecord                  |
+
+## Multi-loader, multi-module, multi-version
+
+**Multi-loader.** Combine Gradle mod loaders into one project: `fabric+forge`, `fabric+neoforge`, `forge+neoforge` or the triple. You get one Gradle build with a shared version catalog, a `common` source set and one subproject per loader, each with its manifest (`fabric.mod.json`, `mods.toml`, `neoforge.mods.toml`) and entrypoint delegating to the shared code.
+
+**Multi-module.** Add optional extra modules to any project: `api` (public API subproject), `core` (implementation split), and — for mod loaders — `game-tests` and `datagen`. Any module turns the project into a Gradle multi-project (or a Maven reactor for Spigot/BungeeCord): the entrypoint stays at the root, extras get their own subproject wired through `settings.gradle` / parent pom.
+
+**Multi-version.** Every dependency line comes from a version catalog keyed by Minecraft version, so the same command targets `26.3` (year-drop numbering), `1.21.1` or `1.20.1` with `--mc`. Versions resolve from ids (`26.3`), aliases (`stable`, `legacy`) or drop names (`wilderness`). When a platform has no line for a version (NeoForge on 1.20.1, Forge on 26.x) the scaffold fails with `EUNSUPPORTED_VERSION` instead of generating a broken build. Architectury picks its second loader from the version: Forge on legacy lines, NeoForge on modern ones.
+
 ## CLI usage
 
 ```bash
-# See every platform
+# See every kind, platform and module
 devix minecraft list
+
+# Interactive (TTY): kind -> platform(s) -> modules -> name -> version -> mc -> package
+devix minecraft init
 
 # Preview without writing anything
 devix minecraft init fabric "Cool Sword" --dry-run
@@ -37,23 +59,33 @@ devix minecraft init fabric "Cool Sword" --dry-run
 # Create a mod in the current directory
 devix minecraft init fabric "Cool Sword" --package com.example.coolsword
 
+# Multi-loader: one project, two loaders, shared version catalog
+devix minecraft init fabric+forge "DualSword" --mc 1.21.1
+
+# Multi-module: entrypoint + api + core subprojects
+devix minecraft init paper "QueueBoard" --modules api,core
+
+# By kind: the default platform of the kind is used
+devix minecraft init --kind proxy-plugin "Relay"
+
+# Target a specific Minecraft version (id, alias or drop name)
+devix minecraft init neoforge "ModernMod" --mc 26.3
+devix minecraft init forge "ClassicMod" --mc 1.20.1
+
 # Create a Paper plugin in a specific directory
 devix minecraft init paper "QueueBoard" --cwd ./projects/queueboard
 
 # JSON output for tooling
 devix minecraft init spigot "EggCannon" --json
 
-# Detect an existing Minecraft project (any of the 8 platforms)
+# Detect an existing Minecraft project (any supported platform)
 devix minecraft check
 devix minecraft check fabric
-
-# Interactive: pick the platform from a list, then type a name (TTY only)
-devix minecraft init
 ```
 
-`check` walks up from the directory and reports every detected platform with its manifest detail (`fabric (mymod)`), or `isMinecraft: false` outside Minecraft projects. With a platform id it also reports whether that specific platform matched. It reads the same markers as `@devix-cli/project-detector`'s `detectMinecraftPlatforms`.
+`check` walks up from the directory and reports every detected platform with its manifest detail (`fabric (mymod)`), or `isMinecraft: false` outside Minecraft projects. With a platform id it also reports whether that specific one matched. It reads the same markers as `@devix-cli/project-detector`'s `detectMinecraftPlatforms`.
 
-Flags: `--cwd` (target directory), `--package` (Java package), `--version`, `--mc` (Minecraft version), `--dry-run`, `--overwrite`, `--json`.
+Flags: `--kind` (project kind), `--modules` (extra modules), `--cwd` (target directory), `--package` (Java package), `--version`, `--mc` (Minecraft version or alias), `--dry-run`, `--overwrite`, `--json`.
 
 ## API
 
@@ -62,24 +94,29 @@ import { MINECRAFT_PLATFORMS, scaffold, summarizeScaffold } from "@devix-cli/min
 
 const result = await scaffold({
   root: "/absolute/path/to/MyMod",
-  platform: "fabric",
+  platform: "fabric+forge", // or kind: "mod"
   name: "Cool Sword",
   packageName: "com.example.coolsword", // optional, default com.example.<slug>
+  minecraftVersion: "26.3", // or "stable", "1.21.1", "wilderness"…
+  modules: ["api", "core"], // optional extras -> multi-module
   dryRun: false,
 });
 
 for (const line of summarizeScaffold(result)) console.log(line);
 ```
 
-| Export                                        | Description                                                    |
-| --------------------------------------------- | -------------------------------------------------------------- |
-| `scaffold(options)`                           | Generate a platform skeleton                                   |
-| `summarizeScaffold(result)`                   | Human-readable summary lines                                   |
-| `MINECRAFT_PLATFORMS`, `PLATFORM_IDS`         | The platform catalog                                           |
-| `MinecraftError`                              | Typed error (`EUNKNOWN_PLATFORM`, `EINVALID_INPUT`, `EEXISTS`) |
-| `PLUGIN_VERSION`, `MINECRAFT_PLUGIN_MANIFEST` | Plugin identity for the core registry                          |
+| Export                                            | Description                                                                                                                   |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `scaffold(options)`                               | Generate a project skeleton (single, multi-loader, multi-module)                                                              |
+| `summarizeScaffold(result)`                       | Human-readable summary lines                                                                                                  |
+| `MINECRAFT_PROJECT_KINDS`                         | The kind catalog (`mod`, `plugin`, `proxy-plugin`)                                                                            |
+| `MINECRAFT_PLATFORMS`, `PLATFORM_IDS`             | The platform catalog (with `buildSystem`, `loaders`, `combinable`)                                                            |
+| `MINECRAFT_MODULES`, `MODULE_IDS`                 | The optional module catalog                                                                                                   |
+| `MINECRAFT_VERSIONS`, `DEFAULT_MINECRAFT_VERSION` | The version catalog and its default (`resolveVersionSpec`, `resolveLoaderVersions`, `supportedLoaders`)                       |
+| `MinecraftError`                                  | Typed error (`EUNKNOWN_PLATFORM`, `EUNKNOWN_VERSION`, `EUNSUPPORTED_VERSION`, `EUNKNOWN_MODULE`, `EINVALID_INPUT`, `EEXISTS`) |
+| `PLUGIN_VERSION`, `MINECRAFT_PLUGIN_MANIFEST`     | Plugin identity for the core registry                                                                                         |
 
-The scaffold result includes `targetPlatforms`: the Minecraft platforms the destination had before writing (empty on fresh directories), so callers can tell fresh scaffolds from additions to an existing project.
+The scaffold result includes `platforms`, `kind`, `minecraftVersion`, `javaVersion`, `modules` and `targetPlatforms`: the Minecraft platforms the destination had before writing (empty on fresh directories), so callers can tell fresh scaffolds from additions to an existing project.
 
 ## Safety guarantees
 

@@ -1,49 +1,95 @@
 import {
+  extraModuleDependencies,
+  gradleJavaBlocks,
+  moduleResources,
+  moduleSrcMain,
+  renderSingleModuleSettings,
+} from "./gradle-common.js";
+import {
+  gradleGitignore,
+  renderExtraModuleBuilds,
+  renderMultimoduleSettings,
+} from "./gradle-multimodule.js";
+import {
+  extraModules,
   packageLeaf,
   packagePath,
   pascalCase,
   type PlatformRenderer,
+  type TemplateContext,
   type TemplateFile,
 } from "./types.js";
 
+/** The fabric.mod.json of one loader module. */
+function fabricModJson(context: TemplateContext, entryPackage: string): string {
+  const leaf = packageLeaf(context.packageName);
+  return `${JSON.stringify(
+    {
+      schemaVersion: 1,
+      id: leaf,
+      version: context.version,
+      name: context.name,
+      environment: "*",
+      entrypoints: {
+        main: [`${entryPackage}.${pascalCase(context.name)}`],
+      },
+      depends: {
+        fabricloader: `>=${context.versions[0]?.deps.fabric_loader ?? "0.16.0"}`,
+        minecraft: `~${context.versions[0]?.minecraft ?? "1.21.1"}`,
+        java: `>=${context.versions[0]?.javaVersion ?? 21}`,
+      },
+    },
+    null,
+    2,
+  )}\n`;
+}
+
+/** The ModInitializer class of one module. */
+function initializer(context: TemplateContext, entryPackage: string, className: string): string {
+  return [
+    `package ${entryPackage};`,
+    "",
+    "import net.fabricmc.api.ModInitializer;",
+    "",
+    "/**",
+    ` * Entry point of the ${context.name} mod.`,
+    " */",
+    `public class ${className} implements ModInitializer {`,
+    "    @Override",
+    "    public void onInitialize() {",
+    `        System.out.println("[${context.name}] initialized");`,
+    "    }",
+    "}",
+    "",
+  ].join("\n");
+}
+
 /**
- * Fabric templates: Gradle (build.gradle.kts + settings), a Java 21
- * toolchain, `fabric.mod.json` with an entrypoint and a split
- * client/main source set, plus the mod initializer class.
+ * Fabric templates: Loom build driven entirely by the version catalog
+ * (gradle.properties), `fabric.mod.json` with an entrypoint, and —
+ * when modules were requested — a Gradle multi-project with the
+ * entrypoint at the root plus api/core/datagen subprojects.
  */
 export const renderFabric: PlatformRenderer = (context) => {
-  const pkg = packagePath(context.packageName);
+  const deps = context.versions[0]?.deps ?? {};
   const mainClass = pascalCase(context.name);
-  const leaf = packageLeaf(context.packageName);
+  const pkg = packagePath(context.packageName);
   const files: TemplateFile[] = [];
 
-  files.push({
-    path: "settings.gradle",
-    contents: [
-      "pluginManagement {",
-      "    repositories {",
-      "        maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }",
-      "        mavenCentral()",
-      "        gradlePluginPortal()",
-      "    }",
-      "}",
-      "",
-      `rootProject.name = '${context.name}'`,
-      "",
-    ].join("\n"),
-  });
+  const settings = context.multimodule
+    ? renderMultimoduleSettings(context)
+    : renderSingleModuleSettings(context.name, [
+        "maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }",
+        "mavenCentral()",
+      ]);
+  files.push({ path: "settings.gradle", contents: settings });
 
   files.push({
     path: "build.gradle",
     contents: [
       "plugins {",
-      "    id 'fabric-loom' version '1.7-SNAPSHOT'",
+      `    id 'fabric-loom' version '${context.versions[0]?.loom ?? "1.9-SNAPSHOT"}'`,
       "    id 'maven-publish'",
-      "}",
-      "",
-      "java {",
-      "    toolchain { languageVersion = JavaLanguageVersion.of(21) }",
-      "    withSourcesJar()",
       "}",
       "",
       `version = '${context.version}'`,
@@ -54,10 +100,11 @@ export const renderFabric: PlatformRenderer = (context) => {
       "repositories {}",
       "",
       "dependencies {",
-      "    minecraft 'com.mojang:minecraft:' + project.minecraft_version",
-      "    mappings 'net.fabricmc:yarn:_mappings+1.21.1:v2'",
-      "    modImplementation 'net.fabricmc:fabric-loader:0.16.5'",
-      "    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.103.0+1.21.1'",
+      '    minecraft "com.mojang:minecraft:${project.minecraft_version}"',
+      '    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"',
+      '    modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader}"',
+      '    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api}"',
+      ...extraModuleDependencies(context),
       "}",
       "",
       "processResources {",
@@ -67,15 +114,7 @@ export const renderFabric: PlatformRenderer = (context) => {
       "    }",
       "}",
       "",
-      "tasks.withType(JavaCompile).configureEach {",
-      "    it.options.release = 21",
-      "}",
-      "",
-      "java {",
-      "    sourceCompatibility = JavaVersion.VERSION_21",
-      "    targetCompatibility = JavaVersion.VERSION_21",
-      "}",
-      "",
+      ...gradleJavaBlocks(context.versions[0]?.javaVersion ?? 21),
     ].join("\n"),
   });
 
@@ -85,64 +124,56 @@ export const renderFabric: PlatformRenderer = (context) => {
       "org.gradle.jvmargs=-Xmx2G",
       "org.gradle.parallel=true",
       "",
-      "# Fabric versions (edit to taste)",
-      "minecraft_version=1.21.1",
-      "",
-    ].join(""),
-  });
-
-  files.push({
-    path: "src/main/resources/fabric.mod.json",
-    contents: `${JSON.stringify(
-      {
-        schemaVersion: 1,
-        id: leaf,
-        version: context.version,
-        name: context.name,
-        environment: "*",
-        entrypoints: {
-          main: [`${context.packageName}.${mainClass}`],
-        },
-        depends: {
-          fabricloader: ">=0.16.0",
-          minecraft: `~${context.minecraftVersion}`,
-          java: ">=21",
-        },
-      },
-      null,
-      2,
-    )}\n`,
-  });
-
-  files.push({
-    path: `src/main/java/${pkg}/${mainClass}.java`,
-    contents: [
-      `package ${context.packageName};`,
-      "",
-      "import net.fabricmc.api.ModInitializer;",
-      "",
-      "/**",
-      ` * Entry point of the ${context.name} mod.`,
-      " */",
-      `public class ${mainClass} implements ModInitializer {`,
-      "    @Override",
-      "    public void onInitialize() {",
-      `        System.out.println("[${context.name}] initialized");`,
-      "    }",
-      "}",
+      "# Version catalog (managed by devix minecraft init --mc)",
+      ...Object.entries(deps).map(([key, value]) => `${key}=${value}`),
       "",
     ].join("\n"),
   });
 
+  const mainIs = context.modules[0] ?? "main";
   files.push({
-    path: "src/main/resources/assets/.gitkeep",
-    contents: "",
+    path: `${moduleResources(mainIs, true)}/fabric.mod.json`,
+    contents: fabricModJson(context, context.packageName),
+  });
+  files.push({
+    path: `${moduleSrcMain(mainIs, true)}/${pkg}/${mainClass}.java`,
+    contents: initializer(context, context.packageName, mainClass),
   });
 
-  files.push({
-    path: ".gitignore",
-    contents: ["build/", ".gradle/", "run/", "*.class", ""].join("\n"),
-  });
+  // Extra modules: an api module ships a marker interface, the rest a starter class.
+  for (const module of extraModules(context)) {
+    const modulePackage = `${context.packageName}.${module.replace(/-/g, "")}`;
+    const moduleClass = module === "api" ? `${mainClass}Api` : `${mainClass}${pascalCase(module)}`;
+    files.push({
+      path: `${moduleSrcMain(module, false)}/${packagePath(modulePackage)}/${moduleClass}.java`,
+      contents:
+        module === "api"
+          ? [
+              `package ${modulePackage};`,
+              "",
+              "/**",
+              ` * Public API of the ${context.name} mod.`,
+              " */",
+              `public interface ${moduleClass} {`,
+              "}",
+              "",
+            ].join("\n")
+          : [
+              `package ${modulePackage};`,
+              "",
+              "/**",
+              ` * ${pascalCase(module)} module of the ${context.name} mod.`,
+              " */",
+              `public final class ${moduleClass} {`,
+              `    private ${moduleClass}() {}`,
+              "}",
+              "",
+            ].join("\n"),
+    });
+  }
+  files.push(...renderExtraModuleBuilds(context));
 
+  files.push({ path: "src/main/resources/assets/.gitkeep", contents: "" });
+  files.push({ path: ".gitignore", contents: gradleGitignore() });
   return files;
 };

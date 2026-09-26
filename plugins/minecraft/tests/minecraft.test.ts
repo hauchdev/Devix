@@ -4,7 +4,14 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MINECRAFT_PLATFORMS, PLATFORM_IDS, scaffold, summarizeScaffold } from "../src/index.js";
+import {
+  DEFAULT_MINECRAFT_VERSION,
+  MINECRAFT_PLATFORMS,
+  MINECRAFT_PROJECT_KINDS,
+  PLATFORM_IDS,
+  scaffold,
+  summarizeScaffold,
+} from "../src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -19,10 +26,11 @@ afterEach(async () => {
 });
 
 describe("minecraft platform catalog", () => {
-  it("lists the eight supported platforms", () => {
+  it("lists the nine supported platforms", () => {
     expect(PLATFORM_IDS).toEqual([
       "fabric",
       "forge",
+      "neoforge",
       "architectury",
       "spigot",
       "paper",
@@ -30,7 +38,19 @@ describe("minecraft platform catalog", () => {
       "velocity",
       "bungeecord",
     ]);
-    expect(MINECRAFT_PLATFORMS).toHaveLength(8);
+    expect(MINECRAFT_PLATFORMS).toHaveLength(9);
+  });
+
+  it("exposes the three project kinds in prompt order", () => {
+    expect(MINECRAFT_PROJECT_KINDS.map((kind) => kind.id)).toEqual([
+      "mod",
+      "plugin",
+      "proxy-plugin",
+    ]);
+  });
+
+  it("defaults to the newest catalog version", () => {
+    expect(DEFAULT_MINECRAFT_VERSION).toBe("26.3");
   });
 });
 
@@ -119,10 +139,16 @@ describe("scaffold", () => {
     expect(result.files.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("writes an architectury multi-loader skeleton", async () => {
+  it("writes an architectury multi-loader skeleton with the version's second loader", async () => {
     const dir = await makeTempDir();
 
-    await scaffold({ root: dir, platform: "architectury", name: "CrossMod" });
+    // 26.3 has no Forge line: the second loader is NeoForge.
+    await scaffold({
+      root: dir,
+      platform: "architectury",
+      name: "CrossMod",
+      minecraftVersion: "26.3",
+    });
 
     expect(await readFile(join(dir, "common/build.gradle"), "utf8")).toContain("architectury");
     expect(
@@ -133,10 +159,136 @@ describe("scaffold", () => {
     ).toContain("ModInitializer");
     expect(
       await readFile(
-        join(dir, "forge/src/main/java/com/example/crossmod/forge/CrossModForge.java"),
+        join(dir, "neoforge/src/main/java/com/example/crossmod/neoforge/CrossModNeoForge.java"),
         "utf8",
       ),
     ).toContain("@Mod");
+  });
+
+  it("writes an architectury legacy skeleton with Forge as the second loader", async () => {
+    const dir = await makeTempDir();
+
+    await scaffold({
+      root: dir,
+      platform: "architectury",
+      name: "LegacyCross",
+      minecraftVersion: "1.20.1",
+    });
+
+    expect(
+      await readFile(
+        join(dir, "forge/src/main/java/com/example/legacycross/forge/LegacyCrossForge.java"),
+        "utf8",
+      ),
+    ).toContain("@Mod");
+  });
+
+  it("writes a multi-loader fabric+forge project with a shared catalog", async () => {
+    const dir = await makeTempDir();
+
+    const result = await scaffold({
+      root: dir,
+      platform: "fabric+forge",
+      name: "DualLoader",
+      minecraftVersion: "1.21.1",
+    });
+
+    expect(result.platforms).toEqual(["fabric", "forge"]);
+    expect(await readFile(join(dir, "fabric/build.gradle"), "utf8")).toContain("fabric-loom");
+    expect(await readFile(join(dir, "forge/build.gradle"), "utf8")).toContain(
+      "net.minecraftforge.gradle",
+    );
+    const shared = await readFile(join(dir, "gradle.properties"), "utf8");
+    expect(shared).toContain("minecraft_version=1.21.1");
+    expect(shared).toContain("forge_version=");
+    expect(shared).toContain("fabric_loader=");
+  });
+
+  it("writes a multi-module project with wired subprojects", async () => {
+    const dir = await makeTempDir();
+
+    const result = await scaffold({
+      root: dir,
+      platform: "fabric",
+      name: "Modular",
+      modules: ["api", "core"],
+    });
+
+    expect(result.modules).toEqual(["main", "api", "core"]);
+    const settings = await readFile(join(dir, "settings.gradle"), "utf8");
+    expect(settings).toContain("include ':api'");
+    expect(settings).toContain("include ':core'");
+    expect(await readFile(join(dir, "api/build.gradle"), "utf8")).toContain("java-library");
+    expect(
+      await readFile(
+        join(dir, "core/src/main/java/com/example/modular/core/ModularCore.java"),
+        "utf8",
+      ),
+    ).toContain("package com.example.modular.core");
+    const build = await readFile(join(dir, "build.gradle"), "utf8");
+    expect(build).toContain("project(':api')");
+  });
+
+  it("rejects modules that need a loader on plugin platforms", async () => {
+    const dir = await makeTempDir();
+
+    await expect(
+      scaffold({ root: dir, platform: "paper", name: "X", modules: ["datagen"] }),
+    ).rejects.toMatchObject({ code: "EINVALID_INPUT" });
+  });
+
+  it("rejects kind together with platform", async () => {
+    const dir = await makeTempDir();
+
+    await expect(
+      scaffold({ root: dir, kind: "plugin", platform: "paper", name: "X" } as never),
+    ).rejects.toMatchObject({ code: "EINVALID_INPUT" });
+  });
+
+  it("rejects multi-kind platform mixes", async () => {
+    const dir = await makeTempDir();
+
+    await expect(
+      scaffold({ root: dir, platform: "fabric+paper", name: "X" }),
+    ).rejects.toMatchObject({ code: "EINVALID_INPUT" });
+  });
+
+  it("resolves version aliases and rejects unknown versions", async () => {
+    const dir = await makeTempDir();
+
+    const stable = await scaffold({
+      root: dir,
+      platform: "paper",
+      name: "V",
+      minecraftVersion: "stable",
+    });
+    expect(stable.minecraftVersion).toBe("26.3");
+
+    const legacy = await scaffold({
+      root: dir.replace(/devix-minecraft-/, "devix-minecraft-l1-"),
+      platform: "spigot",
+      name: "V2",
+      minecraftVersion: "1.20.1",
+    });
+    expect(legacy.minecraftVersion).toBe("1.20.1");
+    expect(legacy.javaVersion).toBe(17);
+
+    await expect(
+      scaffold({
+        root: dir.replace(/devix-minecraft-/, "devix-minecraft-l2-"),
+        platform: "paper",
+        name: "V3",
+        minecraftVersion: "9.9.9",
+      }),
+    ).rejects.toMatchObject({ code: "EUNKNOWN_VERSION" });
+  });
+
+  it("rejects a platform without a dependency line for the version", async () => {
+    const dir = await makeTempDir();
+
+    await expect(
+      scaffold({ root: dir, platform: "forge", name: "X", minecraftVersion: "26.3" }),
+    ).rejects.toMatchObject({ code: "EUNSUPPORTED_VERSION" });
   });
 
   it("refuses to touch a non-empty target without overwrite", async () => {
@@ -164,7 +316,12 @@ describe("scaffold", () => {
     const dir = await makeTempDir();
     await writeFile(join(dir, "fabric.mod.json"), '{ "id": "there-is-a-mod-here" }', "utf8");
 
-    const error = await scaffold({ root: dir, platform: "forge", name: "X" }).then(
+    const error = await scaffold({
+      root: dir,
+      platform: "fabric",
+      name: "X",
+      minecraftVersion: "1.21.1",
+    }).then(
       () => undefined,
       (error: unknown) => error as { message: string },
     );

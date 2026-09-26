@@ -19,11 +19,11 @@ import {
 } from "./types.js";
 
 /**
- * Forge templates: ForgeGradle build driven by the version catalog,
- * `mods.toml` under META-INF and the `@Mod` main class; multi-module
- * aware like every Gradle renderer.
+ * NeoForge templates: NeoGradle/ModDevGradle build driven by the
+ * version catalog, `neoforge.mods.toml` and the `@Mod` main class;
+ * multi-module aware like every Gradle renderer.
  */
-export const renderForge: PlatformRenderer = (context) => {
+export const renderNeoForge: PlatformRenderer = (context) => {
   const deps = context.versions[0]?.deps ?? {};
   const mainClass = pascalCase(context.name);
   const pkg = packagePath(context.packageName);
@@ -35,7 +35,7 @@ export const renderForge: PlatformRenderer = (context) => {
     contents: context.multimodule
       ? renderMultimoduleSettings(context)
       : renderSingleModuleSettings(context.name, [
-          "maven { url = 'https://maven.minecraftforge.net/' }",
+          "maven { url = 'https://maven.neoforged.net/releases' }",
           "mavenCentral()",
         ]),
   });
@@ -44,7 +44,7 @@ export const renderForge: PlatformRenderer = (context) => {
     path: "build.gradle",
     contents: [
       "plugins {",
-      `    id 'net.minecraftforge.gradle' version '${deps.forgegradle_version ?? "[6.0,6.2)"}'`,
+      `    id 'net.neoforged.gradle.userdev' version '${deps.neogradle_version ?? "7.0.171"}'`,
       "}",
       "",
       `version = '${context.version}'`,
@@ -52,22 +52,15 @@ export const renderForge: PlatformRenderer = (context) => {
       "",
       "base { archivesName = '" + context.name + "' }",
       "",
-      `java.toolchain.languageVersion = JavaLanguageVersion.of(${String(context.versions[0]?.javaVersion ?? 17)})`,
-      "",
-      "minecraft {",
-      `    mappings channel: 'official', version: '${deps.minecraft_version ?? "1.20.1"}'`,
-      "    runs {",
-      "        client { workingDirectory project.file('run') }",
-      "        server { workingDirectory project.file('run') }",
-      "    }",
-      "}",
+      `java.toolchain.languageVersion = JavaLanguageVersion.of(${String(context.versions[0]?.javaVersion ?? 21)})`,
       "",
       "repositories {",
       "    mavenCentral()",
+      "    maven { url = 'https://maven.neoforged.net/releases' }",
       "}",
       "",
       "dependencies {",
-      `    minecraft 'net.minecraftforge:forge:${"${project.forge_version}"}'`,
+      '    implementation "net.neoforged:neoforge:${project.neoforge_version}"',
       ...extraModuleDependencies(context),
       "}",
       "",
@@ -82,7 +75,6 @@ export const renderForge: PlatformRenderer = (context) => {
     path: "gradle.properties",
     contents: [
       "org.gradle.jvmargs=-Xmx3G",
-      "org.gradle.daemon=false",
       "",
       "# Version catalog (managed by devix minecraft init --mc)",
       ...Object.entries(deps).map(([key, value]) => `${key}=${value}`),
@@ -91,10 +83,10 @@ export const renderForge: PlatformRenderer = (context) => {
   });
 
   files.push({
-    path: `${moduleResources(context.modules[0] ?? "main", true)}/META-INF/mods.toml`,
+    path: `${moduleResources(context.modules[0] ?? "main", true)}/META-INF/neoforge.mods.toml`,
     contents: [
       'modLoader="javafml"',
-      `loaderVersion="${deps.forge_loader_version ?? "[47,)"}"`,
+      'loaderVersion="[1,)"',
       'license="MIT"',
       "",
       "[[mods]]",
@@ -103,16 +95,16 @@ export const renderForge: PlatformRenderer = (context) => {
       `displayName="${context.name}"`,
       "",
       `[[dependencies.${leaf}]]`,
-      '    modId="forge"',
-      "    mandatory=true",
-      `    versionRange="${deps.forge_loader_version ?? "[47,)"}"`,
+      '    modId="neoforge"',
+      '    type="required"',
+      `    versionRange="${deps.neoforge_range ?? "[21.0,)"}"`,
       '    ordering="NONE"',
       '    side="BOTH"',
       "",
       `[[dependencies.${leaf}]]`,
       '    modId="minecraft"',
-      "    mandatory=true",
-      `    versionRange="[${deps.minecraft_version ?? "1.20.1"},)"`,
+      '    type="required"',
+      `    versionRange="[${deps.minecraft_version ?? "1.21.1"},)"`,
       '    ordering="NONE"',
       '    side="BOTH"',
       "",
@@ -124,7 +116,7 @@ export const renderForge: PlatformRenderer = (context) => {
     contents: [
       `package ${context.packageName};`,
       "",
-      "import net.minecraftforge.fml.common.Mod;",
+      "import net.neoforged.fml.common.Mod;",
       "",
       "/**",
       ` * Entry point of the ${context.name} mod.`,

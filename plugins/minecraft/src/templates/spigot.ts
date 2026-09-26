@@ -1,76 +1,89 @@
-import { packagePath, pascalCase, type PlatformRenderer, type TemplateFile } from "./types.js";
+import { moduleResources, moduleSrcMain } from "./gradle-common.js";
+import {
+  mavenGitignore,
+  renderMavenExtraModulePoms,
+  renderMavenModulePom,
+  renderMavenParentPom,
+  renderStandaloneMavenPom,
+} from "./maven-multimodule.js";
+import {
+  extraModules,
+  packagePath,
+  pascalCase,
+  type PlatformRenderer,
+  type TemplateContext,
+  type TemplateFile,
+} from "./types.js";
+import { extraModuleSources } from "./paper.js";
+
+/** The spigot-api dependency XML of the version catalog line. */
+function spigotDependency(context: TemplateContext): string[] {
+  const deps = context.versions[0]?.deps ?? {};
+  return [
+    "        <dependency>",
+    "            <groupId>org.spigotmc</groupId>",
+    "            <artifactId>spigot-api</artifactId>",
+    `            <version>${deps.api_version ?? "1.21.1-R0.1-SNAPSHOT"}</version>`,
+    "            <scope>provided</scope>",
+    "        </dependency>",
+  ];
+}
 
 /**
- * Spigot/Bukkit templates: Maven pom against the spigot-api, a
- * `plugin.yml` and the JavaPlugin main class.
+ * Spigot/Bukkit templates: Maven against `spigot-api`, `plugin.yml`
+ * and the `JavaPlugin` main class; with extra modules the project
+ * becomes a Maven reactor (parent pom + one pom per module).
  */
 export const renderSpigot: PlatformRenderer = (context) => {
-  const pkg = packagePath(context.packageName);
   const mainClass = pascalCase(context.name);
+  const pkg = packagePath(context.packageName);
+  const slug = packagePath(context.packageName).split("/").pop() ?? "project";
   const files: TemplateFile[] = [];
 
-  files.push({
-    path: "pom.xml",
-    contents: [
-      '<?xml version="1.0" encoding="UTF-8"?>',
-      '<project xmlns="http://maven.apache.org/POM/4.0.0"',
-      '         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
-      '         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">',
-      "    <modelVersion>4.0.0</modelVersion>",
-      "",
-      `    <groupId>${context.packageName}</groupId>`,
-      `    <artifactId>${context.name}</artifactId>`,
-      `    <version>${context.version}</version>`,
-      "    <packaging>jar</packaging>",
-      "",
-      "    <properties>",
-      "        <maven.compiler.release>21</maven.compiler.release>",
-      "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>",
-      "    </properties>",
-      "",
-      "    <repositories>",
-      "        <repository>",
-      "            <id>spigotmc-repo</id>",
-      "            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>",
-      "        </repository>",
-      "    </repositories>",
-      "",
-      "    <dependencies>",
-      "        <dependency>",
-      "            <groupId>org.spigotmc</groupId>",
-      "            <artifactId>spigot-api</artifactId>",
-      "            <version>1.21.1-R0.1-SNAPSHOT</version>",
-      "            <scope>provided</scope>",
-      "        </dependency>",
-      "    </dependencies>",
-      "",
-      "    <build>",
-      "        <resources>",
-      "            <resource>",
-      "                <directory>src/main/resources</directory>",
-      "                <filtering>true</filtering>",
-      "            </resource>",
-      "        </resources>",
-      "    </build>",
-      "</project>",
-      "",
-    ].join("\n"),
-  });
+  if (context.multimodule) {
+    // The parent aggregator lives in pom-parent.xml; the entrypoint
+    // module keeps the canonical pom.xml (with the parent block) so a
+    // plain `mvn package` at the root still builds the plugin jar.
+    files.push({
+      path: "pom.xml",
+      contents: renderMavenModulePom(context, slug, context.modules[0] ?? "main", true),
+    });
+    files.push({
+      path: "pom-parent.xml",
+      contents: renderMavenParentPom(context, slug),
+    });
+    for (const module of extraModules(context)) {
+      files.push({
+        path: `${module}/pom.xml`,
+        contents: renderMavenModulePom(context, slug, module, false),
+      });
+    }
+  } else {
+    files.push({
+      path: "pom.xml",
+      contents: renderStandaloneMavenPom(context, slug, spigotDependency(context), [
+        "        <repository>",
+        "            <id>spigotmc-repo</id>",
+        "            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>",
+        "        </repository>",
+      ]),
+    });
+  }
 
   files.push({
-    path: "src/main/resources/plugin.yml",
+    path: `${moduleResources(context.modules[0] ?? "main", true)}/plugin.yml`,
     contents: [
       `name: ${context.name}`,
       `version: '${context.version}'`,
-      "main: " + `${context.packageName}.${mainClass}`,
-      "api-version: '1.21'",
+      `main: ${context.packageName}.${mainClass}`,
+      `api-version: '${context.versions[0]?.minecraft ?? "1.21"}'`,
       "description: Generated by Devix",
       "",
     ].join("\n"),
   });
 
   files.push({
-    path: `src/main/java/${pkg}/${mainClass}.java`,
+    path: `${moduleSrcMain(context.modules[0] ?? "main", true)}/${pkg}/${mainClass}.java`,
     contents: [
       `package ${context.packageName};`,
       "",
@@ -94,10 +107,8 @@ export const renderSpigot: PlatformRenderer = (context) => {
     ].join("\n"),
   });
 
-  files.push({
-    path: ".gitignore",
-    contents: ["target/", ".idea/", "*.iml", ""].join("\n"),
-  });
-
+  files.push(...extraModuleSources(context, "plugin"));
+  files.push(...renderMavenExtraModulePoms(context, slug));
+  files.push({ path: ".gitignore", contents: mavenGitignore() });
   return files;
 };
