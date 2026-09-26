@@ -149,6 +149,69 @@ describe("scaffold", () => {
     });
   });
 
+  it("refuses a destination that already looks like a Minecraft project", async () => {
+    const dir = await makeTempDir();
+    const resources = join(dir, "src", "main", "resources");
+    await mkdir(resources, { recursive: true });
+    await writeFile(join(resources, "plugin.yml"), "name: Old\n", "utf8");
+
+    await expect(
+      scaffold({ root: dir, platform: "paper", name: "NewPlugin" }),
+    ).rejects.toMatchObject({ code: "EINVALID_INPUT" });
+  });
+
+  it("describes the detected target platforms in the error message", async () => {
+    const dir = await makeTempDir();
+    await writeFile(join(dir, "fabric.mod.json"), '{ "id": "there-is-a-mod-here" }', "utf8");
+
+    const error = await scaffold({ root: dir, platform: "forge", name: "X" }).then(
+      () => undefined,
+      (error: unknown) => error as { message: string },
+    );
+
+    expect(error?.message).toContain("Fabric");
+    expect(error?.message).toContain("allowExistingProject");
+  });
+
+  it("allowExistingProject permits scaffolding over an existing project without touching its files", async () => {
+    const dir = await makeTempDir();
+    await writeFile(join(dir, "fabric.mod.json"), '{ "id": "existing" }', "utf8");
+
+    const result = await scaffold({
+      root: dir,
+      platform: "fabric",
+      name: "SecondMod",
+      allowExistingProject: true,
+    });
+
+    expect(result.files.length).toBeGreaterThan(0);
+    expect(result.targetPlatforms.map((p) => p.id)).toEqual(["fabric"]);
+    // The flat pre-existing manifest is not a template path: it must survive untouched.
+    await expect(readFile(join(dir, "fabric.mod.json"), "utf8")).resolves.toBe(
+      '{ "id": "existing" }',
+    );
+  });
+
+  it("reports an empty targetPlatforms on a fresh directory", async () => {
+    const dir = await makeTempDir();
+
+    const result = await scaffold({ root: dir, platform: "velocity", name: "Proxy" });
+
+    expect(result.targetPlatforms).toEqual([]);
+  });
+
+  it("dry-run over an existing project writes nothing and notes the detection", async () => {
+    const dir = await makeTempDir();
+    await writeFile(join(dir, "paper-plugin.yml"), "name: Existing\n", "utf8");
+
+    const result = await scaffold({ root: dir, platform: "paper", name: "Queue", dryRun: true });
+
+    expect(result.dryRun).toBe(true);
+    expect(result.targetPlatforms.map((p) => p.id)).toEqual(["bukkit"]);
+    const lines = summarizeScaffold(result);
+    expect(lines.join("\n")).toContain("already a Bukkit/Spigot/Paper project (Existing)");
+  });
+
   it("skips existing files when overwrite is enabled, never rewriting them", async () => {
     const dir = await makeTempDir();
     await writeFile(join(dir, "build.gradle"), "// my custom build\n", "utf8");

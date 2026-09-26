@@ -1,9 +1,11 @@
 import { isFile, writeFileString } from "@devix-cli/filesystem";
+import { createDefaultRegistry, detectMinecraftPlatforms } from "@devix-cli/project-detector";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
 import { MinecraftError } from "./errors.js";
 import { PLATFORM_IDS } from "./catalog.js";
 import { buildTemplates, type TemplateContext } from "./templates/index.js";
+import type { DetectedMinecraftPlatform } from "@devix-cli/project-detector";
 
 /** Options accepted by `scaffold`. */
 export interface ScaffoldOptions {
@@ -26,6 +28,12 @@ export interface ScaffoldOptions {
    * Individual existing files are always skipped, never overwritten.
    */
   readonly overwrite?: boolean;
+  /**
+   * Allow scaffolding into a directory that already looks like a
+   * Minecraft project (any minecraft-category detector matched).
+   * Defaults to `false`: the run fails with `EINVALID_INPUT` instead.
+   */
+  readonly allowExistingProject?: boolean;
 }
 
 /** One written (or would-be-written) file. */
@@ -46,6 +54,12 @@ export interface ScaffoldResult {
   readonly files: readonly ScaffoldEntry[];
   /** True when nothing was written because dryRun was set. */
   readonly dryRun: boolean;
+  /**
+   * What the destination looked like before writing: the Minecraft
+   * platforms detected at `root`, in registration order. Empty when
+   * the destination contained no Minecraft markers.
+   */
+  readonly targetPlatforms: readonly DetectedMinecraftPlatform[];
 }
 
 /** Package token used in default packages: lowercased, identifier-safe. */
@@ -139,6 +153,20 @@ export async function scaffold(options: ScaffoldOptions): Promise<ScaffoldResult
     }
   }
 
+  const targetDetection = await detectMinecraftPlatforms(createDefaultRegistry(), {
+    root: context.root,
+  });
+  if (
+    targetDetection.isMinecraft &&
+    options.allowExistingProject !== true &&
+    options.dryRun !== true
+  ) {
+    throw MinecraftError.targetIsProject(
+      context.root,
+      targetDetection.platforms.map((platform) => platform.name),
+    );
+  }
+
   const entries = await writeAll(context.root, files, options.dryRun === true);
 
   return {
@@ -146,6 +174,7 @@ export async function scaffold(options: ScaffoldOptions): Promise<ScaffoldResult
     root: context.root,
     files: entries,
     dryRun: options.dryRun === true,
+    targetPlatforms: targetDetection.platforms,
   };
 }
 
@@ -154,6 +183,11 @@ export function summarizeScaffold(result: ScaffoldResult): string[] {
   const lines: string[] = [
     `${result.dryRun ? "Would write" : "Wrote"} ${String(result.files.length)} file(s) at ${result.root}`,
   ];
+  for (const platform of result.targetPlatforms) {
+    lines.push(
+      `  note: target is already a ${platform.name} project${platform.detail === undefined ? "" : ` (${platform.detail})`}`,
+    );
+  }
   for (const entry of result.files) {
     lines.push(
       `  ${entry.skipped ? "skipped" : "created"}: ${relativeLabel(result.root, entry.path)}`,

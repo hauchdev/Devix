@@ -16,6 +16,7 @@ export type { MinecraftErrorCode } from "./errors.js";
 export { MINECRAFT_PLATFORMS, PLATFORM_IDS, type MinecraftPlatform } from "./catalog.js";
 export { scaffold, summarizeScaffold } from "./scaffold.js";
 export type { ScaffoldEntry, ScaffoldOptions, ScaffoldResult } from "./scaffold.js";
+export type { DetectedMinecraftPlatform } from "@devix-cli/project-detector";
 import type { PluginManifest } from "@devix-cli/core";
 
 /**

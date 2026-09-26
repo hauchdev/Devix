@@ -36,6 +36,19 @@ export class MinecraftError extends Error {
     return new MinecraftError("EINVALID_INPUT", message);
   }
 
+  /**
+   * The destination already looks like a Minecraft project and
+   * `allowExistingProject` was not set.
+   */
+  static targetIsProject(path: string, platforms: readonly string[]): MinecraftError {
+    return new MinecraftError(
+      "EINVALID_INPUT",
+      `The destination is already a ${platforms.join(" + ")} project. ` +
+        "Scaffold into a fresh directory, or pass allowExistingProject to continue anyway.",
+      { path },
+    );
+  }
+
   /** The scaffold target already exists and overwrite is disabled. */
   static targetExists(path: string, conflicts: readonly string[]): MinecraftError {
     return new MinecraftError(
