@@ -141,4 +141,72 @@ describe("devix CLI (compiled binary)", () => {
     expect(parsed.git).toBeDefined();
     expect(parsed.docker).toBeDefined();
   }, 30_000);
+
+  it("minecraft check reports no platforms outside Minecraft projects", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const empty = await mkdtemp(join(tmpdir(), "devix-cli-check-empty-"));
+    try {
+      const { stdout } = await runCli(["minecraft", "check", "--json"], empty);
+
+      const parsed = JSON.parse(stdout) as { isMinecraft: boolean; platforms: unknown[] };
+      expect(parsed.isMinecraft).toBe(false);
+      expect(parsed.platforms).toEqual([]);
+    } finally {
+      await rm(empty, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft check detects a scaffolded fabric project and honors the requested platform", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-check-fabric-"));
+    try {
+      await runCli(["minecraft", "init", "fabric", "CheckMod", "--here"], dir);
+
+      const { stdout } = await runCli(["minecraft", "check", "--json"], dir);
+      const parsed = JSON.parse(stdout) as {
+        isMinecraft: boolean;
+        platforms: { id: string; detail: string }[];
+        requested?: { id: string; detected: boolean };
+      };
+      expect(parsed.isMinecraft).toBe(true);
+      expect(parsed.platforms[0]?.id).toBe("fabric");
+      expect(parsed.platforms[0]?.detail).toBe("checkmod");
+
+      const requested = await runCli(["minecraft", "check", "fabric", "--json"], dir);
+      const requestedParsed = JSON.parse(requested.stdout) as {
+        requested: { id: string; detected: boolean };
+      };
+      expect(requestedParsed.requested).toEqual({ id: "fabric", detected: true });
+
+      const human = await runCli(["minecraft", "check"], dir);
+      expect(human.stdout).toContain("✓ fabric");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft check rejects unknown platforms with a clear message", async () => {
+    await expect(runCli(["minecraft", "check", "wurm"])).rejects.toThrow(/Unknown platform/i);
+  }, 30_000);
+
+  it("doctor lists the Minecraft section only when platforms are detected", async () => {
+    const { mkdtemp, mkdir, rm, writeFile } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-doctor-mc-"));
+    try {
+      const plain = await runCli(["doctor"], dir);
+      expect(plain.stdout).not.toContain("Minecraft:");
+
+      const resources = join(dir, "src", "main", "resources");
+      await mkdir(resources, { recursive: true });
+      await writeFile(join(resources, "paper-plugin.yml"), "name: DoctorMc\n", "utf8");
+
+      const withMc = await runCli(["doctor"], dir);
+      expect(withMc.stdout).toContain("Minecraft: bukkit (DoctorMc)");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

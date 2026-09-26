@@ -21,13 +21,13 @@ function folderName(name: string): string {
 
 export default class Minecraft extends Command {
   static override description =
-    "Scaffold Minecraft mod and plugin projects: fabric, forge, architectury, spigot, paper, folia, velocity, bungeecord.";
+    "Scaffold and inspect Minecraft mod and plugin projects: fabric, forge, architectury, spigot, paper, folia, velocity, bungeecord.";
 
   static override args = {
     operation: Args.string({
       description: "Operation to run.",
       required: true,
-      options: ["list", "init"],
+      options: ["list", "init", "check"],
     }),
     platform: Args.string({
       description: `Platform id for init (${PLATFORM_IDS.join(", ")}).`,
@@ -83,6 +83,11 @@ export default class Minecraft extends Command {
 
     if (args.operation === "list") {
       this.renderList(flags.json);
+      return;
+    }
+
+    if (args.operation === "check") {
+      await this.runCheck(args.platform, flags.cwd, flags.json);
       return;
     }
 
@@ -148,6 +153,63 @@ export default class Minecraft extends Command {
     }
   }
 
+  /** Detects the Minecraft platforms of the directory tree at cwd. */
+  private async runCheck(platform: string | undefined, cwd: string, json: boolean): Promise<void> {
+    if (platform !== undefined && !PLATFORM_IDS.includes(platform)) {
+      this.error(MinecraftError.unknownPlatform(platform, PLATFORM_IDS).message, { exit: 1 });
+    }
+
+    // Lazy: keep --help/--version free of the detector stack.
+    const { createDefaultRegistry, detectMinecraftPlatforms } = await import(
+      "@devix-cli/project-detector"
+    );
+
+    const detection = await detectMinecraftPlatforms(createDefaultRegistry(), {
+      cwd: join(cwd),
+    });
+
+    if (json) {
+      this.log(
+        JSON.stringify(
+          {
+            root: detection.root,
+            isMinecraft: detection.isMinecraft,
+            platforms: detection.platforms.map((entry) => ({
+              id: entry.id,
+              name: entry.name,
+              detail: entry.detail,
+              markers: entry.markers.map((marker) => marker.marker),
+            })),
+            ...(platform === undefined
+              ? {}
+              : {
+                  requested: {
+                    id: platform,
+                    detected: detection.platforms.some((entry) => entry.id === platform),
+                  },
+                }),
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    this.log(`Project root: ${detection.root}`);
+    if (!detection.isMinecraft) {
+      this.log("No Minecraft platform detected in this directory tree.");
+      return;
+    }
+    for (const entry of detection.platforms) {
+      const label = entry.detail === undefined ? entry.name : `${entry.name} (${entry.detail})`;
+      this.log(`  ✓ ${entry.id} — ${label}`);
+      for (const marker of entry.markers) {
+        this.log(`      ${marker.marker}`);
+      }
+    }
+  }
+
   private renderList(json: boolean): void {
     if (json) {
       this.log(JSON.stringify(MINECRAFT_PLATFORMS, null, 2));
@@ -159,5 +221,6 @@ export default class Minecraft extends Command {
     }
     this.log("");
     this.log("Init one with: devix minecraft init <platform> <name> [--dry-run]");
+    this.log("Detect an existing one with: devix minecraft check [platform]");
   }
 }
