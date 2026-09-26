@@ -39,9 +39,10 @@ Registration validates the manifest shape (id pattern, semver version, non-empty
 
 ## Built-in plugins
 
-| Plugin   | Commands       | What it adds                                              |
-| -------- | -------------- | --------------------------------------------------------- |
-| `docker` | `devix docker` | Availability probing, running containers and local images |
+| Plugin      | Commands          | What it adds                                                            |
+| ----------- | ----------------- | ----------------------------------------------------------------------- |
+| `docker`    | `devix docker`    | Availability probing, running containers and local images               |
+| `minecraft` | `devix minecraft` | Scaffolding (`init`) and detection (`check`) for 8 mod/plugin platforms |
 
 ## Writing an integration
 

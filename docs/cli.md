@@ -67,6 +67,22 @@ devix docker ps         # running containers
 devix docker images
 ```
 
+### `devix minecraft`
+
+Minecraft scaffolding and detection, powered by the `@devix-cli/minecraft` plugin.
+
+```bash
+devix minecraft list                    # the eight supported platforms
+devix minecraft init <platform> <name>  # scaffold a mod/plugin skeleton
+devix minecraft init fabric "Cool Sword" --dry-run --json
+devix minecraft check [platform]        # detect an existing Minecraft project
+devix minecraft check --json
+```
+
+`init` flags: `--cwd` (parent directory), `--here` (scaffold into the directory itself instead of a project subfolder), `--package`, `--version`, `--mc`, `--dry-run`, `--overwrite`, `--json`.
+
+`init` never overwrites existing files and refuses destinations that already look like a Minecraft project (pass `--overwrite` to skip existing files, and see the plugin README for `allowExistingProject`). `check` reports every detected platform with its manifest detail and, when a platform id is given, whether that specific one matched.
+
 ### `devix plugin list`
 
 Lists installed plugins and the commands they contribute.

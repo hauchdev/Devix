@@ -42,7 +42,13 @@ devix minecraft init paper "QueueBoard" --cwd ./projects/queueboard
 
 # JSON output for tooling
 devix minecraft init spigot "EggCannon" --json
+
+# Detect an existing Minecraft project (any of the 8 platforms)
+devix minecraft check
+devix minecraft check fabric
 ```
+
+`check` walks up from the directory and reports every detected platform with its manifest detail (`fabric (mymod)`), or `isMinecraft: false` outside Minecraft projects. With a platform id it also reports whether that specific platform matched. It reads the same markers as `@devix-cli/project-detector`'s `detectMinecraftPlatforms`.
 
 Flags: `--cwd` (target directory), `--package` (Java package), `--version`, `--mc` (Minecraft version), `--dry-run`, `--overwrite`, `--json`.
 
@@ -62,16 +68,20 @@ const result = await scaffold({
 for (const line of summarizeScaffold(result)) console.log(line);
 ```
 
-| Export                                | Description                                                    |
-| ------------------------------------- | -------------------------------------------------------------- |
-| `scaffold(options)`                   | Generate a platform skeleton                                   |
-| `summarizeScaffold(result)`           | Human-readable summary lines                                   |
-| `MINECRAFT_PLATFORMS`, `PLATFORM_IDS` | The platform catalog                                           |
-| `MinecraftError`                      | Typed error (`EUNKNOWN_PLATFORM`, `EINVALID_INPUT`, `EEXISTS`) |
+| Export                                        | Description                                                    |
+| --------------------------------------------- | -------------------------------------------------------------- |
+| `scaffold(options)`                           | Generate a platform skeleton                                   |
+| `summarizeScaffold(result)`                   | Human-readable summary lines                                   |
+| `MINECRAFT_PLATFORMS`, `PLATFORM_IDS`         | The platform catalog                                           |
+| `MinecraftError`                              | Typed error (`EUNKNOWN_PLATFORM`, `EINVALID_INPUT`, `EEXISTS`) |
+| `PLUGIN_VERSION`, `MINECRAFT_PLUGIN_MANIFEST` | Plugin identity for the core registry                          |
+
+The scaffold result includes `targetPlatforms`: the Minecraft platforms the destination had before writing (empty on fresh directories), so callers can tell fresh scaffolds from additions to an existing project.
 
 ## Safety guarantees
 
 - **Existing files are never overwritten.** Without `overwrite`, scaffolding into a directory that already contains template files fails with `EEXISTS`; with `overwrite`, existing files are skipped and reported, generated ones are added.
+- **Existing Minecraft projects are respected.** When the destination already looks like a Minecraft project (any platform detector matched), `scaffold` fails with `EINVALID_INPUT` unless you pass `allowExistingProject: true`. Dry-runs always proceed and note the detection instead.
 - **`dryRun: true` writes nothing.** The result lists exactly what would be created.
 - **Deterministic output.** The same options always produce the same files.
 - **No process execution.** Scaffolding is pure filesystem writing; building your mod stays in your build system.
