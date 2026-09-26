@@ -20,10 +20,15 @@ export interface PromptChoice {
   readonly description?: string;
 }
 
-/** The answers collected by `promptMissingScaffoldArgs`. */
-export interface PromptAnswers {
-  readonly platform: string;
+/** The answers collected by the scaffold spec prompts. */
+export interface ScaffoldSpec {
+  readonly kind: string;
+  readonly platforms: string[];
+  readonly modules: string[];
   readonly name: string;
+  readonly version: string;
+  readonly minecraftVersion: string;
+  readonly packageName?: string;
 }
 
 /** The input stream ended (EOF or Ctrl+C) before the prompts were answered. */
@@ -36,33 +41,218 @@ export class PromptCancelledError extends Error {
 
 const DEFAULT_STREAMS: PromptStreams = { input: process.stdin, output: process.stdout };
 
+function writeLine(streams: PromptStreams, line: string): void {
+  streams.output.write(`${line}\n`);
+}
+
 /**
- * Asks for the scaffold arguments the user left out.
- *
- * Missing values are prompted interactively: a numbered choice list for
- * the platform and a free-text question for the name. Provided values
- * pass through untouched, so the command stays fully scriptable.
- *
- * Answers are read through a line queue rather than `rl.question`, so
- * input typed ahead (or piped in) is never dropped between questions.
+ * A prompt session: one readline + line queue shared by every question
+ * so input typed ahead (or piped in) is never dropped between questions.
  */
-export async function promptMissingScaffoldArgs(
-  choices: readonly PromptChoice[],
-  platform: string | undefined,
-  name: string | undefined,
-  streams: PromptStreams = DEFAULT_STREAMS,
-): Promise<PromptAnswers> {
-  const rl = createInterface({ input: streams.input, output: streams.output });
-  const lines = createLineQueue(rl);
-  try {
-    const resolvedPlatform =
-      platform === undefined ? await askChoice(lines, streams, choices) : platform;
-    const resolvedName =
-      name === undefined || name.trim().length === 0 ? await askText(lines, streams) : name;
-    return { platform: resolvedPlatform, name: resolvedName };
-  } finally {
-    rl.close();
+export class PromptSession {
+  private readonly lines: { next(): Promise<string> };
+  private readonly rl: ReturnType<typeof createInterface>;
+
+  constructor(private readonly streams: PromptStreams = DEFAULT_STREAMS) {
+    this.rl = createInterface({ input: streams.input, output: streams.output });
+    this.lines = createLineQueue(this.rl);
   }
+
+  /** Renders a numbered single-choice list and re-asks until valid. */
+  async choice(question: string, choices: readonly PromptChoice[]): Promise<string> {
+    for (;;) {
+      writeLine(this.streams, `? ${question}:`);
+      choices.forEach((choice, index) => {
+        const label =
+          choice.description === undefined ? choice.name : `${choice.name} — ${choice.description}`;
+        writeLine(this.streams, `  ${index + 1}) ${choice.id.padEnd(14)}${label}`);
+      });
+      const answer = (await this.ask("Enter a number or id: ")).toLowerCase();
+      if (/^\d+$/.test(answer)) {
+        const choice = choices[Number.parseInt(answer, 10) - 1];
+        if (choice !== undefined) {
+          return choice.id;
+        }
+      }
+      const byId = choices.find((choice) => choice.id === answer);
+      if (byId !== undefined) {
+        return byId.id;
+      }
+      writeLine(
+        this.streams,
+        `  Enter a number between 1 and ${choices.length} or an id (e.g. ${choices[0]?.id ?? "id"}).`,
+      );
+    }
+  }
+
+  /**
+   * Renders a numbered multi-select list. Accepts comma/space
+   * separated numbers or ids; an empty answer (with a default)
+   * returns the default; `0` returns nothing.
+   */
+  async multiChoice(
+    question: string,
+    choices: readonly PromptChoice[],
+    defaults: readonly string[] = [],
+  ): Promise<string[]> {
+    for (;;) {
+      writeLine(this.streams, `? ${question}:`);
+      choices.forEach((choice, index) => {
+        const label =
+          choice.description === undefined ? choice.name : `${choice.name} — ${choice.description}`;
+        writeLine(this.streams, `  ${index + 1}) ${choice.id.padEnd(14)}${label}`);
+      });
+      const defaultNote =
+        defaults.length > 0 ? ` (default: ${defaults.join(", ")})` : " (0 for none)";
+      const answer = await this.ask(`Enter ids/numbers, comma separated${defaultNote}: `);
+      if (answer.trim().length === 0) {
+        return [...defaults];
+      }
+      const parsed = parseMultiAnswer(answer, choices);
+      if (parsed !== undefined) {
+        return parsed;
+      }
+      writeLine(
+        this.streams,
+        `  Enter numbers or ids between 1 and ${choices.length}, comma separated (0 for none).`,
+      );
+    }
+  }
+
+  /** Re-asks a free-text question until the answer is non-empty. */
+  async text(question: string): Promise<string> {
+    for (;;) {
+      const answer = await this.ask(`? ${question}: `);
+      if (answer.length > 0) {
+        return answer;
+      }
+      writeLine(this.streams, "  The answer cannot be empty.");
+    }
+  }
+
+  /** Asks optional text: empty answers resolve to undefined. */
+  async optionalText(question: string, fallback?: string): Promise<string | undefined> {
+    const hint = fallback === undefined ? "" : ` (default: ${fallback})`;
+    const answer = await this.ask(`? ${question}${hint}: `);
+    const trimmed = answer.trim();
+    return trimmed.length === 0 ? fallback : trimmed;
+  }
+
+  /** Writes the question and waits for the next line; EOF cancels. */
+  private async ask(question: string): Promise<string> {
+    this.streams.output.write(question);
+    try {
+      return await this.lines.next();
+    } catch (error) {
+      if (error instanceof PromptCancelledError) {
+        writeLine(this.streams, "");
+      }
+      throw error;
+    }
+  }
+
+  /** Closes the underlying readline interface. */
+  close(): void {
+    this.rl.close();
+  }
+}
+
+/** Parses a multi-select answer into choice ids (undefined when invalid). */
+function parseMultiAnswer(answer: string, choices: readonly PromptChoice[]): string[] | undefined {
+  const tokens = answer
+    .split(/[, ]+/)
+    .map((token) => token.trim().toLowerCase())
+    .filter((token) => token.length > 0);
+  if (tokens.length === 0) {
+    return [];
+  }
+  const ids: string[] = [];
+  for (const token of tokens) {
+    if (token === "0") {
+      continue;
+    }
+    let id: string | undefined;
+    if (/^\d+$/.test(token)) {
+      const choice = choices[Number.parseInt(token, 10) - 1];
+      id = choice?.id;
+    } else {
+      id = choices.find((choice) => choice.id === token)?.id;
+    }
+    if (id === undefined) {
+      return undefined;
+    }
+    if (!ids.includes(id)) {
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Asks for the scaffold arguments the user left out: project kind,
+ * target platform(s) (multi-select), optional extra modules, then the
+ * free-text name and the version/package/mc details. Provided values
+ * pass through untouched, so the command stays fully scriptable.
+ */
+export async function promptScaffoldSpec(
+  kinds: readonly PromptChoice[],
+  platformsByKind: Readonly<Record<string, readonly PromptChoice[]>>,
+  modulesByKind: Readonly<Record<string, readonly PromptChoice[]>>,
+  partial: {
+    kind?: string;
+    platforms?: readonly string[];
+    modules?: readonly string[];
+    name?: string;
+    version?: string;
+    minecraftVersion?: string;
+    packageName?: string;
+  },
+  streams: PromptStreams = DEFAULT_STREAMS,
+): Promise<ScaffoldSpec> {
+  const session = new PromptSession(streams);
+  try {
+    const kind = partial.kind ?? (await session.choice("What do you want to build", kinds));
+    const platformChoices = platformsByKind[kind] ?? [];
+    const platforms =
+      partial.platforms !== undefined && partial.platforms.length > 0
+        ? [...partial.platforms]
+        : await session.multiChoice("Target platform(s)", platformChoices, [
+            platformChoices[0]?.id ?? "",
+          ]);
+    const moduleChoices = modulesByKind[kind] ?? [];
+    // An explicit empty modules list answers the question too.
+    const modules =
+      partial.modules !== undefined
+        ? [...partial.modules]
+        : await session.multiChoice("Extra modules", moduleChoices, []);
+    const name = partial.name === undefined ? await session.text("Project name") : partial.name;
+    const version =
+      partial.version ?? (await session.optionalText("Project version", "0.1.0")) ?? "0.1.0";
+    const minecraftVersion =
+      partial.minecraftVersion ??
+      (await session.optionalText("Minecraft version", "26.3")) ??
+      "26.3";
+    const packageName =
+      partial.packageName ??
+      (await session.optionalText("Java package", `com.example.${slugify(name)}`));
+    return {
+      kind,
+      platforms,
+      modules,
+      name,
+      version,
+      minecraftVersion,
+      ...(packageName === undefined ? {} : { packageName }),
+    };
+  } finally {
+    session.close();
+  }
+}
+
+/** Package token used in default packages: lowercased, identifier-safe. */
+function slugify(value: string): string {
+  const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return slug.length > 0 ? slug : "project";
 }
 
 /**
@@ -119,68 +309,23 @@ function createLineQueue(rl: ReturnType<typeof createInterface>): {
   };
 }
 
-/** Renders the numbered choice list and re-asks until the answer matches. */
-async function askChoice(
-  lines: { next(): Promise<string> },
-  streams: PromptStreams,
+/**
+ * Legacy two-question helper kept for compatibility: platform + name.
+ */
+export async function promptMissingScaffoldArgs(
   choices: readonly PromptChoice[],
-): Promise<string> {
-  for (;;) {
-    writeLine(streams, "? Platform:");
-    choices.forEach((choice, index) => {
-      const label =
-        choice.description === undefined ? choice.name : `${choice.name} — ${choice.description}`;
-      writeLine(streams, `  ${index + 1}) ${choice.id.padEnd(14)}${label}`);
-    });
-    const answer = (await ask(lines, streams, "Enter a number or platform id: ")).toLowerCase();
-    const byId = choices.find((choice) => choice.id === answer);
-    if (byId !== undefined) {
-      return byId.id;
-    }
-    if (/^\d+$/.test(answer)) {
-      const choice = choices[Number.parseInt(answer, 10) - 1];
-      if (choice !== undefined) {
-        return choice.id;
-      }
-    }
-    writeLine(
-      streams,
-      `  Enter a number between 1 and ${choices.length} or a platform id (e.g. ${choices[0]?.id ?? "fabric"}).`,
-    );
-  }
-}
-
-/** Re-asks a free-text question until the answer is non-empty. */
-async function askText(
-  lines: { next(): Promise<string> },
-  streams: PromptStreams,
-): Promise<string> {
-  for (;;) {
-    const answer = await ask(lines, streams, "? Project name: ");
-    if (answer.length > 0) {
-      return answer;
-    }
-    writeLine(streams, "  The project name cannot be empty.");
-  }
-}
-
-/** Writes the question, waits for the next line; EOF surfaces as PromptCancelledError. */
-async function ask(
-  lines: { next(): Promise<string> },
-  streams: PromptStreams,
-  question: string,
-): Promise<string> {
-  streams.output.write(question);
+  platform: string | undefined,
+  name: string | undefined,
+  streams: PromptStreams = DEFAULT_STREAMS,
+): Promise<{ platform: string; name: string }> {
+  const session = new PromptSession(streams);
   try {
-    return await lines.next();
-  } catch (error) {
-    if (error instanceof PromptCancelledError) {
-      writeLine(streams, "");
-    }
-    throw error;
+    const resolvedPlatform =
+      platform === undefined ? await session.choice("Platform", choices) : platform;
+    const resolvedName =
+      name === undefined || name.trim().length === 0 ? await session.text("Project name") : name;
+    return { platform: resolvedPlatform, name: resolvedName };
+  } finally {
+    session.close();
   }
-}
-
-function writeLine(streams: PromptStreams, line: string): void {
-  streams.output.write(`${line}\n`);
 }

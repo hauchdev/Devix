@@ -229,8 +229,75 @@ describe("devix CLI (compiled binary)", () => {
 
   it("minecraft init --json refuses to prompt and demands the arguments", async () => {
     await expect(runCli(["minecraft", "init", "--json"])).rejects.toThrow(
-      /--json requires the platform and name/i,
+      /--json requires the platform/i,
     );
+  }, 30_000);
+
+  it("minecraft init scaffolds a multi-loader fabric+forge project with --mc", async () => {
+    const { mkdtemp, readFile, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-init-multiloader-"));
+    try {
+      await runCli(
+        ["minecraft", "init", "fabric+forge", "DualMod", "--here", "--mc", "1.21.1"],
+        dir,
+      );
+
+      const fabricBuild = await readFile(join(dir, "fabric/build.gradle"), "utf8");
+      expect(fabricBuild).toContain("fabric-loom");
+      const shared = await readFile(join(dir, "gradle.properties"), "utf8");
+      expect(shared).toContain("minecraft_version=1.21.1");
+      expect(shared).toContain("fabric_loader=");
+      expect(shared).toContain("forge_version=");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft init scaffolds a multi-module paper project with --modules", async () => {
+    const { mkdtemp, readFile, readdir, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-init-multimodule-"));
+    try {
+      const { stdout } = await runCli(
+        ["minecraft", "init", "paper", "QueueBoard", "--here", "--modules", "api,core"],
+        dir,
+      );
+
+      expect(stdout).toContain("modules: main, api, core");
+      const settings = await readFile(join(dir, "settings.gradle"), "utf8");
+      expect(settings).toContain("include ':api'");
+      expect(await readFile(join(dir, "api/build.gradle"), "utf8")).toContain("java-library");
+      expect(await readdir(join(dir, "core"))).toContain("src");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft init --kind resolves the default platform of the kind", async () => {
+    const { mkdtemp, readFile, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-init-kind-"));
+    try {
+      const { stdout } = await runCli(
+        ["minecraft", "init", "--kind", "proxy-plugin", "Relay", "--here"],
+        dir,
+      );
+
+      expect(stdout).toContain("kind: proxy-plugin");
+      expect(stdout).toContain("platform: velocity");
+      expect(await readFile(join(dir, "build.gradle"), "utf8")).toContain("velocity-api");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft list shows the kinds, platforms and modules", async () => {
+    const { stdout } = await runCli(["minecraft", "list"]);
+
+    expect(stdout).toContain("Project kinds:");
+    expect(stdout).toContain("neoforge");
+    expect(stdout).toContain("Optional modules:");
   }, 30_000);
 
   it("doctor lists the Minecraft section only when platforms are detected", async () => {

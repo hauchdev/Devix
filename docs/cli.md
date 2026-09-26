@@ -72,19 +72,24 @@ devix docker images
 Minecraft scaffolding and detection, powered by the `@devix-cli/minecraft` plugin.
 
 ```bash
-devix minecraft list                    # the eight supported platforms
-devix minecraft init <platform> <name>  # scaffold a mod/plugin skeleton
+devix minecraft list                          # kinds, platforms and optional modules
+devix minecraft init <platform> <name>        # scaffold a mod/plugin/proxy skeleton
+devix minecraft init fabric+forge "DualSword" --mc 1.21.1   # multi-loader project
+devix minecraft init paper "QueueBoard" --modules api,core  # multi-module project
+devix minecraft init --kind proxy-plugin "Relay"            # by kind (default platform)
 devix minecraft init fabric "Cool Sword" --dry-run --json
-devix minecraft init                    # interactive: asks platform and name
-devix minecraft check [platform]        # detect an existing Minecraft project
+devix minecraft init                          # interactive: kind -> platforms -> modules -> name -> ...
+devix minecraft check [platform]              # detect an existing Minecraft project
 devix minecraft check --json
 ```
 
-`init` flags: `--cwd` (parent directory), `--here` (scaffold into the directory itself instead of a project subfolder), `--package`, `--version`, `--mc`, `--dry-run`, `--overwrite`, `--json`.
+`init` flags: `--kind` (mod, plugin, proxy-plugin), `--modules` (api, core, game-tests, datagen), `--cwd` (parent directory), `--here` (scaffold into the directory itself instead of a project subfolder), `--package`, `--version`, `--mc` (Minecraft version: `26.3`, `1.21.1`, alias `stable`/`legacy`), `--dry-run`, `--overwrite`, `--json`.
+
+`init` supports multi-loader projects (combine Gradle mod loaders with `+`: `fabric+forge`, `fabric+neoforge`, … — one shared version catalog, one subproject per loader), multi-module projects (extra `api`/`core`/`game-tests`/`datagen` subprojects) and multi-version targeting (every dependency line comes from a version catalog keyed by Minecraft version; unsupported combinations fail with `EUNSUPPORTED_VERSION`). Architectury picks its second loader from the version: Forge on legacy lines, NeoForge on modern ones.
 
 `init` never overwrites existing files and refuses destinations that already look like a Minecraft project (pass `--overwrite` to skip existing files, and see the plugin README for `allowExistingProject`). `check` reports every detected platform with its manifest detail and, when a platform id is given, whether that specific one matched.
 
-On an interactive terminal, `init` asks for whatever is missing: a numbered platform list and a free-text project name. Scripts and automation must pass both arguments — non-interactive input fails with the usage message, and `--json` always requires them as arguments.
+On an interactive terminal, `init` asks for whatever is missing, in order: the project kind, the target platform(s) (multi-select), the optional extra modules, then the project name and the version/package/Minecraft-version details. Scripts and automation must pass the platform (or `--kind`) and the name — non-interactive input fails with the usage message, and `--json` always requires them as arguments.
 
 ### `devix plugin list`
 

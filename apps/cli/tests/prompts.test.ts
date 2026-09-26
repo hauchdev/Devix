@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   promptMissingScaffoldArgs,
+  promptScaffoldSpec,
   PromptCancelledError,
+  PromptSession,
   type PromptChoice,
 } from "../src/lib/prompts.js";
 
@@ -35,7 +37,186 @@ function makeStreams(...answers: string[]): {
   return { streams: { input, output }, outputText: () => captured };
 }
 
-describe("promptMissingScaffoldArgs", () => {
+describe("PromptSession", () => {
+  it("choice accepts an id or a list position", async () => {
+    const byId = makeStreams("paper");
+    const sessionA = new PromptSession(byId.streams);
+    expect(await sessionA.choice("Pick", CHOICES)).toBe("paper");
+    sessionA.close();
+
+    const byNumber = makeStreams("3");
+    const sessionB = new PromptSession(byNumber.streams);
+    expect(await sessionB.choice("Pick", CHOICES)).toBe("spigot");
+    sessionB.close();
+  });
+
+  it("choice re-asks after an invalid answer", async () => {
+    const { streams, outputText } = makeStreams("wurm", "99", "1");
+    const session = new PromptSession(streams);
+
+    expect(await session.choice("Pick", CHOICES)).toBe("fabric");
+    expect(outputText()).toContain("Enter a number between 1 and 3");
+    session.close();
+  });
+
+  it("multiChoice parses comma/space separated ids and numbers", async () => {
+    const { streams } = makeStreams("1, fabric  3");
+    const session = new PromptSession(streams);
+
+    expect(await session.multiChoice("Pick", CHOICES)).toEqual(["fabric", "spigot"]);
+    session.close();
+  });
+
+  it("multiChoice returns [] for 0 and keeps the default on an empty answer", async () => {
+    const none = makeStreams("0");
+    const sessionA = new PromptSession(none.streams);
+    expect(await sessionA.multiChoice("Pick", CHOICES)).toEqual([]);
+    sessionA.close();
+
+    const defaulted = makeStreams("");
+    const sessionB = new PromptSession(defaulted.streams);
+    expect(await sessionB.multiChoice("Pick", CHOICES, ["spigot"])).toEqual(["spigot"]);
+    sessionB.close();
+  });
+
+  it("multiChoice re-asks when an entry is invalid", async () => {
+    const { streams, outputText } = makeStreams("1, wurm", "2");
+    const session = new PromptSession(streams);
+
+    expect(await session.multiChoice("Pick", CHOICES)).toEqual(["paper"]);
+    expect(outputText()).toContain("comma separated");
+    session.close();
+  });
+
+  it("text re-asks on empty answers and optionalText falls back", async () => {
+    const { streams, outputText } = makeStreams("", "  ", "EggCannon");
+    const session = new PromptSession(streams);
+
+    expect(await session.text("Name")).toBe("EggCannon");
+    expect(outputText()).toContain("cannot be empty");
+    session.close();
+
+    const optional = makeStreams("");
+    const sessionB = new PromptSession(optional.streams);
+    expect(await sessionB.optionalText("Package", "com.example.x")).toBe("com.example.x");
+    sessionB.close();
+  });
+});
+
+describe("promptScaffoldSpec", () => {
+  const kinds = [
+    { id: "mod", name: "Mod" },
+    { id: "plugin", name: "Plugin" },
+  ];
+  const platformsByKind: Record<string, readonly PromptChoice[]> = {
+    mod: [
+      { id: "fabric", name: "Fabric" },
+      { id: "forge", name: "Forge" },
+    ],
+    plugin: [{ id: "paper", name: "Paper" }],
+  };
+  const modulesByKind: Record<string, readonly PromptChoice[]> = {
+    mod: [
+      { id: "api", name: "API" },
+      { id: "core", name: "Core" },
+    ],
+    plugin: [{ id: "api", name: "API" }],
+  };
+
+  it("walks the full flow: kind, platforms, modules, name, versions", async () => {
+    const { streams, outputText } = makeStreams(
+      "mod", // kind
+      "1,2", // platforms: fabric+forge
+      "api", // modules
+      "Cool Sword", // name
+      "", // version -> default 0.1.0
+      "", // mc -> default 26.3
+      "", // package -> default
+    );
+
+    const spec = await promptScaffoldSpec(kinds, platformsByKind, modulesByKind, {}, streams);
+
+    expect(spec).toMatchObject({
+      kind: "mod",
+      platforms: ["fabric", "forge"],
+      modules: ["api"],
+      name: "Cool Sword",
+      version: "0.1.0",
+      minecraftVersion: "26.3",
+    });
+    expect(spec.packageName).toBe("com.example.coolsword");
+    expect(outputText()).toContain("What do you want to build");
+    expect(outputText()).toContain("Target platform(s)");
+    expect(outputText()).toContain("Extra modules");
+  });
+
+  it("skips the questions answered by argv", async () => {
+    const { streams, outputText } = makeStreams(
+      "1,2", // platforms
+      "api,core", // modules
+      "My Mod", // name
+      "", // version
+      "", // mc
+      "", // package
+    );
+
+    const spec = await promptScaffoldSpec(
+      kinds,
+      platformsByKind,
+      modulesByKind,
+      { kind: "mod", modules: ["api"] },
+      streams,
+    );
+
+    expect(spec.kind).toBe("mod");
+    expect(spec.platforms).toEqual(["fabric", "forge"]);
+    expect(spec.modules).toEqual(["api"]);
+    expect(outputText()).not.toContain("What do you want to build");
+    expect(outputText()).not.toContain("Extra modules");
+  });
+
+  it("passes everything through without prompting when argv covers it", async () => {
+    const { streams, outputText } = makeStreams();
+    const input = streams.input;
+    input.end();
+
+    const spec = await promptScaffoldSpec(
+      kinds,
+      platformsByKind,
+      modulesByKind,
+      {
+        kind: "plugin",
+        platforms: ["paper"],
+        modules: [],
+        name: "QueueBoard",
+        version: "1.0.0",
+        minecraftVersion: "1.21.1",
+        packageName: "com.example.queue",
+      },
+      streams,
+    );
+
+    expect(spec).toMatchObject({
+      kind: "plugin",
+      platforms: ["paper"],
+      modules: [],
+      name: "QueueBoard",
+      version: "1.0.0",
+      packageName: "com.example.queue",
+    });
+    expect(outputText()).toBe("");
+  });
+
+  it("rejects with PromptCancelledError when input ends immediately", async () => {
+    const { streams } = makeStreams();
+
+    await expect(
+      promptScaffoldSpec(kinds, platformsByKind, modulesByKind, {}, streams),
+    ).rejects.toBeInstanceOf(PromptCancelledError);
+  });
+});
+
+describe("promptMissingScaffoldArgs (legacy)", () => {
   it("passes provided values through without prompting", async () => {
     const { streams, outputText } = makeStreams();
 
@@ -45,49 +226,14 @@ describe("promptMissingScaffoldArgs", () => {
     expect(outputText()).toBe("");
   });
 
-  it("accepts a platform id typed directly", async () => {
-    const { streams } = makeStreams("paper", "QueueBoard");
+  it("accepts a platform id typed directly and re-asks empty names", async () => {
+    const { streams, outputText } = makeStreams("", "QueueBoard");
 
-    const answers = await promptMissingScaffoldArgs(CHOICES, undefined, undefined, streams);
-
-    expect(answers).toEqual({ platform: "paper", name: "QueueBoard" });
-  });
-
-  it("accepts a choice by its list position", async () => {
-    const { streams } = makeStreams("2", "QueueBoard");
-
-    const answers = await promptMissingScaffoldArgs(CHOICES, undefined, undefined, streams);
+    const answers = await promptMissingScaffoldArgs(CHOICES, "paper", undefined, streams);
 
     expect(answers).toEqual({ platform: "paper", name: "QueueBoard" });
-  });
-
-  it("re-asks after an invalid choice until the answer is valid", async () => {
-    const { streams, outputText } = makeStreams("wurm", "99", "1", "My Mod");
-
-    const answers = await promptMissingScaffoldArgs(CHOICES, undefined, undefined, streams);
-
-    expect(answers).toEqual({ platform: "fabric", name: "My Mod" });
-    expect(outputText()).toContain("Enter a number between 1 and 3");
-    // The list is rendered once per attempt.
-    expect(outputText().match(/Platform:/g)).toHaveLength(3);
-  });
-
-  it("re-asks for an empty project name", async () => {
-    const { streams, outputText } = makeStreams("spigot", "", "   ", "EggCannon");
-
-    const answers = await promptMissingScaffoldArgs(CHOICES, undefined, undefined, streams);
-
-    expect(answers).toEqual({ platform: "spigot", name: "EggCannon" });
-    expect(outputText()).toContain("cannot be empty");
-  });
-
-  it("only prompts for the name when the platform was given", async () => {
-    const { streams, outputText } = makeStreams("OnlyName");
-
-    const answers = await promptMissingScaffoldArgs(CHOICES, "velocity", undefined, streams);
-
-    expect(answers).toEqual({ platform: "velocity", name: "OnlyName" });
     expect(outputText()).not.toContain("Platform:");
+    expect(outputText()).toContain("cannot be empty");
   });
 
   it("rejects with PromptCancelledError when input ends immediately", async () => {
