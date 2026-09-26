@@ -75,6 +75,7 @@ Minecraft scaffolding and detection, powered by the `@devix-cli/minecraft` plugi
 devix minecraft list                    # the eight supported platforms
 devix minecraft init <platform> <name>  # scaffold a mod/plugin skeleton
 devix minecraft init fabric "Cool Sword" --dry-run --json
+devix minecraft init                    # interactive: asks platform and name
 devix minecraft check [platform]        # detect an existing Minecraft project
 devix minecraft check --json
 ```
@@ -82,6 +83,8 @@ devix minecraft check --json
 `init` flags: `--cwd` (parent directory), `--here` (scaffold into the directory itself instead of a project subfolder), `--package`, `--version`, `--mc`, `--dry-run`, `--overwrite`, `--json`.
 
 `init` never overwrites existing files and refuses destinations that already look like a Minecraft project (pass `--overwrite` to skip existing files, and see the plugin README for `allowExistingProject`). `check` reports every detected platform with its manifest detail and, when a platform id is given, whether that specific one matched.
+
+On an interactive terminal, `init` asks for whatever is missing: a numbered platform list and a free-text project name. Scripts and automation must pass both arguments — non-interactive input fails with the usage message, and `--json` always requires them as arguments.
 
 ### `devix plugin list`
 

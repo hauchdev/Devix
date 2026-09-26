@@ -46,6 +46,9 @@ devix minecraft init spigot "EggCannon" --json
 # Detect an existing Minecraft project (any of the 8 platforms)
 devix minecraft check
 devix minecraft check fabric
+
+# Interactive: pick the platform from a list, then type a name (TTY only)
+devix minecraft init
 ```
 
 `check` walks up from the directory and reports every detected platform with its manifest detail (`fabric (mymod)`), or `isMinecraft: false` outside Minecraft projects. With a platform id it also reports whether that specific platform matched. It reads the same markers as `@devix-cli/project-detector`'s `detectMinecraftPlatforms`.

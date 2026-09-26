@@ -9,10 +9,15 @@ const execFileAsync = promisify(execFile);
 const cliRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const binPath = join(cliRoot, "bin", "run.js");
 
-async function runCli(args: string[], cwd?: string): Promise<{ stdout: string; stderr: string }> {
+async function runCli(
+  args: string[],
+  cwd?: string,
+  stdin?: string,
+): Promise<{ stdout: string; stderr: string }> {
   return execFileAsync(process.execPath, [binPath, ...args], {
     cwd: cwd ?? cliRoot,
     encoding: "utf8",
+    ...(stdin === undefined ? {} : { input: stdin }),
   });
 }
 
@@ -189,6 +194,43 @@ describe("devix CLI (compiled binary)", () => {
 
   it("minecraft check rejects unknown platforms with a clear message", async () => {
     await expect(runCli(["minecraft", "check", "wurm"])).rejects.toThrow(/Unknown platform/i);
+  }, 30_000);
+
+  it("minecraft init without args on a non-interactive stream fails with the usage message", async () => {
+    const { mkdtemp, readdir, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-init-eof-"));
+    try {
+      await expect(runCli(["minecraft", "init", "--here"], dir, "")).rejects.toThrow(
+        /init requires a platform and a name/i,
+      );
+      expect(await readdir(dir)).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft init normalizes oclif's piped-stdin arg leakage into the missing-args error", async () => {
+    // oclif v5 stuffs piped stdin into the first missing positional
+    // arg; the command must reject that multi-line "platform" instead
+    // of scaffolding from garbage or hanging.
+    const { mkdtemp, readdir, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-init-pipe-"));
+    try {
+      await expect(
+        runCli(["minecraft", "init", "--here"], dir, "fabric\nPiped Mod\n"),
+      ).rejects.toThrow(/init requires a platform and a name/i);
+      expect(await readdir(dir)).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft init --json refuses to prompt and demands the arguments", async () => {
+    await expect(runCli(["minecraft", "init", "--json"])).rejects.toThrow(
+      /--json requires the platform and name/i,
+    );
   }, 30_000);
 
   it("doctor lists the Minecraft section only when platforms are detected", async () => {
