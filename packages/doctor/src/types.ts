@@ -28,6 +28,11 @@ export interface ProjectReport {
   readonly languages: readonly string[];
   readonly packageManagers: readonly string[];
   readonly tools: readonly string[];
+  /**
+   * Detected Minecraft platforms as `id` or `id (detail)` entries,
+   * e.g. `fabric (mymod)`. Empty when the project is not one.
+   */
+  readonly minecraft: readonly string[];
 }
 
 /** Full result of a doctor run. */

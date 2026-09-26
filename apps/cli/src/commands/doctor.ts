@@ -49,6 +49,9 @@ export default class Doctor extends Command {
     this.log(section("  Languages", report.project.languages));
     this.log(section("  Package managers", report.project.packageManagers));
     this.log(section("  Tools", report.project.tools));
+    if (report.project.minecraft.length > 0) {
+      this.log(section("  Minecraft", report.project.minecraft));
+    }
 
     this.log("");
     const missing = report.environment.checks.filter((c) => c.status !== "ok").length;

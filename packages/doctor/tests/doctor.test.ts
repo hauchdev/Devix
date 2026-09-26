@@ -75,6 +75,25 @@ describe("runDoctor", () => {
     expect(report.project.root).toBe(dir);
   });
 
+  it("reports detected Minecraft platforms with their manifest detail", async () => {
+    const dir = await makeTempDir();
+    await writeFile(join(dir, "fabric.mod.json"), '{ "schemaVersion": 1, "id": "mymod" }', "utf8");
+
+    const report = await runDoctor({ cwd: dir, services: fakeServices });
+
+    expect(report.project.isProject).toBe(true);
+    expect(report.project.minecraft).toEqual(["fabric (mymod)"]);
+  });
+
+  it("reports an empty minecraft list outside Minecraft projects", async () => {
+    const dir = await makeTempDir();
+    await writeFile(join(dir, "package.json"), "{}", "utf8");
+
+    const report = await runDoctor({ cwd: dir, services: fakeServices });
+
+    expect(report.project.minecraft).toEqual([]);
+  });
+
   it("reports an empty project without error", async () => {
     const dir = await makeTempDir();
 

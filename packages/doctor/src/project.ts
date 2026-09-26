@@ -1,4 +1,8 @@
-import { summarizeProject, type DetectorRegistry } from "@devix-cli/project-detector";
+import {
+  detectMinecraftPlatforms,
+  summarizeProject,
+  type DetectorRegistry,
+} from "@devix-cli/project-detector";
 
 import type { ProjectReport } from "./types.js";
 
@@ -12,7 +16,10 @@ export async function checkProject(
   registry: DetectorRegistry,
   cwd: string,
 ): Promise<ProjectReport> {
-  const summary = await summarizeProject(registry, { cwd });
+  const [summary, minecraft] = await Promise.all([
+    summarizeProject(registry, { cwd }),
+    detectMinecraftPlatforms(registry, { cwd }),
+  ]);
 
   return {
     root: summary.root,
@@ -20,5 +27,8 @@ export async function checkProject(
     languages: summary.languages.map((entry) => entry.id),
     packageManagers: summary.packageManagers.map((entry) => entry.id),
     tools: summary.tools.map((entry) => entry.id),
+    minecraft: minecraft.platforms.map((platform) =>
+      platform.detail === undefined ? platform.id : `${platform.id} (${platform.detail})`,
+    ),
   };
 }
