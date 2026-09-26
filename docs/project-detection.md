@@ -21,18 +21,23 @@
 | `pnpm`       | packageManager | `pnpm-lock.yaml`, `pnpm-workspace.yaml`                                                             | lockfileVersion                           |
 | `yarn`       | packageManager | `yarn.lock`, `.yarnrc.yml`                                                                          | lockfile version                          |
 | `bun`        | packageManager | `bun.lockb`, `bun.lock`, `bunfig.toml`                                                              | —                                         |
+| `git`        | tool           | `.git` (directory or file)                                                                          | entry kind                                |
+| `docker`     | tool           | `Dockerfile*`, compose files, `.dockerignore`                                                       | —                                         |
 
-Minecraft mod/plugin platforms (Fabric, Quilt, Forge, NeoForge, Bukkit/Spigot/Paper, BungeeCord, Velocity, Sponge) use the dedicated `minecraft` category. `summarizeProject` groups them under `tools` while keeping `category: "minecraft"` on every entry, so renderers can split them out.
-| `git` | tool | `.git` (directory or file) | entry kind |
-| `docker` | tool | `Dockerfile*`, compose files, `.dockerignore` | — |
-| `fabric` | minecraft | `fabric.mod.json` (flat or `src/main/resources`) | mod id |
-| `quilt` | minecraft | `quilt.mod.json` (flat or `src/main/resources`) | loader id |
-| `forge` | minecraft | `META-INF/mods.toml`, `META-INF/neoforge.mods.toml` (flat or `src/main/resources`) | modId |
-| `neoforge` | minecraft | `META-INF/neoforge.mods.toml` (flat or `src/main/resources`) | modId |
-| `bukkit` | minecraft | `plugin.yml`, `paper-plugin.yml` (flat or `src/main/resources`) | plugin name |
-| `bungeecord` | minecraft | `bungee.yml`, legacy `plugin.yml` (flat or `src/main/resources`) | plugin name |
-| `velocity` | minecraft | `velocity-plugin.json` (flat or `src/main/resources`) | plugin id |
-| `sponge` | minecraft | `sponge_plugin.json`, legacy `mcmod.info` (flat or `src/main/resources`) | plugin id |
+### Minecraft platforms
+
+Mod and proxy-plugin platforms use the dedicated `minecraft` category. `summarizeProject` groups them under `tools` while keeping `category: "minecraft"` on every entry, so renderers can split them out. All markers match flat or inside `src/main/resources`.
+
+| Detector     | Markers                                             | Details extracted |
+| ------------ | --------------------------------------------------- | ----------------- |
+| `fabric`     | `fabric.mod.json`                                   | mod id            |
+| `quilt`      | `quilt.mod.json`                                    | loader id         |
+| `forge`      | `META-INF/mods.toml`, `META-INF/neoforge.mods.toml` | modId             |
+| `neoforge`   | `META-INF/neoforge.mods.toml`                       | modId             |
+| `bukkit`     | `plugin.yml`, `paper-plugin.yml`                    | plugin name       |
+| `bungeecord` | `bungee.yml`, legacy `plugin.yml`                   | plugin name       |
+| `velocity`   | `velocity-plugin.json`                              | plugin id         |
+| `sponge`     | `sponge_plugin.json`, legacy `mcmod.info`           | plugin id         |
 
 ## Usage
 
@@ -44,6 +49,26 @@ console.log(summary.languages, summary.packageManagers, summary.tools);
 ```
 
 Lower-level APIs: `detectProject(registry, { cwd })` returns per-detector results, and `findProjectRoot(startDir, detectors)` resolves the root only.
+
+### Minecraft-specific detection
+
+`detectMinecraftPlatforms(registry, { cwd })` composes the results of every `minecraft`-category detector into a flat, ready-to-render answer:
+
+```ts
+import { createDefaultRegistry, detectMinecraftPlatforms } from "@devix-cli/project-detector";
+
+const detection = await detectMinecraftPlatforms(createDefaultRegistry(), { cwd: process.cwd() });
+if (detection.isMinecraft) {
+  for (const platform of detection.platforms) {
+    console.log(platform.id, platform.detail);
+  }
+}
+```
+
+- One entry per detector (registration order), so a hybrid Fabric + Velocity monorepo lists both.
+- Entries carry the detector `id`/`name`, the first detection `detail` (mod or plugin id) and the full marker evidence.
+- Not a Minecraft project is a normal result: `isMinecraft: false` with an empty `platforms`, never an error.
+- Only real registered detectors count: the platform id of an entry always equals the detector id from the registry.
 
 ## Writing a detector
 
