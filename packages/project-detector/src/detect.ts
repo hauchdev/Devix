@@ -7,6 +7,11 @@ export interface DetectProjectOptions {
   cwd?: string;
   /** Detectors to run, in order. Defaults to all registered in the given registry. */
   detectors?: readonly Detector[];
+  /**
+   * Skips the upward marker search and runs the detectors at exactly
+   * this directory. Takes precedence over `cwd` for root resolution.
+   */
+  root?: string;
 }
 
 /**
@@ -23,7 +28,7 @@ export async function detectProject(
 ): Promise<ProjectDetection> {
   const detectors = options.detectors ?? registry.all();
   const startDir = options.cwd ?? process.cwd();
-  const root = await findProjectRoot(startDir, detectors);
+  const root = options.root ?? (await findProjectRoot(startDir, detectors));
 
   const results = new Map<string, DetectionResult>();
   let isProject = false;

@@ -80,6 +80,32 @@ describe("detectMinecraftPlatforms", () => {
     expect(detection.platforms.map((p) => p.id)).toEqual(["fabric"]);
   });
 
+  it("with an explicit root inspects exactly that directory, not its ancestors", async () => {
+    const dir = await makeTempDir();
+    const nested = join(dir, "sub", "project");
+    await mkdir(nested, { recursive: true });
+    await writeFile(join(dir, "fabric.mod.json"), '{ "id": "parent" }', "utf8");
+
+    const detection = await detectMinecraftPlatforms(createDefaultRegistry(), { root: nested });
+
+    expect(detection.root).toBe(nested);
+    expect(detection.isMinecraft).toBe(false);
+    expect(detection.platforms).toEqual([]);
+  });
+
+  it("with an explicit root still reports markers sitting in that directory", async () => {
+    const dir = await makeTempDir();
+    await writeFile(join(dir, "plugin.yml"), "name: Here\n", "utf8");
+
+    const detection = await detectMinecraftPlatforms(createDefaultRegistry(), { root: dir });
+
+    expect(detection.root).toBe(dir);
+    // plugin.yml is a bukkit marker and the bungeecord legacy fallback:
+    // one file, two matching detectors, both reported.
+    expect(detection.platforms.map((p) => p.id)).toEqual(["bukkit", "bungeecord"]);
+    expect(detection.platforms[0]?.detail).toBe("Here");
+  });
+
   it("keeps registration order and one entry per detector across multiple platforms", async () => {
     const dir = await makeTempDir();
     await writeFile(join(dir, "fabric.mod.json"), '{ "id": "dual" }', "utf8");

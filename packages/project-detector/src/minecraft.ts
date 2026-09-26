@@ -26,8 +26,16 @@ export interface MinecraftDetection {
 
 /** Options accepted by `detectMinecraftPlatforms`. */
 export interface MinecraftDetectionOptions {
-  /** Directory where the upward search starts. Defaults to `process.cwd()`. */
+  /**
+   * Directory where the upward marker search starts. Defaults to
+   * `process.cwd()`. Ignored when `root` is set.
+   */
   readonly cwd?: string;
+  /**
+   * Skips the upward search and inspects exactly this directory: an
+   * entry appears only when its markers sit here, not above.
+   */
+  readonly root?: string;
 }
 
 /**
@@ -43,10 +51,10 @@ export async function detectMinecraftPlatforms(
   registry: DetectorRegistry,
   options: MinecraftDetectionOptions = {},
 ): Promise<MinecraftDetection> {
-  const detection = await detectProject(
-    registry,
-    options.cwd === undefined ? {} : { cwd: options.cwd },
-  );
+  const detection = await detectProject(registry, {
+    ...(options.cwd === undefined ? {} : { cwd: options.cwd }),
+    ...(options.root === undefined ? {} : { root: options.root }),
+  });
 
   const platforms: DetectedMinecraftPlatform[] = [];
   for (const detector of registry.all()) {
