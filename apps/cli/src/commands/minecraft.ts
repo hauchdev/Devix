@@ -8,11 +8,11 @@ import {
   MINECRAFT_PROJECT_KINDS,
   MinecraftError,
   MODULE_IDS,
-  planRun,
   PLATFORM_IDS,
   scaffold,
   summarizeScaffold,
 } from "@devix-cli/minecraft";
+import { pluginCommandRegistry } from "../lib/plugin-commands.js";
 import { promptScaffoldSpec, PromptCancelledError, type PromptChoice } from "../lib/prompts.js";
 
 /** `Cool Sword!` -> `cool-sword`: a filesystem-friendly folder name. */
@@ -112,18 +112,67 @@ export default class Minecraft extends Command {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Minecraft);
 
-    if (args.operation === "list") {
-      this.renderList(flags.json);
-      return;
-    }
+    if (["list", "check", "run"].includes(args.operation)) {
+      const handler = await pluginCommandRegistry.load("minecraft");
+      const result = await handler({
+        argv: [args.operation, ...(args.kind === undefined ? [] : [args.kind])],
+        flags,
+      });
 
-    if (args.operation === "check") {
-      await this.runCheck(args.kind, flags.cwd, flags.json);
-      return;
-    }
+      if (!result.ok) {
+        this.error(result.error.message, { exit: 1 });
+      }
 
-    if (args.operation === "run") {
-      await this.runRun(flags.cwd, flags.json);
+      if (flags.json) {
+        this.log(JSON.stringify(result.data, null, 2));
+        return;
+      }
+
+      if (args.operation === "list") {
+        this.renderList(
+          result.data as {
+            kinds: { id: string; name: string; description: string }[];
+            platforms: { id: string; kind: string; name: string; description: string }[];
+            modules: { id: string; name: string; description: string }[];
+          },
+        );
+        return;
+      }
+
+      if (args.operation === "check") {
+        this.renderCheck(
+          result.data as {
+            isMinecraft: boolean;
+            platforms: { id: string; name: string; detail?: string; markers: string[] }[];
+            requested?: { id: string; detected: boolean };
+          },
+        );
+        return;
+      }
+
+      // run
+      const runResult = result.data as {
+        cwd: string;
+        platforms: string[];
+        command: string;
+        windowsCommand?: string;
+        warnings: string[];
+      };
+      this.log(`Project root: ${runResult.cwd}`);
+      this.log(`Platforms: ${runResult.platforms.join(", ")}`);
+      this.log("");
+      this.log("Run with:");
+      this.log(`  ${runResult.command}`);
+      if (runResult.windowsCommand !== undefined) {
+        this.log(`  ${runResult.windowsCommand}  (Windows)`);
+      }
+      if (runResult.warnings.length > 0) {
+        this.log("");
+        this.log("Notes:");
+        for (const warning of runResult.warnings) {
+          this.log(`  • ${warning}`);
+        }
+      }
       return;
     }
 
@@ -386,137 +435,44 @@ export default class Minecraft extends Command {
     return ids;
   }
 
-  /** Prints how to run the Minecraft project at cwd (print-first). */
-  private async runRun(cwd: string, json: boolean): Promise<void> {
-    const plan = await planRun(cwd);
-
-    if (json) {
-      this.log(
-        JSON.stringify(
-          {
-            cwd: plan.cwd,
-            isMinecraft: plan.isMinecraft,
-            platforms: plan.platforms,
-            command: plan.command,
-            windowsCommand: plan.windowsCommand,
-            warnings: plan.warnings,
-          },
-          null,
-          2,
-        ),
-      );
-      return;
-    }
-
-    if (!plan.isMinecraft) {
-      this.error(plan.warnings[0] ?? "Not a Minecraft project.", { exit: 1 });
-    }
-
-    this.log(`Project root: ${plan.cwd}`);
-    this.log(`Platforms: ${plan.platforms.join(", ")}`);
-    this.log("");
-    this.log("Run with:");
-    this.log(`  ${plan.command}`);
-    if (plan.windowsCommand !== undefined) {
-      this.log(`  ${plan.windowsCommand}  (Windows)`);
-    }
-
-    if (plan.warnings.length > 0) {
-      this.log("");
-      this.log("Notes:");
-      for (const warning of plan.warnings) {
-        this.log(`  • ${warning}`);
-      }
-    }
-  }
-
-  /** Detects the Minecraft platforms of the directory tree at cwd. */
-  private async runCheck(platform: string | undefined, cwd: string, json: boolean): Promise<void> {
-    if (platform !== undefined && !PLATFORM_IDS.includes(platform)) {
-      this.error(MinecraftError.unknownPlatform(platform, PLATFORM_IDS).message, { exit: 1 });
-    }
-
-    // Lazy: keep --help/--version free of the detector stack.
-    const { createDefaultRegistry, detectMinecraftPlatforms } = await import(
-      "@devix-cli/project-detector"
-    );
-
-    const detection = await detectMinecraftPlatforms(createDefaultRegistry(), {
-      cwd: join(cwd),
-    });
-
-    if (json) {
-      this.log(
-        JSON.stringify(
-          {
-            root: detection.root,
-            isMinecraft: detection.isMinecraft,
-            platforms: detection.platforms.map((entry) => ({
-              id: entry.id,
-              name: entry.name,
-              detail: entry.detail,
-              markers: entry.markers.map((marker) => marker.marker),
-            })),
-            ...(platform === undefined
-              ? {}
-              : {
-                  requested: {
-                    id: platform,
-                    detected: detection.platforms.some((entry) => entry.id === platform),
-                  },
-                }),
-          },
-          null,
-          2,
-        ),
-      );
-      return;
-    }
-
-    this.log(`Project root: ${detection.root}`);
-    if (!detection.isMinecraft) {
-      this.log("No Minecraft platform detected in this directory tree.");
-      return;
-    }
-    for (const entry of detection.platforms) {
-      const label = entry.detail === undefined ? entry.name : `${entry.name} (${entry.detail})`;
-      this.log(`  ✓ ${entry.id} — ${label}`);
-      for (const marker of entry.markers) {
-        this.log(`      ${marker.marker}`);
-      }
-    }
-  }
-
-  private renderList(json: boolean): void {
-    if (json) {
-      this.log(
-        JSON.stringify(
-          {
-            kinds: MINECRAFT_PROJECT_KINDS,
-            platforms: MINECRAFT_PLATFORMS,
-            modules: MINECRAFT_MODULES,
-          },
-          null,
-          2,
-        ),
-      );
-      return;
-    }
+  private renderList(data: {
+    kinds: { id: string; name: string; description: string }[];
+    platforms: { id: string; kind: string; name: string; description: string }[];
+    modules: { id: string; name: string; description: string }[];
+  }): void {
     this.log("Project kinds:");
-    for (const kind of MINECRAFT_PROJECT_KINDS) {
+    for (const kind of data.kinds) {
       this.log(`  ${kind.id.padEnd(14)}${kind.description}`);
     }
     this.log("");
     this.log("Platforms:");
-    for (const platform of MINECRAFT_PLATFORMS) {
+    for (const platform of data.platforms) {
       this.log(`  ${platform.id.padEnd(14)}${platform.kind.padEnd(14)}${platform.description}`);
     }
     this.log("");
-    this.log(`Optional modules: ${MODULE_IDS.join(", ")}`);
+    this.log(`Optional modules: ${data.modules.map((module) => module.id).join(", ")}`);
     this.log("");
     this.log(
       "Init one with: devix minecraft init <platform(s)> <name> [--kind mod] [--modules api,core] [--mc 26.3]",
     );
     this.log("Detect an existing one with: devix minecraft check [platform]");
+  }
+
+  private renderCheck(data: {
+    isMinecraft: boolean;
+    platforms: { id: string; name: string; detail?: string; markers: string[] }[];
+    requested?: { id: string; detected: boolean };
+  }): void {
+    if (!data.isMinecraft) {
+      this.log("No Minecraft platform detected in this directory tree.");
+      return;
+    }
+    for (const entry of data.platforms) {
+      const label = entry.detail === undefined ? entry.name : `${entry.name} (${entry.detail})`;
+      this.log(`  ✓ ${entry.id} — ${label}`);
+      for (const marker of entry.markers) {
+        this.log(`      ${marker}`);
+      }
+    }
   }
 }

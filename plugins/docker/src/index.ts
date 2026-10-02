@@ -27,10 +27,13 @@ export const DOCKER_PLUGIN_MANIFEST: PluginManifest = {
         id: "docker",
         description: "Docker diagnostics and container/image listings.",
         module: "@devix-cli/docker",
+        export: "commandHandlers",
       },
     ],
   },
 };
+
+export { commandHandlers } from "./handlers.js";
 
 /** Availability of the Docker installation on this machine. */
 export interface DockerAvailability {

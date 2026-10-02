@@ -44,6 +44,7 @@ export { scaffold, summarizeScaffold } from "./scaffold.js";
 export type { ScaffoldEntry, ScaffoldOptions, ScaffoldResult } from "./scaffold.js";
 export { planRun, requireMinecraftRun } from "./run.js";
 export type { RunPlan } from "./run.js";
+export { commandHandlers } from "./handlers.js";
 export type { DetectedMinecraftPlatform } from "@devix-cli/project-detector";
 import type { PluginManifest } from "@devix-cli/core";
 
@@ -64,6 +65,7 @@ export const MINECRAFT_PLUGIN_MANIFEST: PluginManifest = {
         id: "minecraft",
         description: "Scaffold and inspect Minecraft projects.",
         module: "@devix-cli/minecraft",
+        export: "commandHandlers",
       },
     ],
   },

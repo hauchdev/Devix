@@ -46,3 +46,14 @@ export function err(code: string, message: string, details?: Record<string, unkn
 export function formatJson<T>(output: CommandOutput<T>): string {
   return JSON.stringify(output, null, 2);
 }
+
+/** A plugin-contributed command handler. It receives raw argv and parsed flags and returns canonical output. */
+export type CommandHandler<T = unknown> = (context: {
+  /** Positional arguments after the command name. */
+  readonly argv: readonly string[];
+  /** Parsed flags (shape depends on the command). */
+  readonly flags: Readonly<Record<string, unknown>>;
+}) => Promise<CommandOutput<T>>;
+
+/** A map of command ids to handlers, exported by plugins. */
+export type CommandHandlers = Readonly<Record<string, CommandHandler>>;

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@devix-cli/core": "workspace:*",
+    "@devix-cli/output": "workspace:*",
     "@devix-cli/shell": "workspace:*"
   },
   "devDependencies": {

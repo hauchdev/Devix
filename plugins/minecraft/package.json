@@ -20,9 +20,10 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
-    "@devix-cli/core": "^0.1.0",
-    "@devix-cli/filesystem": "^0.1.0",
-    "@devix-cli/project-detector": "^0.2.0"
+    "@devix-cli/core": "workspace:*",
+    "@devix-cli/filesystem": "workspace:*",
+    "@devix-cli/output": "workspace:*",
+    "@devix-cli/project-detector": "workspace:*"
   },
   "devDependencies": {
     "eslint": "9.39.1"
