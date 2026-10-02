@@ -1,27 +1,27 @@
-# Devix — Guía de desarrollo
+# Devix — Development Guide
 
-Guía práctica para desarrollar, probar y mantener Devix.
+Practical guide for developing, testing and maintaining Devix.
 
-> **Devix** es un toolkit modular para desarrolladores, construido como monorepo con TypeScript, pnpm y Turborepo.
+> **Devix** is a modular developer toolkit, built as a monorepo with TypeScript, pnpm and Turborepo.
 
 ---
 
-## 1. Requisitos
+## 1. Requirements
 
-| Herramienta | Versión    | Notas                                              |
-| ----------- | ---------- | -------------------------------------------------- |
-| Node.js     | LTS (22.x) | Runtime del proyecto                               |
-| pnpm        | 12.5.1     | Fijado en `packageManager`; se activa con Corepack |
-| Git         | 2.x        |                                                    |
+| Tool    | Version    | Notes                                    |
+| ------- | ---------- | ---------------------------------------- |
+| Node.js | LTS (22.x) | Project runtime                          |
+| pnpm    | 12.5.1     | Pinned in `packageManager`; use Corepack |
+| Git     | 2.x        |                                          |
 
-Activar la versión de pnpm fijada:
+Activate the pinned pnpm version:
 
 ```bash
 corepack enable
 corepack prepare pnpm@12.5.1 --activate
 ```
 
-Comprobar instalación:
+Check the installation:
 
 ```bash
 node --version   # v22.x
@@ -31,7 +31,7 @@ git --version
 
 ---
 
-## 2. Primeros pasos
+## 2. Getting started
 
 ```bash
 git clone https://github.com/hauchdev/Devix.git
@@ -39,7 +39,7 @@ cd Devix
 pnpm install
 ```
 
-Verificar que todo funciona:
+Verify everything works:
 
 ```bash
 pnpm build
@@ -48,38 +48,40 @@ pnpm lint
 pnpm typecheck
 ```
 
-Los cuatro comandos deben terminar sin errores antes de empezar a programar.
+All four commands must finish without errors before you start coding.
 
 ---
 
-## 3. Comandos
+## 3. Commands
 
-Todos los comandos se ejecutan desde la raíz del repositorio.
+All commands run from the repository root.
 
-| Comando          | Qué hace                                                   |
-| ---------------- | ---------------------------------------------------------- |
-| `pnpm install`   | Instala dependencias de todo el workspace                  |
-| `pnpm build`     | Compila todos los paquetes (orden respetando dependencias) |
-| `pnpm test`      | Ejecuta los tests (Vitest)                                 |
-| `pnpm lint`      | Analiza el código (ESLint)                                 |
-| `pnpm typecheck` | Comprueba tipos sin emitir salida                          |
-| `pnpm format`    | Formatea el código (Prettier)                              |
-| `pnpm clean`     | Elimina artefactos de build (`dist/`)                      |
-| `pnpm dev`       | Reservado para watch del CLI (sin tareas todavía)          |
+| Command             | What it does                                          |
+| ------------------- | ----------------------------------------------------- |
+| `pnpm install`      | Install dependencies for the whole workspace          |
+| `pnpm build`        | Build all packages (dependency order respected)       |
+| `pnpm test`         | Run tests (Vitest)                                    |
+| `pnpm lint`         | Analyze code (ESLint)                                 |
+| `pnpm typecheck`    | Type-check without emitting output                    |
+| `pnpm format`       | Format code (Prettier)                                |
+| `pnpm clean`        | Remove build artifacts (`dist/`)                      |
+| `pnpm dev`          | Reserved for CLI watch mode (no tasks yet)            |
+| `pnpm verify`       | Run lint, typecheck, test, build and prettier --check |
+| `pnpm format:check` | Check formatting without writing                      |
 
 ### CI (GitHub Actions)
 
-`.github/workflows/ci.yml` se ejecuta en cada push a `main` y en cada Pull Request:
+`.github/workflows/ci.yml` runs on every push to `main` and on every Pull Request:
 
 ```text
 install --frozen-lockfile → format check → lint → typecheck → test → build
 ```
 
-Matriz: **ubuntu-latest** (Node 22 y 24) y **windows-latest** (Node 22) — Windows se comprueba en cada PR porque es plataforma objetivo de Devix. El workflow lee la versión de pnpm del campo `packageManager` y cachea `.turbo` por runner.
+Matrix: **ubuntu-latest** (Node 22 and 24) and **windows-latest** (Node 22) — Windows is checked on every PR because it is a target platform for Devix. The workflow reads the pnpm version from the `packageManager` field and caches `.turbo` per runner.
 
-### Trabajar en un paquete concreto
+### Working on a single package
 
-Usa filtros de pnpm para no ejecutar todo el monorepo:
+Use pnpm filters to avoid running the whole monorepo:
 
 ```bash
 pnpm --filter @devix-cli/core build
@@ -87,84 +89,84 @@ pnpm --filter @devix-cli/core test
 pnpm --filter @devix-cli/core typecheck
 ```
 
-### Añadir dependencias
+### Adding dependencies
 
 ```bash
-# Dependencia de la raíz (tooling compartido)
-pnpm add -Dw <paquete>
+# Root dependency (shared tooling)
+pnpm add -Dw <package>
 
-# Dependencia de un paquete concreto
-pnpm --filter @devix-cli/core add -D <paquete>
+# Dependency for a specific package
+pnpm --filter @devix-cli/core add -D <package>
 
-# Dependencia interna entre paquetes (siempre así)
+# Internal dependency between packages (always like this)
 pnpm --filter @devix-cli/logger add @devix-cli/core@workspace:*
 ```
 
-> **Nota sobre pnpm estricto:** cada paquete solo puede importar lo que declara en su `package.json`. El tooling compartido (config de ESLint, TypeScript, Vitest) vive en la raíz; los paquetes declaran solo lo que ejecutan directamente (p. ej. el binario de `eslint`).
+> **Note on strict pnpm:** each package can only import what it declares in its `package.json`. Shared tooling (ESLint config, TypeScript, Vitest) lives at the root; packages declare only what they run directly (e.g. the `eslint` binary).
 
 ---
 
-## 4. Estructura del monorepo
+## 4. Monorepo structure
 
 ```text
 Devix/
 ├── apps/
-│   └── cli/                  # CLI de Devix (oclif) ✓
+│   └── cli/                  # Devix CLI (oclif) ✓
 │
 ├── packages/
-│   ├── core/                 # Fundamentos compartidos ✓
-│   ├── logger/               # Logging centralizado ✓ (deprecated)
-│   ├── config/               # Configuración ✓
-│   ├── filesystem/           # Abstracciones de FS ✓
-│   ├── shell/                # Ejecución de procesos ✓
-│   ├── project-detector/     # Detección de proyectos ✓
-│   ├── git/                  # Operaciones Git ✓
-│   ├── doctor/               # Diagnóstico de entorno y proyecto ✓
-│   └── deps/                 # Delegación en gestor de paquetes ✓
+│   ├── core/                 # Shared foundations ✓
+│   ├── logger/               # Centralized logging ✓ (deprecated)
+│   ├── config/               # Configuration loading ✓
+│   ├── filesystem/           # FS abstractions ✓
+│   ├── shell/                # Process execution ✓
+│   ├── project-detector/     # Project detection ✓
+│   ├── git/                  # Git operations ✓
+│   ├── doctor/               # Environment and project diagnostics ✓
+│   └── deps/                 # Package manager delegation ✓
 │
-├── plugins/                  # Integraciones opcionales (docker, minecraft) ✓
-├── docs/                     # Documentación específica ✓
-├── .changeset/               # Versionado y releases ✓
-├── .github/                  # CI y releases ✓
+├── plugins/                  # Optional integrations (docker, minecraft) ✓
+├── docs/                     # Specific documentation ✓
+├── .changeset/               # Versioning and releases ✓
+├── .github/                  # CI and releases ✓
 │
-├── turbo.json                # Orquestación Turborepo
-├── tsconfig.json             # TypeScript base (estricto)
-├── eslint.config.js          # ESLint flat config compartido
-├── .prettierrc               # Formato compartido
+├── turbo.json                # Turborepo orchestration
+├── tsconfig.json             # Base strict TypeScript
+├── eslint.config.js          # Shared ESLint flat config
+├── .prettierrc               # Shared formatting
 └── pnpm-workspace.yaml       # apps/*, packages/*, plugins/*
 ```
 
 ---
 
-## 5. Arquitectura de dependencias
+## 5. Dependency architecture
 
-La dirección de dependencias es estricta y unidireccional:
+Dependency direction is strict and unidirectional:
 
 ```text
-apps/cli            (capa superior: interfaz de usuario)
+apps/cli            (top layer: user interface)
    ↓
-plugins             (integraciones opcionales, desacopladas)
+plugins             (optional integrations, decoupled)
    ↓
 services / features (project-detector, git, doctor…)
    ↓
 packages            (filesystem, shell, config, logger)
    ↓
-core                (fundamentos, sin dependencias internas)
+core                (foundations, no internal dependencies)
 ```
 
-Reglas:
+Rules:
 
-1. **Responsabilidad única.** Cada paquete resuelve un problema concreto. No existe un `packages/utils` genérico.
-2. **El CLI no contiene lógica de negocio.** Los comandos coordinan; los paquetes implementan.
-3. **Los paquetes base nunca dependen del CLI** ni de capas superiores.
-4. **Las dependencias internas siempre usan `workspace:*`.**
-5. **Reutilización:** si dos comandos necesitan lo mismo, es un paquete o servicio.
+1. **Single responsibility.** Each package solves one concrete problem. There is no generic `packages/utils`.
+2. **The CLI contains no business logic.** Commands coordinate; packages implement.
+3. **Base packages never depend on the CLI** or upper layers.
+4. **Internal dependencies always use `workspace:*`.**
+5. **Reuse:** if two commands need the same thing, it becomes a package or service.
 
 ---
 
 ## 6. TypeScript
 
-La configuración base (`tsconfig.json` raíz) es estricta:
+The base config (`tsconfig.json` at root) is strict:
 
 ```jsonc
 {
@@ -178,7 +180,7 @@ La configuración base (`tsconfig.json` raíz) es estricta:
 }
 ```
 
-Cada paquete extiende la raíz:
+Each package extends the root:
 
 ```json
 {
@@ -191,21 +193,21 @@ Cada paquete extiende la raíz:
 }
 ```
 
-Reglas:
+Rules:
 
-- Todos los paquetes son **ESM** (`"type": "module"`).
-- Prohibido `any`: preferir `unknown` y tipos explícitos.
-- No usar `@ts-ignore` ni desactivar `strict` sin una razón técnica documentada.
+- All packages are **ESM** (`"type": "module"`).
+- `any` is forbidden: prefer `unknown` and explicit types.
+- No `@ts-ignore` or disabling `strict` without a documented technical reason.
 
-### Nota: por qué TypeScript 6.x y no 7
+### Note: why TypeScript 6.x and not 7
 
-El proyecto usa **TypeScript 6.0.3** (última estable con API clásica). TypeScript 7.0 (compilador nativo) **no expone aún una API programática estable** — llega con 7.1 — y `typescript-eslint` la necesita para funcionar. Cuando salga 7.1 se reevaluará la migración.
+The project uses **TypeScript 6.0.3** (latest stable with the classic API). TypeScript 7.0 (native compiler) **does not yet expose a stable programmatic API** — that arrives with 7.1 — and `typescript-eslint` needs it to work. Migration will be re-evaluated when 7.1 is released.
 
 ---
 
 ## 7. Tests
 
-Framework: **Vitest**. Cada paquete tiene sus tests en `tests/`:
+Framework: **Vitest**. Each package keeps its tests in `tests/`:
 
 ```text
 packages/logger/
@@ -213,39 +215,39 @@ packages/logger/
 └── tests/logger.test.ts
 ```
 
-Convenciones:
+Conventions:
 
-- Los tests importan desde `../src/...` directamente (no requieren build).
-- Cubrir: casos normales, casos vacíos, archivos inexistentes, proyectos inválidos.
-- Los fixtures de proyectos de ejemplo vivirán en `tests/fixtures/` (raíz) cuando llegue el project-detector.
-- Comportamiento multiplataforma (Windows/Linux/macOS) se testea con `node:path` y APIs de Node, nunca con rutas hardcodeadas.
+- Tests import from `../src/...` directly (no build required).
+- Cover: normal cases, empty cases, missing files, invalid projects.
+- Cross-platform behavior (Windows/Linux/macOS) is tested with `node:path` and Node APIs, never with hardcoded paths.
 
 ---
 
-## 8. Calidad: lint y formato
+## 8. Quality: lint and format
 
-- **ESLint 9** con flat config en la raíz (`eslint.config.js`), heredada automáticamente por todos los paquetes.
-- Regla destacada: `@typescript-eslint/no-explicit-any: error`.
-- **Prettier** para formato: `pnpm format` (o deja que tu IDE lo aplique al guardar).
+- **ESLint 9** with flat config at the root (`eslint.config.js`), inherited automatically by all packages.
+- Highlighted rule: `@typescript-eslint/no-explicit-any: error`.
+- **Prettier** for formatting: `pnpm format` (or let your IDE apply it on save).
 
-Checklist antes de considerar algo terminado:
+Checklist before considering something done:
 
 ```bash
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
+pnpm exec prettier --check .
 ```
 
-Los cuatro deben pasar.
+All five must pass.
 
 ---
 
-## 9. Git y commits
+## 9. Git and commits
 
-### Ramas
+### Branches
 
-Ramas cortas y descriptivas desde `main`:
+Short, descriptive branches from `main`:
 
 ```text
 feat/project-detector
@@ -256,124 +258,124 @@ docs/plugin-system
 chore/update-dependencies
 ```
 
-`main` representa siempre un estado estable. No hay rama `develop`.
+`main` always represents a stable state. There is no `develop` branch.
 
 ### Conventional Commits
 
 ```text
-feat:     nueva funcionalidad      feat(project): detect pnpm workspaces
-fix:      corrección de bug        fix(cli): handle missing project
-docs:     documentación            docs: document plugin architecture
-test:     tests                    test(project): add detector fixtures
-refactor: refactorización          refactor(core): simplify project context
-perf:     rendimiento              perf(detector): cache project detection
-ci:       integración continua     ci: add pull request checks
-chore:    mantenimiento            chore: update dependencies
+feat:     new feature           feat(project): detect pnpm workspaces
+fix:      bug fix               fix(cli): handle missing project
+docs:     documentation         docs: document plugin architecture
+test:     tests                 test(project): add detector fixtures
+refactor: refactoring           refactor(core): simplify project context
+perf:     performance           perf(detector): cache project detection
+ci:       continuous integration ci: add pull request checks
+chore:    maintenance           chore: update dependencies
 ```
 
-Cada commit representa un cambio real. No se generan commits artificiales.
+Each commit represents a real change. No artificial commits.
 
-### Flujo habitual
+### Typical workflow
 
 ```bash
 git switch main
 git pull
-git switch -c feat/mi-feature
+git switch -c feat/my-feature
 
-# ... desarrollar ...
+# ... develop ...
 
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm verify
 
-git status          # comprobar que no se cuelan artefactos
-git add .
-git commit -m "feat(scope): describe el cambio"
-git push -u origin feat/mi-feature
+git status          # check no artifacts slip in
+git add <files>
+git commit -m "feat(scope): describe the change"
+git push -u origin feat/my-feature
 ```
 
 ### Pull Requests
 
-Un PR debe:
+A PR must:
 
-- tener un título descriptivo (`feat(project): add Node.js detection`)
-- explicar **qué** cambia y **por qué**
-- incluir tests cuando corresponda
-- pasar CI
-- no contener cambios no relacionados
+- have a descriptive title (`feat(project): add Node.js detection`)
+- explain **what** changes and **why**
+- include tests when appropriate
+- pass CI
+- not mix unrelated changes
 
 ---
 
-## 10. Versionado y releases
+## 10. Versioning and releases
 
 - **Semantic Versioning**: `MAJOR.MINOR.PATCH` (0.1.0, 0.2.1, 1.0.0…).
-- **Changesets** para registrar cambios que afectan a usuarios:
+- **Changesets** to record user-facing changes:
 
 ```bash
-pnpm changeset        # crea un changeset describiendo el cambio
+pnpm changeset        # create a changeset describing the change
 ```
 
-Los changesets se acumulan en `.changeset/` y se consumen en el release. No editar changelogs manualmente.
+Changesets accumulate in `.changeset/` and are consumed on release. Do not edit changelogs manually.
 
 ---
 
 ## 11. Roadmap
 
-El plan por fases, con criterios de aceptación y estado actual, vive en [ROADMAP.md](./ROADMAP.md).
+The phased plan, with acceptance criteria and current status, lives in [ROADMAP.md](./ROADMAP.md).
 
 ---
 
-## 12. Solución de problemas
+## 12. Troubleshooting
 
-**`pnpm build` falla con `invalid_package_manager_field`**
-El campo `packageManager` debe tener semver completo (`pnpm@12.5.1`, no `pnpm@12`). Comprueba que usas la versión fijada: `corepack prepare pnpm@12.5.1 --activate`.
+**`pnpm build` fails with `invalid_package_manager_field`**
+The `packageManager` field must have full semver (`pnpm@12.5.1`, not `pnpm@12`). Check you are using the pinned version: `corepack prepare pnpm@12.5.1 --activate`.
 
-**Un paquete no encuentra una dependencia de otro paquete**
-Con pnpm estricto no hay hoisting. Declara la dependencia en el `package.json` del paquete con `workspace:*`.
+**A package cannot find a dependency from another package**
+With strict pnpm there is no hoisting. Declare the dependency in the package's `package.json` with `workspace:*`.
 
-**ESLint falla con `Cannot find package` en `eslint.config.js`**
-La config vive en la raíz, por lo que `@eslint/js` y `typescript-eslint` deben estar en las devDeps de la **raíz**. Los paquetes solo necesitan `eslint` (el binario).
+**ESLint fails with `Cannot find package` in `eslint.config.js`**
+The config lives at the root, so `@eslint/js` and `typescript-eslint` must be in the root **devDependencies**. Packages only need `eslint` (the binary).
 
-**Turbo avisa `no output files found for task ...#test`**
-Esperado: la tarea `test` declara `coverage/**` como output, que solo existe al activar coverage. No es un error.
+**Turbo warns `no output files found for task ...#test`**
+Expected: the `test` task declares `coverage/**` as output, which only exists when coverage is enabled. Not an error.
 
-**Después de `pnpm clean`, `pnpm build` es instantáneo**
-Turborepo restaura los outputs desde su cache local. El build es correcto.
+**After `pnpm clean`, `pnpm build` is instant**
+Turborepo restores outputs from its local cache. The build is correct.
 
-**El CI falla en "Format check" pero local pasa (CRLF en Windows)**
-El repo fuerza LF vía `.gitattributes` (`* text=auto eol=lf`); Prettier exige LF. Si ves diferencias entre tu máquina y CI, comprueba `git ls-files --eol` y asegúrate de commitear con el fichero guardado en disco (los buffers abiertos del IDE pueden sobrescribir cambios). La batería de verificación **siempre incluye** `prettier --check .` — es la misma que ejecuta el CI.
+**CI fails on "Format check" but local passes (CRLF on Windows)**
+The repo forces LF via `.gitattributes` (`* text=auto eol=lf`); Prettier requires LF. If you see differences between your machine and CI, check `git ls-files --eol` and make sure to commit with the file saved to disk (open IDE buffers may overwrite changes). The verification checklist **always includes** `prettier --check .` — it is the same one CI runs.
 
-**Errores TS2591: `Cannot find name 'node:fs'` / `Cannot find namespace 'NodeJS'`**
-El paquete importa builtins de Node pero no ve sus tipos. `@types/node` debe estar en la **raíz** (versión alineada con el LTS: `@types/node@22`) y el tsconfig raíz declara `"types": ["node"]` — la resolución automática de `@types` no sube directorios en workspaces de pnpm, la explícita sí.
-
----
-
-## 13. Reglas para agentes de IA
-
-Leer primero `AGENTS.md` (y el `AGENTS.md` del subdirectorio correspondiente cuando exista) antes de modificar código.
-
-Los agentes no deben:
-
-- cambiar la arquitectura sin motivo justificado
-- introducir dependencias innecesarias
-- desactivar `strict` o ignorar errores de TypeScript
-- borrar tests para hacer pasar la suite
-- modificar APIs públicas sin documentarlo
-- realizar cambios no relacionados con la tarea
-- generar commits artificiales
+**TS2591 errors: `Cannot find name 'node:fs'` / `Cannot find namespace 'NodeJS'`**
+The package imports Node builtins but cannot see their types. `@types/node` must be at the **root** (version aligned with LTS: `@types/node@22`) and the root tsconfig declares `"types": ["node"]` — automatic `@types` resolution does not go up directories in pnpm workspaces, explicit does.
 
 ---
 
-## 14. Principio fundamental
+## 13. Rules for AI agents
 
-Devix crece mediante **funcionalidad real**, no mediante commits artificiales.
+Read `AGENTS.md` at the root (and the `AGENTS.md` of the relevant subdirectory when it exists) before modifying code.
+
+AI agents must not:
+
+- change architecture without a justified reason
+- introduce unnecessary dependencies
+- disable `strict` or ignore TypeScript errors
+- delete tests to make the suite pass
+- modify public APIs without documenting it
+- make unrelated changes
+- generate artificial commits
+
+---
+
+## 14. Core principle
+
+Devix grows through **real functionality**, not artificial commits.
 
 ```text
 Correctness > Maintainability > Developer Experience > Performance > Feature count
 ```
 
-Un buen commit:
+A good commit:
 
 ```text
 feat(project): detect pnpm workspaces
 ```
 
-La cantidad de commits no es el objetivo. El objetivo es una herramienta útil, mantenible y técnicamente sólida.
+The number of commits is not the goal. The goal is a useful, maintainable and technically solid tool.
