@@ -58,4 +58,33 @@ describe("PluginRegistry", () => {
       registry.register(manifest({ id: "alpha", name: "Alpha", version: "1.0.0-beta.1+build" })),
     ).not.toThrow();
   });
+
+  it("accepts capability declarations", () => {
+    const registry = new PluginRegistry((m) => PluginError.invalid(m));
+
+    registry.register(
+      manifest({
+        capabilities: {
+          commands: [{ id: "docker", description: "Docker command", module: "@devix-cli/docker" }],
+        },
+      }),
+    );
+
+    const registered = registry.all()[0];
+    expect(registered?.manifest.capabilities?.commands?.[0]?.id).toBe("docker");
+  });
+
+  it("rejects malformed capability entries", () => {
+    const registry = new PluginRegistry((m) => PluginError.invalid(m));
+
+    expect(() =>
+      registry.register(
+        manifest({
+          capabilities: {
+            commands: [{ id: "docker", module: "" } as never],
+          },
+        }),
+      ),
+    ).toThrowError(PluginError);
+  });
 });
