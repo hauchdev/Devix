@@ -226,6 +226,9 @@ importers:
       '@devix-cli/project-detector':
         specifier: workspace:*
         version: link:../../packages/project-detector
+      '@devix-cli/web':
+        specifier: workspace:*
+        version: link:../../plugins/web
       '@oclif/core':
         specifier: ^5.0.0
         version: 5.0.1
@@ -363,6 +366,25 @@ importers:
         version: 9.39.1(supports-color@8.1.1)
 
   plugins/minecraft:
+    dependencies:
+      '@devix-cli/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@devix-cli/filesystem':
+        specifier: workspace:*
+        version: link:../../packages/filesystem
+      '@devix-cli/output':
+        specifier: workspace:*
+        version: link:../../packages/output
+      '@devix-cli/project-detector':
+        specifier: workspace:*
+        version: link:../../packages/project-detector
+    devDependencies:
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(supports-color@8.1.1)
+
+  plugins/web:
     dependencies:
       '@devix-cli/core':
         specifier: workspace:*

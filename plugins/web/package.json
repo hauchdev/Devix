@@ -1,0 +1,47 @@
+{
+  "name": "@devix-cli/web",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Web project integration for Devix: detect frameworks, inspect environment variables, list scripts, serve static builds and print build commands.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+  },
+  "dependencies": {
+    "@devix-cli/core": "workspace:*",
+    "@devix-cli/filesystem": "workspace:*",
+    "@devix-cli/output": "workspace:*",
+    "@devix-cli/project-detector": "workspace:*"
+  },
+  "devDependencies": {
+    "eslint": "9.39.1"
+  },
+  "license": "MIT",
+  "author": "hauchdev <hauch8bingo@proton.me>",
+  "homepage": "https://github.com/hauchdev/Devix#readme",
+  "bugs": "https://github.com/hauchdev/Devix/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hauchdev/Devix.git",
+    "directory": "plugins/web"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}
