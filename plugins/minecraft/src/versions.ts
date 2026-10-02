@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { MinecraftError } from "./errors.js";
 
 /**
@@ -36,91 +38,28 @@ export interface MinecraftVersionSpec {
   readonly bungeecord: { readonly api: string } | null;
 }
 
+interface VersionCatalog {
+  readonly default: string;
+  readonly versions: readonly MinecraftVersionSpec[];
+}
+
+function loadCatalog(): VersionCatalog {
+  const raw = readFileSync(new URL("../catalog/versions.json", import.meta.url), "utf8");
+  return JSON.parse(raw) as VersionCatalog;
+}
+
+const catalog = loadCatalog();
+
 /**
- * The version catalog, newest first. Adding a Minecraft version means
- * adding one entry here — every template resolves its dependencies
- * through it, so no build file ever hardcodes versions.
+ * The version catalog, newest first. Versions live in
+ * `catalog/versions.json` so they can be updated without recompiling.
+ * Every template resolves its dependencies through this catalog, so no
+ * build file ever hardcodes versions.
  */
-export const MINECRAFT_VERSIONS: readonly MinecraftVersionSpec[] = [
-  {
-    minecraft: "26.3",
-    aliases: ["wilderness", "wilderness-bound", "26.3", "stable"],
-    label: "26.3 — Wilderness Bound (latest drop)",
-    javaVersion: 21,
-    loom: "1.11-SNAPSHOT",
-    fabric: { loader: "0.17.3", api: "0.140.0+26.3", yarn: "26.3+build.1" },
-    neoforge: { version: "26.3.0", neogradle: "7.0.194" },
-    forge: null,
-    architectury: { plugin: "3.4-SNAPSHOT", api: "17.0.8" },
-    paper: { api: "26.3-R0.1-SNAPSHOT", loader: "0.17.3" },
-    spigot: { api: "26.3-R0.1-SNAPSHOT" },
-    velocity: { api: "3.4.0-SNAPSHOT" },
-    bungeecord: { api: "1.21-R0.4-SNAPSHOT" },
-  },
-  {
-    minecraft: "26.1",
-    aliases: ["tiny-takeover", "tiny", "26.1"],
-    label: "26.1 — Tiny Takeover",
-    javaVersion: 21,
-    loom: "1.11-SNAPSHOT",
-    fabric: { loader: "0.17.2", api: "0.133.4+26.1", yarn: "26.1+build.1" },
-    neoforge: { version: "26.1.9", neogradle: "7.0.180" },
-    forge: null,
-    architectury: { plugin: "3.4-SNAPSHOT", api: "17.0.8" },
-    paper: { api: "26.1-R0.1-SNAPSHOT", loader: "0.17.2" },
-    spigot: { api: "26.1-R0.1-SNAPSHOT" },
-    velocity: { api: "3.4.0-SNAPSHOT" },
-    bungeecord: { api: "1.21-R0.4-SNAPSHOT" },
-  },
-  {
-    minecraft: "1.21.11",
-    aliases: ["1.21.11"],
-    label: "1.21.11 — legacy line (pre year-drop numbering)",
-    javaVersion: 21,
-    loom: "1.10-SNAPSHOT",
-    fabric: { loader: "0.17.2", api: "0.140.0+1.21.11", yarn: "1.21.11+build.1" },
-    neoforge: { version: "21.11.5", neogradle: "7.0.171" },
-    forge: null,
-    architectury: { plugin: "3.4-SNAPSHOT", api: "16.1.11" },
-    paper: { api: "1.21.11-R0.1-SNAPSHOT", loader: "0.17.2" },
-    spigot: { api: "1.21.11-R0.1-SNAPSHOT" },
-    velocity: { api: "3.4.0-SNAPSHOT" },
-    bungeecord: { api: "1.21-R0.4-SNAPSHOT" },
-  },
-  {
-    minecraft: "1.21.1",
-    aliases: ["1.21.1", "legacy"],
-    label: "1.21.1 — classic legacy line",
-    javaVersion: 21,
-    loom: "1.9-SNAPSHOT",
-    fabric: { loader: "0.16.14", api: "0.115.6+1.21.1", yarn: "1.21.1+build.3" },
-    neoforge: { version: "21.1.209", neogradle: "7.0.171" },
-    forge: { version: "1.21.1-52.1.1", forgegradle: "[6.0.24,6.2)" },
-    architectury: { plugin: "3.4-SNAPSHOT", api: "13.0.8" },
-    paper: { api: "1.21.1-R0.1-SNAPSHOT", loader: "0.16.14" },
-    spigot: { api: "1.21.1-R0.1-SNAPSHOT" },
-    velocity: { api: "3.4.0-SNAPSHOT" },
-    bungeecord: { api: "1.20-R0.3-SNAPSHOT" },
-  },
-  {
-    minecraft: "1.20.1",
-    aliases: ["1.20.1"],
-    label: "1.20.1 — the long-lived Forge classic",
-    javaVersion: 17,
-    loom: "1.7-SNAPSHOT",
-    fabric: { loader: "0.16.14", api: "0.92.6+1.20.1", yarn: "1.20.1+build.10" },
-    neoforge: null,
-    forge: { version: "1.20.1-47.4.0", forgegradle: "[6.0,6.2)" },
-    architectury: { plugin: "3.4-SNAPSHOT", api: "9.2.14" },
-    paper: { api: "1.20.1-R0.1-SNAPSHOT", loader: "0.16.14" },
-    spigot: { api: "1.20.1-R0.1-SNAPSHOT" },
-    velocity: { api: "3.3.0-SNAPSHOT" },
-    bungeecord: { api: "1.20-R0.2-SNAPSHOT" },
-  },
-];
+export const MINECRAFT_VERSIONS: readonly MinecraftVersionSpec[] = catalog.versions;
 
 /** The default Minecraft version for new scaffolds. */
-export const DEFAULT_MINECRAFT_VERSION = "26.3";
+export const DEFAULT_MINECRAFT_VERSION = catalog.default;
 
 /**
  * One dependency version resolved for a concrete platform. The exact
