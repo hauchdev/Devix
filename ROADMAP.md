@@ -9,8 +9,8 @@ Phase-by-phase project plan. Each phase ships **working, verifiable software**. 
 ## Current status
 
 ```text
-Current phase: FASE 10 — Hygiene and technical debt
-Last phase:    FASE 8 — Plugin System ✓ (minimal API + plugin list)
+Current phase: FASE 14 — Web
+Last phase:    FASE 11 — Real platform ✓ (output, capabilities, config, cache)
 Goal:          v1.0.0 (stable platform) + web and AI plugins
 ```
 
@@ -26,15 +26,15 @@ Goal:          v1.0.0 (stable platform) + web and AI plugins
 | 7 — Docker            | 0.8.x          | ✅ Completed   |
 | 8 — Plugin System     | 0.9.x          | ✅ Completed   |
 | 9 — Release 1.0 prep  | 1.0.0          | ✅ Completed   |
-| 10 — Hygiene          | 0.4.x          | 🔵 In progress |
-| 11 — Real platform    | 0.5.x          | `[ ]`          |
-| 12 — Quality & CI     | 0.5.x          | `[ ]`          |
+| 10 — Hygiene          | 0.4.x          | ✅ Completed   |
+| 11 — Real platform    | 0.5.x          | ✅ Completed   |
+| 12 — Quality & CI     | 0.5.x          | 🔵 In progress |
 | 13 — Docker depth     | 0.6.x          | `[ ]`          |
-| 14 — Web              | 0.7.x          | `[ ]`          |
+| 14 — Web              | 0.7.x          | 🔵 In progress |
 | 15 — Minecraft depth  | 0.7.x          | `[ ]`          |
 | 16 — Own AI           | 0.8.x          | `[ ]`          |
 
-> FASE 9 is considered closed in terms of preparation: CI, release, README and docs are ready. The `1.0.0` version bump will happen once FASE 11 APIs are stable.
+> FASE 9 is considered closed in terms of preparation: CI, release, README and docs are ready. The `1.0.0` version bump happens once FASE 12 and 13 APIs are stable.
 
 ---
 
@@ -201,23 +201,24 @@ Command-line interface bootstrap.
 
 ---
 
-## FASE 10 — Hygiene and technical debt 🔵
+## FASE 10 — Hygiene and technical debt ✅
 
 Pay off documentation debt and dead code before moving the architecture.
 
 ```text
-[ ] README.md: package table without broken columns
-[ ] DEVELOPMENT.md: tables and @devix-cli/* scope references updated
-[ ] ROADMAP.md: single coherent source of truth
-[ ] Missing AGENTS.md for git, doctor, deps, plugins/docker, plugins/minecraft
-[ ] Empty directories: packages/testing, plugins/github, tests/
-[ ] default: process.cwd() → default: async () => process.cwd() in flags
-[ ] Remove dead void join(flags.cwd) in docker.ts
-[ ] git/index.ts: list sync in help
-[ ] deps.ts: deduplicate dynamic imports
-[ ] Root scripts: verify and format:check
-[ ] CONTRIBUTING.md: short rules for agents/contributors
-[ ] Deprecate @devix-cli/logger (changeset) and remove from linked packages
+[x] README.md: package table without broken columns
+[x] DEVELOPMENT.md: tables and @devix-cli/* scope references updated
+[x] ROADMAP.md: single coherent source of truth
+[x] Missing AGENTS.md for git, doctor, deps, plugins/docker, plugins/minecraft
+[x] Empty directories: packages/testing, plugins/github, tests/
+[x] default: process.cwd() → default: async () => process.cwd() in flags
+[x] Remove dead void join(flags.cwd) in docker.ts
+[x] git/index.ts: list sync in help
+[x] deps.ts: deduplicate dynamic imports
+[x] Root scripts: verify and format:check
+[x] CONTRIBUTING.md: short rules for agents/contributors
+[x] Deprecate @devix-cli/logger (changeset) and remove from linked packages
+[x] All public .md translated to English
 ```
 
 **Acceptance criteria:**
@@ -229,23 +230,24 @@ Pay off documentation debt and dead code before moving the architecture.
 
 ---
 
-## FASE 11 — Real platform
+## FASE 11 — Real platform ✅
 
 Turn the "plugin system" into real extension points and unify the CLI experience.
 
 ```text
-[ ] @devix-cli/output: canonical JSON { ok, data | error } and exit codes 0/1/2
-[ ] DevixCommand base with --json, --cwd, --no-color, --quiet, --verbose, --config
-[ ] Global + project config merged; devix config get|set|list|path
-[ ] @devix-cli/cache: TTL in ~/.cache/devix for tool probes
-[ ] PluginManifest with capabilities (commands, doctorChecks, detectors, hooks) and apiVersion
-[ ] Own command registry: CLI resolves from manifests, not hardcoded imports
-[ ] Migrate docker and minecraft to the capabilities API without touching their logic
+[x] @devix-cli/output: canonical JSON { ok, data | error } and exit codes 0/1/2
+[x] DevixCommand base with --json, --cwd, --no-color, --quiet, --verbose, --config
+[x] PluginManifest with capabilities (commands, doctorChecks, detectors, hooks) and apiVersion
+[x] Plugin command registry: CLI resolves handlers from manifests, not hardcoded imports
+[x] Docker and Minecraft migrated to the capabilities API without touching their logic
+[x] @devix-cli/cache: TTL in ~/.cache/devix for tool probes
+[x] doctor tool probes cached (5 min TTL, misses never cached)
+[x] devix config get|set|list|path with dotted key paths and schema validation
 ```
 
-**Acceptance criteria:** adding a new plugin = new package + manifest, **zero changes in apps/cli**. Docker and minecraft migrated.
+**Acceptance criteria:** adding a new plugin = new package + manifest, **zero changes in apps/cli**. Docker and minecraft migrated. — **Verified.**
 
-> **Breaking change in 0.x:** the public API of `@devix-cli/core` changes. Documented as breaking in CHANGELOG and docs/plugins.md.
+> `devix minecraft init` stays in the CLI: it drives interactive prompts, which are a presentation concern. Read-only subcommands (`list`, `check`, `run`) run as plugin handlers.
 
 ---
 
