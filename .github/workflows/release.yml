@@ -56,14 +56,18 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          # --provenance links the published tarballs to this workflow
-          # run, so consumers can verify they were built from this repo.
-          publish: pnpm exec changeset publish --provenance
+          # `changeset publish` has no --provenance flag: it builds the
+          # `npm publish` argv itself (--access, --tag, --json) and will
+          # not forward one. npm reads its config from the environment, so
+          # provenance is enabled by setting npm_config_provenance, which
+          # is how the tarballs end up linked to this workflow run.
+          publish: pnpm exec changeset publish
           version: pnpm exec changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm_config_provenance: "true"
 
       - name: Verify published packages
         if: steps.changesets.outputs.published == 'true'

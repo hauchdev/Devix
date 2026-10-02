@@ -28,10 +28,18 @@ function parseSpec(spec) {
 
 /** Reads one published manifest from the registry. */
 async function fetchManifest(name, version) {
-  const { stdout } = await run("npm", ["view", `${name}@${version}`, "--json"], {
-    encoding: "utf8",
-    maxBuffer: 8 * 1024 * 1024,
-  });
+  // `npm` is a .cmd shim on Windows, which execFile cannot spawn without
+  // a shell. The command and arguments are hardcoded registry lookups,
+  // so the shell adds no injection surface — it only resolves the shim.
+  const { stdout } = await run(
+    process.platform === "win32" ? "npm.cmd" : "npm",
+    ["view", `${name}@${version}`, "--json"],
+    {
+      encoding: "utf8",
+      maxBuffer: 8 * 1024 * 1024,
+      ...(process.platform === "win32" ? { shell: true } : {}),
+    },
+  );
 
   const parsed = JSON.parse(stdout);
   // `npm view pkg@ver --json` returns a string when there is a single
@@ -55,7 +63,14 @@ for (const spec of specs) {
   try {
     manifest = await fetchManifest(name, version);
   } catch (error) {
-    problems.push(`${name}@${version} is not on the registry: ${error.message}`);
+    // npm writes its own diagnostics to stderr, and its config warnings
+    // come before the real error. Report the first line that is actually
+    // an error, so a 404 reads as a 404.
+    const detail = error.stderr
+      ?.split("\n")
+      .map((line) => line.trim())
+      .find((line) => line.startsWith("npm error"));
+    problems.push(`${name}@${version} is not readable on the registry: ${detail ?? error.message}`);
     continue;
   }
 
