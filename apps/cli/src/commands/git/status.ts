@@ -9,7 +9,7 @@ export default class GitStatus extends Command {
     cwd: Flags.string({
       char: "d",
       description: "Repository directory. Defaults to the current directory.",
-      default: process.cwd(),
+      default: async () => process.cwd(),
     }),
     json: Flags.boolean({
       description: "Output the status as JSON.",

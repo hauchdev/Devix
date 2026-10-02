@@ -11,7 +11,7 @@ export default class Doctor extends Command {
     cwd: Flags.string({
       char: "d",
       description: "Directory to inspect. Defaults to the current directory.",
-      default: process.cwd(),
+      default: async () => process.cwd(),
     }),
     json: Flags.boolean({
       description: "Output the report as JSON.",

@@ -9,7 +9,7 @@ export default class Detect extends Command {
     cwd: Flags.string({
       char: "d",
       description: "Directory to detect from. Defaults to the current directory.",
-      default: process.cwd(),
+      default: async () => process.cwd(),
     }),
     json: Flags.boolean({
       description: "Output the summary as JSON.",

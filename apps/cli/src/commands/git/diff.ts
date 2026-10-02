@@ -11,7 +11,7 @@ export default class GitDiff extends Command {
     cwd: Flags.string({
       char: "d",
       description: "Repository directory. Defaults to the current directory.",
-      default: process.cwd(),
+      default: async () => process.cwd(),
     }),
     json: Flags.boolean({
       description: "Output the diff stat as JSON.",
