@@ -1,23 +1,12 @@
-import { Command, Flags } from "@oclif/core";
 import { join } from "node:path";
 
-import type { CheckResult } from "@devix-cli/doctor";
+import { DevixCommand, devixBaseFlags, field, toUiStatus } from "../lib/devix-command.js";
 
-export default class Doctor extends Command {
+export default class Doctor extends DevixCommand {
   static override description =
     "Diagnose your environment and project: tool versions, detected stack and health.";
 
-  static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Directory to inspect. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
-    json: Flags.boolean({
-      description: "Output the report as JSON.",
-      default: false,
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Doctor);
@@ -32,45 +21,59 @@ export default class Doctor extends Command {
       return;
     }
 
-    this.log(`Project root: ${report.project.root}`);
-    this.log("");
-
-    this.log("Environment:");
-    for (const check of report.environment.checks) {
-      this.log(renderCheck(check));
-    }
-    this.log("");
-
-    this.log("Project:");
-    if (!report.project.isProject) {
-      this.log("  No project markers found in this directory tree.");
+    const ui = this.renderer(flags);
+    if (flags.quiet) {
       return;
     }
-    this.log(section("  Languages", report.project.languages));
-    this.log(section("  Package managers", report.project.packageManagers));
-    this.log(section("  Tools", report.project.tools));
-    if (report.project.minecraft.length > 0) {
-      this.log(section("  Minecraft", report.project.minecraft));
+
+    ui.title("devix doctor");
+    ui.blank();
+
+    ui.heading("Environment", { count: report.environment.checks.length });
+    ui.fields(
+      report.environment.checks.map((check) =>
+        field(
+          check.name,
+          check.detail,
+          toUiStatus(check.status),
+          check.status === "missing" ? "Not found on PATH." : undefined,
+        ),
+      ),
+    );
+    ui.blank();
+
+    ui.heading("Project");
+    if (!report.project.isProject) {
+      ui.fields([
+        field("Markers", "none", "warn", `Nothing recognized under ${report.project.root}`),
+      ]);
+    } else {
+      ui.fields([
+        field("Root", report.project.root),
+        field("Languages", report.project.languages.join(", ") || "none"),
+        field("Managers", report.project.packageManagers.join(", ") || "none"),
+        field("Tools", report.project.tools.join(", ") || "none"),
+        ...(report.project.minecraft.length > 0
+          ? [field("Minecraft", report.project.minecraft.join(", "))]
+          : []),
+      ]);
     }
 
-    this.log("");
-    const missing = report.environment.checks.filter((c) => c.status !== "ok").length;
-    this.log(
-      missing === 0
-        ? "Status: all environment tools detected."
-        : `Status: ${missing} environment tool(s) not found.`,
-    );
+    const missing = report.environment.checks.filter((check) => check.status !== "ok");
+
+    ui.blank();
+    ui.divider();
+    if (missing.length === 0) {
+      ui.line(`  ${ui.style.success(ui.symbols.success)}  Every environment tool was found.`);
+    } else {
+      ui.line(
+        `  ${ui.style.warn(ui.symbols.warn)}  ${String(missing.length)} tool(s) not found: ${missing
+          .map((check) => check.name)
+          .join(", ")}`,
+      );
+      ui.blank();
+      ui.hint("Devix degrades gracefully: missing tools become warnings, not failures.");
+    }
+    ui.blank();
   }
-}
-
-/** Renders one check line: "✓ Node.js 22.20.0" or "✗ pnpm (not found)". */
-function renderCheck(check: CheckResult): string {
-  const mark = check.status === "ok" ? "✓" : "✗";
-  const detail = check.detail === undefined ? "(not found)" : check.detail;
-  return `  ${mark} ${check.name} ${detail}`;
-}
-
-/** Formats an indented section line, or "none" when empty. */
-function section(label: string, values: readonly string[]): string {
-  return `${label}: ${values.length > 0 ? values.join(", ") : "none"}`;
 }

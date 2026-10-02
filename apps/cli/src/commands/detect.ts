@@ -1,21 +1,12 @@
-import { Command, Flags } from "@oclif/core";
 import { join } from "node:path";
 
-export default class Detect extends Command {
+import { DevixCommand, devixBaseFlags, field } from "../lib/devix-command.js";
+
+export default class Detect extends DevixCommand {
   static override description =
     "Detect the current project stack: languages, package managers and tools.";
 
-  static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Directory to detect from. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
-    json: Flags.boolean({
-      description: "Output the summary as JSON.",
-      default: false,
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Detect);
@@ -45,36 +36,42 @@ export default class Detect extends Command {
       return;
     }
 
-    this.log(`Project root: ${summary.root}`);
-    this.log("");
-
-    if (!summary.isProject) {
-      this.log("No project markers found in this directory tree.");
+    const ui = this.renderer(flags);
+    if (flags.quiet) {
       return;
     }
 
-    this.log(
-      section(
-        "Languages",
-        summary.languages.map((entry) => entry.id),
-      ),
-    );
-    this.log(
-      section(
-        "Package managers",
-        summary.packageManagers.map((entry) => entry.id),
-      ),
-    );
-    this.log(
-      section(
-        "Tools",
-        summary.tools.map((entry) => entry.id),
-      ),
-    );
-  }
-}
+    ui.title("devix detect");
+    ui.blank();
 
-/** Formats a one-line summary section: "Label: a, b, c" or "Label: none". */
-function section(label: string, values: readonly string[]): string {
-  return `${label}: ${values.length > 0 ? values.join(", ") : "none"}`;
+    if (!summary.isProject) {
+      ui.fields([
+        field("Root", summary.root),
+        field("Markers", "none", "warn", "No project markers in this directory tree."),
+      ]);
+      ui.blank();
+      return;
+    }
+
+    ui.heading("Project");
+    ui.fields([
+      field("Root", summary.root),
+      field("Languages", summary.languages.map((entry) => entry.id).join(", ") || "none"),
+      field("Managers", summary.packageManagers.map((entry) => entry.id).join(", ") || "none"),
+      field("Tools", summary.tools.map((entry) => entry.id).join(", ") || "none"),
+    ]);
+
+    if (flags.verbose) {
+      const evidence = [...summary.languages, ...summary.packageManagers, ...summary.tools];
+      ui.blank();
+      ui.heading("Evidence", { count: evidence.length });
+      ui.fields(
+        evidence.map((entry) =>
+          field(entry.id, entry.detection?.marker, "muted", entry.detection?.path),
+        ),
+      );
+    }
+
+    ui.blank();
+  }
 }

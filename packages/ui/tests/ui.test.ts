@@ -164,6 +164,24 @@ describe("Ui output", () => {
     expect(plain(render((ui) => ui.fields([{ label: "Empty" }])))[0]).toContain("—");
   });
 
+  it("omits the marker on rows with no status but keeps the column", () => {
+    const lines = plain(
+      render((ui) =>
+        ui.fields([
+          { label: "Plain", value: "first-value" },
+          { label: "Ok", value: "second-value", status: "ok" },
+        ]),
+      ),
+    );
+
+    // The neutral row is indented, not marked: a bullet that means
+    // nothing is decoration, not information.
+    expect(lines[0]?.startsWith("  Plain")).toBe(true);
+    expect(lines[1]?.startsWith("✓ Ok")).toBe(true);
+    // Both values still start at the same column.
+    expect(lines[0]?.indexOf("first-value")).toBe(lines[1]?.indexOf("second-value"));
+  });
+
   it("renders a hint under its field", () => {
     const lines = plain(
       render((ui) => ui.fields([{ label: "Java", value: "21", hint: "Minecraft needs 21" }])),
@@ -205,6 +223,26 @@ describe("Ui output", () => {
     expect(lines).toHaveLength(4);
     expect(lines[0]).toContain("ID");
     expect(lines[2]).toContain("Alpha");
+  });
+
+  it("aligns the table header with the rows", () => {
+    const lines = plain(
+      render((ui) =>
+        ui.table(
+          ["BRANCH", "COMMIT"],
+          [{ cells: ["main", "5834a6cb7"], status: "ok" }, { cells: ["other", "111111111"] }],
+        ),
+      ),
+    );
+
+    // Header, separator and data rows all start in the same column.
+    const headerStart = lines[0]?.search(/\S/);
+    expect(headerStart).toBe(2);
+    expect(lines[1]?.search(/\S/)).toBe(2);
+    expect(lines[2]?.search(/\S/)).toBe(0);
+    expect(lines[3]?.search(/\S/)).toBe(2);
+    // "main" and "other" share a column despite different markers.
+    expect(lines[2]?.indexOf("main")).toBe(lines[3]?.indexOf("other"));
   });
 
   it("truncates the widest column on a narrow terminal", () => {

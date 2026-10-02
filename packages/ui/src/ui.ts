@@ -9,6 +9,9 @@ export type Status = "ok" | "warn" | "error" | "info" | "muted";
 /** Longest hairline drawn after a heading. */
 const RULE_LENGTH = 28;
 
+/** Columns reserved for the status marker in `fields` and `table`. */
+const MARKER_WIDTH = 2;
+
 /** A label/value pair. */
 export interface Field {
   readonly label: string;
@@ -193,22 +196,26 @@ export class Ui {
    * which is what makes a dense report scannable. A field with no value
    * shows an em dash rather than an empty cell, so "missing" never reads
    * as "unfinished".
+   *
+   * A marker is drawn only when the row carries a real status. Rows
+   * without one are indented into the same column, so the block stays
+   * aligned while carrying no decoration that means nothing.
    */
   fields(rows: readonly Field[]): this {
     if (rows.length === 0) {
       return this;
     }
 
-    const markerWidth = 2;
     const labelWidth = Math.min(
       Math.max(...rows.map((row) => visibleWidth(row.label))),
       Math.floor(this.capabilities.width / 2),
     );
-    const indent = " ".repeat(markerWidth + labelWidth + 2);
+    const indent = " ".repeat(MARKER_WIDTH + labelWidth + 2);
 
     for (const row of rows) {
       const status = row.status ?? "info";
       const label = padEndVisible(this.style.muted(row.label), labelWidth);
+      const lead = status === "info" ? " ".repeat(MARKER_WIDTH) : `${this.marker(status)} `;
 
       const value =
         row.value === undefined || row.value.length === 0
@@ -218,7 +225,7 @@ export class Ui {
               truncateVisible(row.value, Math.max(4, this.capabilities.width - indent.length)),
             );
 
-      this.line(`${this.marker(status)} ${label}  ${value}`);
+      this.line(`${lead}${label}  ${value}`);
 
       if (row.hint !== undefined) {
         this.line(`${indent}${this.style.muted(row.hint)}`);
@@ -265,9 +272,13 @@ export class Ui {
     const total = (): number =>
       widths.reduce((sum, width) => sum + width, 0) + gap * (columnCount - 1);
 
+    // The marker column is part of every line, so it comes out of the
+    // budget before any column is sized.
+    const budget = Math.max(4, this.capabilities.width - MARKER_WIDTH);
+
     // Shrink the widest non-final column first: the final column is the
     // one most likely to hold prose worth truncating.
-    let overflow = total() - this.capabilities.width;
+    let overflow = total() - budget;
     while (overflow > 0 && columnCount > 1) {
       const lastIndex = columnCount - 2;
       let widest = 0;
@@ -298,12 +309,12 @@ export class Ui {
       .map((text, index) => padEndVisible(this.style.muted(text), widths[index] ?? 0))
       .join(" ".repeat(gap))
       .trimEnd();
-    this.line(header);
+    this.line(`${" ".repeat(MARKER_WIDTH)}${header}`);
 
     this.line(
-      this.style.muted(
+      `${" ".repeat(MARKER_WIDTH)}${this.style.muted(
         widths.map((width) => this.symbols.rule.repeat(Math.max(1, width))).join(" ".repeat(gap)),
-      ),
+      )}`,
     );
 
     for (const row of rows) {
@@ -313,14 +324,18 @@ export class Ui {
         return padEndVisible(truncateVisible(cell, width), width);
       });
 
-      const text = truncateVisible(cells.join(" ".repeat(gap)).trimEnd(), this.capabilities.width);
+      const text = truncateVisible(
+        cells.join(" ".repeat(gap)).trimEnd(),
+        Math.max(4, this.capabilities.width - MARKER_WIDTH),
+      );
 
-      if (status === undefined) {
-        this.line(text);
-        continue;
-      }
-
-      this.line(`${this.marker(status)} ${text}`);
+      // The marker column is always reserved, so rows with and without a
+      // status stay in the same column instead of stepping sideways.
+      this.line(
+        status === undefined
+          ? `${" ".repeat(MARKER_WIDTH)}${text}`
+          : `${this.marker(status)} ${text}`,
+      );
     }
 
     return this;

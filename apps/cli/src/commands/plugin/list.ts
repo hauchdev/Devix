@@ -1,14 +1,9 @@
-import { Command, Flags } from "@oclif/core";
+import { DevixCommand, devixBaseFlags, field } from "../../lib/devix-command.js";
 
-export default class PluginList extends Command {
+export default class PluginList extends DevixCommand {
   static override description = "List installed Devix plugins.";
 
-  static override flags = {
-    json: Flags.boolean({
-      description: "Output as JSON.",
-      default: false,
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { flags } = await this.parse(PluginList);
@@ -18,25 +13,46 @@ export default class PluginList extends Command {
     );
 
     const registry = createPluginRegistry().registerAll(BUILTIN_PLUGIN_MANIFESTS);
-    const plugins = registry.all().map((p) => p.manifest);
+    const plugins = registry.all().map((entry) => entry.manifest);
 
     if (flags.json) {
       this.log(JSON.stringify(plugins, null, 2));
       return;
     }
 
-    if (plugins.length === 0) {
-      this.log("No plugins installed.");
+    const ui = this.renderer(flags);
+    if (flags.quiet) {
       return;
     }
 
-    for (const plugin of plugins) {
-      const commandIds = plugin.capabilities?.commands?.map((command) => command.id) ?? [];
-      const legacyCommands = plugin.commands ?? [];
-      const allCommands = [...new Set([...commandIds, ...legacyCommands])];
-      this.log(`  ${plugin.id} ${plugin.version}`);
-      this.log(`    ${plugin.description}`);
-      this.log(`    commands: ${allCommands.join(", ") || "none"}`);
+    ui.title("devix plugin list");
+    ui.blank();
+
+    if (plugins.length === 0) {
+      ui.fields([field("Plugins", "none", "muted")]);
+      ui.blank();
+      return;
     }
+
+    ui.heading("Installed plugins", { count: plugins.length });
+    ui.fields(
+      plugins.map((plugin) => {
+        const capabilityCommands =
+          plugin.capabilities?.commands?.map((command) => command.id) ?? [];
+        const legacyCommands = plugin.commands ?? [];
+        const commands = [...new Set([...capabilityCommands, ...legacyCommands])];
+
+        return field(
+          `${plugin.name}  ${plugin.version}`,
+          commands.join(", ") || "no commands",
+          "info",
+          plugin.description,
+        );
+      }),
+    );
+
+    ui.blank();
+    ui.footnote(`api version 1 · ${String(plugins.length)} plugins`);
+    ui.blank();
   }
 }

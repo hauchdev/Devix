@@ -70,9 +70,9 @@ describe("devix CLI (compiled binary)", () => {
   it("doctor prints an environment section with node present", async () => {
     const { stdout } = await runCli(["doctor"]);
 
-    expect(stdout).toContain("Environment:");
-    expect(stdout).toMatch(/✓ Node\.js \d+\.\d+/);
-    expect(stdout).toContain("Project:");
+    expect(stdout).toMatch(/^Environment\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/Node\.js\s+\d+\.\d+/);
+    expect(stdout).toMatch(/^Project\s+-+$/m);
   });
 
   it("doctor --json emits parseable report", async () => {
@@ -103,15 +103,19 @@ describe("devix CLI (compiled binary)", () => {
   }, 30_000);
 
   it("git status shows the branch of this repository", async () => {
-    const { stdout } = await runCli(["git", "status"]);
+    const { stdout } = await runCli(["git", "status", "--no-color"]);
 
-    expect(stdout).toMatch(/Branch: \S+/);
+    expect(stdout).toMatch(/^\s+Branch\s+\S+/m);
   });
 
   it("git branches marks the current branch", async () => {
-    const { stdout } = await runCli(["git", "branches"]);
+    const { stdout } = await runCli(["git", "branches", "--no-color"], undefined, undefined, {
+      DEVIX_UNICODE: "1",
+    });
 
-    expect(stdout).toMatch(/^\* main /m);
+    // The current branch is marked; every other row leaves the column
+    // blank.
+    expect(stdout).toMatch(/^✓\s+main\s+[0-9a-f]{9}/m);
   });
 
   it("git outside a repository fails with a clear message", async () => {
@@ -552,14 +556,14 @@ describe("devix CLI (compiled binary)", () => {
     const dir = await mkdtemp(join(tmpdir(), "devix-cli-doctor-mc-"));
     try {
       const plain = await runCli(["doctor"], dir);
-      expect(plain.stdout).not.toContain("Minecraft:");
+      expect(plain.stdout).not.toMatch(/^Minecraft\s/m);
 
       const resources = join(dir, "src", "main", "resources");
       await mkdir(resources, { recursive: true });
       await writeFile(join(resources, "paper-plugin.yml"), "name: DoctorMc\n", "utf8");
 
       const withMc = await runCli(["doctor"], dir);
-      expect(withMc.stdout).toContain("Minecraft: bukkit (DoctorMc)");
+      expect(withMc.stdout).toMatch(/^\s+Minecraft\s+bukkit \(DoctorMc\)$/m);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

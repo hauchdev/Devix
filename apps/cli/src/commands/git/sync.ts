@@ -1,19 +1,13 @@
-import { Command, Flags } from "@oclif/core";
 import { join } from "node:path";
 
+import { DevixCommand, devixBaseFlags, field } from "../../lib/devix-command.js";
 import { gitErrorHint } from "../../lib/git-errors.js";
 
-export default class GitSync extends Command {
+export default class GitSync extends DevixCommand {
   static override description =
     "Show how the current branch differs from its upstream. Never runs push or pull: it prints the exact commands for you to run.";
 
-  static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Repository directory. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { flags } = await this.parse(GitSync);
@@ -24,26 +18,55 @@ export default class GitSync extends Command {
     try {
       const state = await syncState(join(flags.cwd));
 
-      this.log(`Branch tracks ${state.upstream}.`);
-      this.log("");
-
-      if (state.ahead === 0 && state.behind === 0) {
-        this.log("Up to date.");
+      if (flags.json) {
+        this.log(JSON.stringify(state, null, 2));
         return;
       }
 
+      const ui = this.renderer(flags);
+      if (flags.quiet) {
+        return;
+      }
+
+      ui.title("devix git sync");
+      ui.blank();
+
+      const synced = state.ahead === 0 && state.behind === 0;
+
+      ui.fields([
+        field("Upstream", state.upstream),
+        field("Ahead", String(state.ahead), state.ahead > 0 ? "warn" : "muted"),
+        field("Behind", String(state.behind), state.behind > 0 ? "warn" : "muted"),
+      ]);
+
+      if (synced) {
+        ui.blank();
+        ui.line(`  ${ui.style.success(ui.symbols.success)}  Up to date with ${state.upstream}.`);
+        ui.blank();
+        return;
+      }
+
+      const commands: string[] = [];
       if (state.ahead > 0) {
-        this.log(`Local commits not pushed: ${state.ahead}`);
-        this.log(`  git push`);
+        commands.push("git push");
       }
       if (state.behind > 0) {
-        this.log(`Upstream commits not pulled: ${state.behind}`);
-        this.log(`  git pull --ff-only`);
+        commands.push("git pull --ff-only");
       }
+
+      ui.blank();
+      ui.panel("Run these yourself", commands, {
+        status: state.ahead > 0 && state.behind > 0 ? "error" : "warn",
+      });
+
       if (state.ahead > 0 && state.behind > 0) {
-        this.log("");
-        this.log("Branch diverged: review with git log --oneline origin/main..HEAD first.");
+        ui.blank();
+        ui.hint("Branch diverged: review with git log --oneline origin/main..HEAD first.");
       }
+
+      ui.blank();
+      ui.note("Devix never pushes or pulls on your behalf.");
+      ui.blank();
     } catch (error) {
       if (error instanceof GitError && error.code === "EINVALID") {
         this.error("current branch has no upstream to sync with", { exit: 1 });

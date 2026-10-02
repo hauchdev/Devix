@@ -1,7 +1,9 @@
-import { Command, Args, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import { join } from "node:path";
 
-export default class Deps extends Command {
+import { DevixCommand, devixBaseFlags, field } from "../lib/devix-command.js";
+
+export default class Deps extends DevixCommand {
   static override description =
     "Run read-only dependency commands through the detected package manager.";
 
@@ -13,13 +15,7 @@ export default class Deps extends Command {
     }),
   };
 
-  static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Project directory. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Deps);
@@ -32,29 +28,58 @@ export default class Deps extends Command {
         args.operation as "list" | "outdated" | "audit",
       );
 
-      this.log(`(${manager})`);
-      if (output.stdout.trim().length > 0) {
-        this.log(output.stdout.trimEnd());
+      if (flags.json) {
+        this.log(
+          JSON.stringify(
+            {
+              manager,
+              operation: args.operation,
+              exitCode: output.exitCode,
+              stdout: output.stdout,
+              stderr: output.stderr,
+            },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
+
+      const ui = this.renderer(flags);
+      if (flags.quiet) {
+        return;
+      }
+
+      ui.title(`devix deps ${args.operation}`);
+      ui.blank();
+      ui.fields([
+        field("Manager", manager),
+        field(
+          "Exit",
+          String(output.exitCode),
+          output.exitCode === 0 ? "ok" : "warn",
+          output.exitCode === 0 ? undefined : "Non-zero is a result here, not a failure.",
+        ),
+      ]);
+      ui.blank();
+      ui.divider();
+
+      // The manager output is passed through verbatim: Devix does not
+      // reformat another tool's report.
+      for (const line of output.stdout.split("\n")) {
+        ui.line(line);
       }
       if (output.stderr.trim().length > 0) {
-        this.logToStderr(output.stderr.trimEnd());
+        ui.blank();
+        for (const line of output.stderr.trim().split("\n")) {
+          ui.line(ui.style.muted(line));
+        }
       }
+
+      ui.blank();
     } catch (error) {
       if (error instanceof DepsError) {
-        switch (error.code) {
-          case "EPM_NOT_FOUND":
-            this.error(`${error.message}. Install it or run with the manager you have.`, {
-              exit: 1,
-            });
-            break;
-          case "EPM_UNDETECTED":
-            this.error("no package manager detected: add a lockfile or package.json first", {
-              exit: 1,
-            });
-            break;
-          default:
-            this.error(error.message, { exit: 1 });
-        }
+        this.error(error.message, { exit: 1 });
       }
       throw error;
     }

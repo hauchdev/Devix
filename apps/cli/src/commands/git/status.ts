@@ -1,21 +1,13 @@
-import { Command, Flags } from "@oclif/core";
 import { join } from "node:path";
 
-export default class GitStatus extends Command {
+import { DevixCommand, devixBaseFlags } from "../../lib/devix-command.js";
+import { gitErrorHint } from "../../lib/git-errors.js";
+
+export default class GitStatus extends DevixCommand {
   static override description =
     "Show the current branch and changed paths of the repository (read-only).";
 
-  static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Repository directory. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
-    json: Flags.boolean({
-      description: "Output the status as JSON.",
-      default: false,
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { flags } = await this.parse(GitStatus);
@@ -31,20 +23,41 @@ export default class GitStatus extends Command {
         return;
       }
 
-      this.log(result.branch === undefined ? "HEAD detached" : `Branch: ${result.branch}`);
-      if (!result.hasCommits) {
-        this.log("(no commits yet)");
-      }
-      if (result.entries.length === 0) {
-        this.log("Working tree clean.");
+      const ui = this.renderer(flags);
+      if (flags.quiet) {
         return;
       }
-      this.log("");
-      for (const entry of result.entries) {
-        const index = shortCode(entry.index);
-        const tree = shortCode(entry.workingTree);
-        this.log(`  ${index}${tree} ${entry.path}${entry.conflicted ? " (conflict)" : ""}`);
+
+      ui.title("devix git status");
+      ui.blank();
+      ui.fields([
+        { label: "Branch", value: result.branch ?? "HEAD detached" },
+        ...(result.hasCommits
+          ? []
+          : [{ label: "Commits", value: "none yet", status: "warn" as const }]),
+        { label: "Changes", value: String(result.entries.length) },
+      ]);
+
+      if (result.entries.length === 0) {
+        ui.blank();
+        ui.line(`  ${ui.style.success(ui.symbols.success)}  Working tree clean.`);
+        ui.blank();
+        return;
       }
+
+      ui.blank();
+      ui.table(
+        ["ST", "PATH", "STATE"],
+        result.entries.map((entry) => ({
+          cells: [
+            `${shortCode(entry.index)}${shortCode(entry.workingTree)}`,
+            entry.path,
+            entry.conflicted ? "conflict" : "changed",
+          ],
+          status: (entry.conflicted ? "error" : "warn") as "error" | "warn",
+        })),
+      );
+      ui.blank();
     } catch (error) {
       if (error instanceof GitError && error.code === "EGIT_NOT_A_REPO") {
         this.error("not a git repository", { exit: 1 });
@@ -52,7 +65,7 @@ export default class GitStatus extends Command {
       if (error instanceof GitError && error.code === "EGIT_NOT_FOUND") {
         this.error("git executable not found on PATH", { exit: 1 });
       }
-      throw error;
+      this.error(gitErrorHint(error), { exit: 1 });
     }
   }
 }
