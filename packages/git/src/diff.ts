@@ -16,6 +16,18 @@ export interface DiffStat {
 }
 
 /**
+ * Parses one `--numstat` count column.
+ *
+ * A missing or unparseable column means zero changed lines, never NaN:
+ * a count is a number a report can print, and NaN would leak into the
+ * CLI as a rendering bug rather than a data quirk.
+ */
+function toCount(column: string | undefined): number {
+  const parsed = Number.parseInt(column ?? "", 10);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+/**
  * Reads the working-tree diff against HEAD as per-file line counts
  * via `git diff HEAD --numstat`. Read-only by design: this API never
  * mutates the repository.
@@ -39,8 +51,8 @@ export async function diffStat(
     const binary = additions === "-";
     entries.push({
       path,
-      additions: binary ? 0 : Number.parseInt(additions ?? "0", 10),
-      deletions: binary ? 0 : Number.parseInt(deletions ?? "0", 10),
+      additions: binary ? 0 : toCount(additions),
+      deletions: binary ? 0 : toCount(deletions),
       binary,
     });
   }
