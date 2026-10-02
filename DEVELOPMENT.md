@@ -116,6 +116,7 @@ Devix/
 ├── packages/
 │   ├── core/                 # Shared foundations ✓
 │   ├── output/               # Canonical output shapes and exit codes
+│   ├── cache/                # TTL filesystem cache for tool probes
 │   ├── logger/               # Centralized logging ✓ (deprecated)
 │   ├── config/               # Configuration loading ✓
 │   ├── filesystem/           # FS abstractions ✓
