@@ -10,6 +10,8 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "node scripts/verify.mjs",
     "clean": "turbo clean"
   },
   "devDependencies": {
