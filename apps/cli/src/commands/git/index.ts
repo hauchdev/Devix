@@ -18,5 +18,6 @@ export default class GitCommand extends Command {
     this.log("  status    Show branch and changed paths (porcelain v2 based)");
     this.log("  branches  List local branches with the current one marked");
     this.log("  diff      Working-tree diff against HEAD as per-file line counts");
+    this.log("  sync      Show ahead/behind against upstream (print-only)");
   }
 }

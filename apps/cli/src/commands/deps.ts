@@ -17,15 +17,14 @@ export default class Deps extends Command {
     cwd: Flags.string({
       char: "d",
       description: "Project directory. Defaults to the current directory.",
-      default: process.cwd(),
+      default: async () => process.cwd(),
     }),
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Deps);
 
-    const { runDepsCommand } = await import("@devix-cli/deps");
-    const { DepsError } = await import("@devix-cli/deps");
+    const { runDepsCommand, DepsError } = await import("@devix-cli/deps");
 
     try {
       const { manager, output } = await runDepsCommand(
