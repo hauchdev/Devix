@@ -115,6 +115,7 @@ Devix/
 │
 ├── packages/
 │   ├── core/                 # Shared foundations ✓
+│   ├── output/               # Canonical output shapes and exit codes
 │   ├── logger/               # Centralized logging ✓ (deprecated)
 │   ├── config/               # Configuration loading ✓
 │   ├── filesystem/           # FS abstractions ✓

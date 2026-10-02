@@ -298,6 +298,16 @@ importers:
         specifier: 9.39.1
         version: 9.39.1(supports-color@8.1.1)
 
+  packages/output:
+    dependencies:
+      '@devix-cli/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(supports-color@8.1.1)
+
   packages/project-detector:
     dependencies:
       '@devix-cli/filesystem':
