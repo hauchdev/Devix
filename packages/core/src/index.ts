@@ -14,7 +14,12 @@ export { PluginError } from "./plugin-error.js";
 export type { PluginErrorCode } from "./plugin-error.js";
 export {
   PluginRegistry,
+  type PluginCapabilities,
+  type PluginCommandCapability,
+  type PluginDetectorCapability,
+  type PluginDoctorCheckCapability,
   type PluginErrorFactory,
+  type PluginHookCapability,
   type PluginManifest,
   type RegisteredPlugin,
 } from "./plugins.js";

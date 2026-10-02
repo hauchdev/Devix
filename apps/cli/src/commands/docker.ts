@@ -1,4 +1,5 @@
 import { Command, Args, Flags } from "@oclif/core";
+import { join } from "node:path";
 
 export default class Docker extends Command {
   static override description =
@@ -26,84 +27,60 @@ export default class Docker extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Docker);
-    void flags.cwd;
+    void join(flags.cwd);
 
     const docker = await import("@devix-cli/docker");
     const availability = await docker.dockerAvailability();
 
     if (args.operation === "status") {
-      this.renderStatus(availability, flags.json);
+      if (flags.json) {
+        this.log(JSON.stringify(availability, null, 2));
+        return;
+      }
+      if (!availability.available) {
+        this.log(`Docker unavailable: ${availability.reason ?? "unknown"}`);
+        return;
+      }
+      this.log(`Docker available: ${availability.version ?? "version unknown"}`);
       return;
-    }
-
-    if (!availability.available) {
-      this.error(this.unavailableMessage(availability), { exit: 1 });
     }
 
     if (args.operation === "ps") {
       const containers = await docker.runningContainers();
-      this.renderContainers(containers ?? [], flags.json);
+      if (flags.json) {
+        this.log(JSON.stringify(containers ?? [], null, 2));
+        return;
+      }
+      if (containers === undefined) {
+        this.log("Docker unavailable.");
+        return;
+      }
+      if (containers.length === 0) {
+        this.log("No running containers.");
+        return;
+      }
+      for (const container of containers) {
+        this.log(`${container.id}  ${container.image}  ${container.names}  ${container.status}`);
+      }
       return;
     }
 
-    const list = await docker.images();
-    this.renderImages(list ?? [], flags.json);
-  }
-
-  private renderStatus(
-    availability: { available: boolean; version?: string; reason?: string },
-    json: boolean,
-  ): void {
-    if (json) {
-      this.log(JSON.stringify(availability, null, 2));
+    // images
+    const images = await docker.images();
+    if (flags.json) {
+      this.log(JSON.stringify(images ?? [], null, 2));
       return;
     }
-    if (availability.available) {
-      this.log(`✓ Docker ${availability.version ?? ""}`);
-    } else {
-      this.log(`✗ Docker unavailable: ${this.unavailableMessage(availability)}`);
-    }
-  }
-
-  private renderContainers(
-    containers: { id: string; image: string; names: string; status: string }[],
-    json: boolean,
-  ): void {
-    if (json) {
-      this.log(JSON.stringify(containers, null, 2));
-      return;
-    }
-    if (containers.length === 0) {
-      this.log("No running containers.");
-      return;
-    }
-    for (const c of containers) {
-      this.log(
-        `  ${c.id.slice(0, 12).padEnd(14)}${c.image.padEnd(28)}${c.names.padEnd(24)}${c.status}`,
-      );
-    }
-  }
-
-  private renderImages(
-    images: { repository: string; tag: string; size: string }[],
-    json: boolean,
-  ): void {
-    if (json) {
-      this.log(JSON.stringify(images, null, 2));
+    if (images === undefined) {
+      this.log("Docker unavailable.");
       return;
     }
     if (images.length === 0) {
-      this.log("No images.");
+      this.log("No local images.");
       return;
     }
     for (const image of images) {
-      this.log(`  ${`${image.repository}:${image.tag}`.padEnd(40)}${image.size}`);
+      this.log(`${image.repository}:${image.tag}  ${image.size}`);
     }
-  }
-
-  private unavailableMessage(availability: { reason?: string }): string {
-    return availability.reason === "cli-missing"
-      ? "the docker CLI is not installed"
-      : "the Docker daemon is not running";
   }
 }
