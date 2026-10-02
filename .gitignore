@@ -1,8 +1,6 @@
 node_modules/
 .pnpm-store/
 
-/DEVELOPMENT.md
-/ROADMAP.md
 /AGENTS.md
 /packages/*/AGENTS.md
 /apps/*/AGENTS.md
