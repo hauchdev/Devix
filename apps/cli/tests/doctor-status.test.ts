@@ -1,0 +1,87 @@
+import { describe, expect, it } from "vitest";
+
+import { runCli } from "./helpers/subprocess.js";
+
+const withTempDir = async (prefix: string, body: (dir: string) => Promise<void>): Promise<void> => {
+  const { mkdtemp, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const dir = await mkdtemp(join(tmpdir(), prefix));
+  try {
+    await body(dir);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+};
+
+describe("devix doctor and status", () => {
+  it("doctor prints an environment section with node present", async () => {
+    const { stdout } = await runCli(["doctor"]);
+
+    expect(stdout).toMatch(/^Environment\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/Node\.js\s+\d+\.\d+/);
+    expect(stdout).toMatch(/^Project\s+-+$/m);
+  }, 30_000);
+
+  it("doctor --json emits parseable report", async () => {
+    const { stdout } = await runCli(["doctor", "--json"]);
+
+    const parsed = JSON.parse(stdout) as {
+      environment: { checks: { id: string; status: string }[] };
+      project: { isProject: boolean };
+    };
+    const ids = parsed.environment.checks.map((c) => c.id);
+    expect(ids).toEqual(["node", "pnpm", "npm", "yarn", "bun", "git"]);
+    const node = parsed.environment.checks.find((c) => c.id === "node");
+    expect(node?.status).toBe("ok");
+  }, 30_000);
+
+  it("doctor reports an empty directory without error", async () => {
+    await withTempDir("devix-cli-doctor-empty-", async (dir) => {
+      const { stdout } = await runCli(["doctor", "--json"], dir);
+
+      const parsed = JSON.parse(stdout) as { project: { isProject: boolean } };
+      expect(parsed.project.isProject).toBe(false);
+    });
+  }, 30_000);
+
+  it("status combines project, environment, git and docker", async () => {
+    const { stdout } = await runCli(["status", "--no-color"]);
+
+    expect(stdout).toContain("devix status");
+    expect(stdout).toMatch(/^Project\s+-+$/m);
+    expect(stdout).toMatch(/^Environment\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/^Git\s+-+$/m);
+    expect(stdout).toMatch(/^Docker\s+-+$/m);
+  }, 30_000);
+
+  it("status degrades to ascii and no color on a legacy terminal", async () => {
+    const { stdout } = await runCli(["status", "--no-color"], undefined, undefined, {
+      DEVIX_UNICODE: "0",
+      NO_COLOR: "1",
+    });
+
+    // No ANSI escapes and no box drawing: a legacy Windows console or a
+    // piped log file must stay readable.
+    // eslint-disable-next-line no-control-regex
+    expect(stdout).not.toMatch(/\[/);
+    expect(stdout).not.toContain("─");
+    expect(stdout).not.toContain("✓");
+    expect(stdout).toMatch(/^Project\s+-+$/m);
+  }, 30_000);
+
+  it("status --json emits all sections parseable", async () => {
+    const { stdout } = await runCli(["status", "--json"]);
+
+    const parsed = JSON.parse(stdout) as {
+      project: unknown;
+      environment: unknown;
+      git: unknown;
+      docker: unknown;
+    };
+    expect(parsed.project).toBeDefined();
+    expect(parsed.environment).toBeDefined();
+    expect(parsed.git).toBeDefined();
+    expect(parsed.docker).toBeDefined();
+  }, 30_000);
+});
