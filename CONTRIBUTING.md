@@ -21,10 +21,10 @@ git clone https://github.com/hauchdev/Devix.git
 cd Devix
 pnpm install
 
-pnpm build && pnpm test && pnpm lint && pnpm typecheck
+pnpm verify
 ```
 
-All four commands must be green before you start coding.
+`pnpm verify` runs lint, typecheck, test, build and prettier --check. It must be green before you start coding and before every commit.
 
 ## Project rules
 
@@ -44,8 +44,7 @@ git switch -c feat/my-feature
 
 # ... develop ...
 
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
-npx prettier --check .
+pnpm verify
 
 git add <files>
 git commit -m "feat(scope): describe the change"
@@ -87,6 +86,21 @@ A PR must:
 
 - **Changesets**: if your change affects users, add one with `pnpm changeset` and include it in the PR.
 - **Semantic Versioning** across all packages.
+
+## Rules for AI agents
+
+If you are an AI agent working on this repo, the public rules above apply. In addition:
+
+- Read the project [architecture docs](./docs/architecture.md) and this file before modifying code.
+- Do not change architecture without a justified reason.
+- Do not introduce unnecessary dependencies.
+- Do not disable `strict` or ignore TypeScript errors.
+- Do not delete tests to make the suite pass.
+- Do not modify public APIs without documenting the change.
+- Do not make unrelated changes.
+- Do not generate artificial commits.
+
+> Internal `AGENTS.md` files are kept out of the public repository by `.gitignore`. Human contributors should rely on this file and `docs/architecture.md`.
 
 ## Reporting bugs and proposing features
 
