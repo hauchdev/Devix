@@ -1,5 +1,4 @@
 import { gradleJavaBlocks } from "./gradle-common.js";
-import { gradleGitignore } from "./gradle-multimodule.js";
 import {
   versionsFor,
   type PlatformRenderer,
@@ -329,6 +328,5 @@ export const renderMultiLoader: PlatformRenderer = (context) => {
     ...commonSources(context),
     ...loaderModules(context, loaders),
     ...extraModuleFiles(context),
-    { path: ".gitignore", contents: gradleGitignore() },
   ];
 };

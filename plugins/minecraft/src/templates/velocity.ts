@@ -4,11 +4,7 @@ import {
   moduleSrcMain,
   renderSingleModuleSettings,
 } from "./gradle-common.js";
-import {
-  gradleGitignore,
-  renderExtraModuleBuilds,
-  renderMultimoduleSettings,
-} from "./gradle-multimodule.js";
+import { renderExtraModuleBuilds, renderMultimoduleSettings } from "./gradle-multimodule.js";
 import { packageLeaf, packagePath, pascalCase, type PlatformRenderer } from "./types.js";
 import { extraModuleSources } from "./paper.js";
 
@@ -100,6 +96,5 @@ export const renderVelocity: PlatformRenderer = (context) => {
     },
     ...extraModuleSources(context, "proxy plugin"),
     ...renderExtraModuleBuilds(context),
-    { path: ".gitignore", contents: gradleGitignore() },
   ];
 };

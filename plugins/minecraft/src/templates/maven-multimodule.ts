@@ -116,11 +116,6 @@ export function renderStandaloneMavenPom(
   ].join("\n");
 }
 
-/** The .gitignore used by Maven-based scaffolds. */
-export function mavenGitignore(): string {
-  return ["target/", ".idea/", "*.iml", ""].join("\n");
-}
-
 /** Extra module poms for Maven multi-module scaffolds. */
 export function renderMavenExtraModulePoms(
   context: TemplateContext,

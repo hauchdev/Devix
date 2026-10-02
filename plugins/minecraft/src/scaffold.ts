@@ -1,5 +1,6 @@
 import { isFile, writeFileString } from "@devix-cli/filesystem";
 import { createDefaultRegistry, detectMinecraftPlatforms } from "@devix-cli/project-detector";
+import { chmod } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
 import { MinecraftError } from "./errors.js";
@@ -300,6 +301,11 @@ async function writeAll(
     const skipped = !dryRun && (await isFile(destination));
     if (!dryRun && !skipped) {
       await writeFileString(destination, file.contents, { createDirectories: true });
+      if (file.path === "gradlew") {
+        await chmod(destination, 0o755).catch(() => {
+          // Best-effort: Windows does not use POSIX permissions.
+        });
+      }
     }
     entries.push({ path: destination, skipped });
   }

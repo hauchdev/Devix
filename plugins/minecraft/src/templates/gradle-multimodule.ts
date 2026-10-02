@@ -79,7 +79,3 @@ export function renderExtraModuleBuilds(context: TemplateContext): TemplateFile[
   return files;
 }
 
-/** The .gitignore used by every Gradle-based scaffold. */
-export function gradleGitignore(): string {
-  return ["build/", ".gradle/", "run/", ""].join("\n");
-}

@@ -5,11 +5,7 @@ import {
   moduleSrcMain,
   renderSingleModuleSettings,
 } from "./gradle-common.js";
-import {
-  gradleGitignore,
-  renderExtraModuleBuilds,
-  renderMultimoduleSettings,
-} from "./gradle-multimodule.js";
+import { renderExtraModuleBuilds, renderMultimoduleSettings } from "./gradle-multimodule.js";
 import {
   extraModules,
   packageLeaf,
@@ -174,6 +170,5 @@ export const renderFabric: PlatformRenderer = (context) => {
   files.push(...renderExtraModuleBuilds(context));
 
   files.push({ path: "src/main/resources/assets/.gitkeep", contents: "" });
-  files.push({ path: ".gitignore", contents: gradleGitignore() });
   return files;
 };

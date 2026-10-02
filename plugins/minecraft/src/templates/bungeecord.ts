@@ -1,6 +1,5 @@
 import { moduleResources, moduleSrcMain } from "./gradle-common.js";
 import {
-  mavenGitignore,
   renderMavenExtraModulePoms,
   renderMavenModulePom,
   renderMavenParentPom,
@@ -83,7 +82,6 @@ export const renderBungeeCord: PlatformRenderer = (context) => {
     },
     ...extraModuleSources(context, "proxy plugin"),
     ...renderMavenExtraModulePoms(context, slug),
-    { path: ".gitignore", contents: mavenGitignore() },
   );
   return files;
 };

@@ -1,5 +1,4 @@
 import { moduleSrcMain } from "./gradle-common.js";
-import { gradleGitignore } from "./gradle-multimodule.js";
 import {
   extraModules,
   packageLeaf,
@@ -330,6 +329,5 @@ export const renderArchitectury: PlatformRenderer = (context) => {
             ].join("\n"),
     });
   }
-  files.push({ path: ".gitignore", contents: gradleGitignore() });
   return files;
 };

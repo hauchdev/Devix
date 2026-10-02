@@ -9,6 +9,7 @@ import { renderPaper } from "./paper.js";
 import { renderSpigot } from "./spigot.js";
 import { renderVelocity } from "./velocity.js";
 import { renderMultiLoader } from "./multiloader.js";
+import { renderProjectMeta } from "./project-meta.js";
 import type { PlatformRenderer, TemplateContext, TemplateFile } from "./types.js";
 
 /** One renderer per catalog platform id. */
@@ -30,9 +31,12 @@ const RENDERERS: Readonly<Record<string, PlatformRenderer>> = {
  * combined renderer; single platforms go through their own.
  */
 export function buildTemplates(context: TemplateContext): TemplateFile[] {
-  if (context.platforms.length > 1) {
-    return renderMultiLoader(context);
-  }
+  const platformFiles =
+    context.platforms.length > 1 ? renderMultiLoader(context) : renderPlatformTemplates(context);
+  return [...platformFiles, ...renderProjectMeta(context)];
+}
+
+function renderPlatformTemplates(context: TemplateContext): TemplateFile[] {
   const renderer = RENDERERS[context.platform];
   if (renderer === undefined) {
     throw MinecraftError.unknownPlatform(context.platform, Object.keys(RENDERERS));

@@ -120,6 +120,30 @@ describe("scaffold", () => {
     expect(gradle).toContain("fabric-loom");
   });
 
+  it("writes project meta files for every scaffold", async () => {
+    const dir = await makeTempDir();
+
+    const result = await scaffold({ root: dir, platform: "fabric", name: "MetaMod" });
+    const paths = result.files.map((f) => f.path.replace(dir + "\\", "").replaceAll("\\", "/"));
+
+    expect(paths).toContain(".gitignore");
+    expect(paths).toContain(".editorconfig");
+    expect(paths).toContain("LICENSE");
+    expect(paths).toContain("README.md");
+    expect(paths).toContain("gradlew");
+    expect(paths).toContain("gradlew.bat");
+    expect(paths).toContain("gradle/wrapper/gradle-wrapper.properties");
+    expect(paths).toContain(".github/workflows/build.yml");
+
+    const readme = await readFile(join(dir, "README.md"), "utf8");
+    expect(readme).toContain("MetaMod");
+    expect(readme).toContain("devix minecraft run");
+
+    const gitignore = await readFile(join(dir, ".gitignore"), "utf8");
+    expect(gitignore).toContain(".gradle/");
+    expect(gitignore).toContain("run/");
+  });
+
   it("writes a spigot maven skeleton with plugin.yml", async () => {
     const dir = await makeTempDir();
 

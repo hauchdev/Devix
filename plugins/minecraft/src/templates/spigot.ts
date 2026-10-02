@@ -1,6 +1,5 @@
 import { moduleResources, moduleSrcMain } from "./gradle-common.js";
 import {
-  mavenGitignore,
   renderMavenExtraModulePoms,
   renderMavenModulePom,
   renderMavenParentPom,
@@ -109,6 +108,5 @@ export const renderSpigot: PlatformRenderer = (context) => {
 
   files.push(...extraModuleSources(context, "plugin"));
   files.push(...renderMavenExtraModulePoms(context, slug));
-  files.push({ path: ".gitignore", contents: mavenGitignore() });
   return files;
 };
