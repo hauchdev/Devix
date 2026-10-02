@@ -17,6 +17,28 @@ export interface CliResult {
 }
 
 /**
+ * The environment every run starts from.
+ *
+ * `detectUnicode` reads the platform and locale, so without pinning it
+ * the same assertion passes on a Windows runner and fails on Linux — the
+ * layout comes out as `-` on one and `─` on the other. Colour detection
+ * has the same problem. A test that asserts on layout must not depend on
+ * which machine runs it, so both are pinned here and the per-test `env`
+ * argument is what opts back in.
+ *
+ * `LANG`/`LC_ALL` are cleared as well: they are what makes the locale
+ * detection say "UTF-8" on a Linux CI runner.
+ */
+const BASELINE_ENV: Readonly<Record<string, string | undefined>> = {
+  DEVIX_UNICODE: "0",
+  NO_COLOR: "1",
+  FORCE_COLOR: "0",
+  LANG: undefined,
+  LC_ALL: undefined,
+  LC_CTYPE: undefined,
+};
+
+/**
  * Runs the compiled binary and captures its output.
  *
  * Spawning a subprocess is the expensive part of the e2e suite (~500ms
@@ -34,11 +56,17 @@ export async function runCli(
   stdin?: string,
   env?: Record<string, string>,
 ): Promise<CliResult> {
+  const merged: Record<string, string | undefined> = {
+    ...process.env,
+    ...BASELINE_ENV,
+    ...env,
+  };
+
   return execFileAsync(process.execPath, [binPath, ...args], {
     cwd: cwd ?? cliRoot,
     encoding: "utf8",
     ...(stdin === undefined ? {} : { input: stdin }),
-    ...(env === undefined ? {} : { env: { ...process.env, ...env } }),
+    env: merged,
   });
 }
 

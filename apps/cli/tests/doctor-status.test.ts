@@ -56,17 +56,39 @@ describe("devix doctor and status", () => {
   }, 30_000);
 
   it("status degrades to ascii and no color on a legacy terminal", async () => {
-    const { stdout } = await runCli(["status", "--no-color"], undefined, undefined, {
+    // The helper already pins ASCII for every other test, so this one has
+    // to ask for the Unicode branch explicitly to prove the switch works
+    // in both directions rather than just re-asserting the default.
+    const unicode = await runCli(["status"], undefined, undefined, {
+      DEVIX_UNICODE: "1",
+    });
+    expect(unicode.stdout).toContain("─");
+
+    const legacy = await runCli(["status"], undefined, undefined, {
       DEVIX_UNICODE: "0",
-      NO_COLOR: "1",
     });
 
     // No ANSI escapes and no box drawing: a legacy Windows console or a
     // piped log file must stay readable.
     // eslint-disable-next-line no-control-regex
-    expect(stdout).not.toMatch(/\[/);
+    expect(legacy.stdout).not.toMatch(/\[/);
+    expect(legacy.stdout).not.toContain("─");
+    expect(legacy.stdout).not.toContain("✓");
+    expect(legacy.stdout).toMatch(/^Project\s+-+$/m);
+  }, 30_000);
+
+  it("keeps the ascii layout even when the environment says utf-8", async () => {
+    // The regression this guards: on a Linux runner the locale is UTF-8,
+    // so `detectUnicode` said yes and every `-` rule came out as `─`.
+    // The layout assertions above are written in ASCII, so a helper that
+    // inherits the machine's locale makes them fail on CI and pass
+    // locally. Pinning DEVIX_UNICODE has to win over the locale.
+    const { stdout } = await runCli(["status"], undefined, undefined, {
+      LANG: "C.UTF-8",
+      LC_ALL: "C.UTF-8",
+    });
+
     expect(stdout).not.toContain("─");
-    expect(stdout).not.toContain("✓");
     expect(stdout).toMatch(/^Project\s+-+$/m);
   }, 30_000);
 
