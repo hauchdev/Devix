@@ -6,3 +6,11 @@ export { CONFIG_FILE_NAMES, validateConfigShape } from "./types.js";
 
 export { parseConfigContent } from "./parse.js";
 export { loadConfig, readConfigFile, type LoadConfigOptions } from "./load.js";
+export {
+  findConfigPath,
+  getConfigValue,
+  listConfig,
+  setConfigValue,
+  writeConfig,
+  type ConfigPathOptions,
+} from "./manage.js";

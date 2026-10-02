@@ -199,6 +199,9 @@ importers:
 
   apps/cli:
     dependencies:
+      '@devix-cli/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@devix-cli/core':
         specifier: workspace:*
         version: link:../../packages/core

@@ -41,6 +41,7 @@
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
   },
   "dependencies": {
+    "@devix-cli/config": "workspace:*",
     "@devix-cli/core": "workspace:*",
     "@devix-cli/deps": "workspace:*",
     "@devix-cli/docker": "workspace:*",
