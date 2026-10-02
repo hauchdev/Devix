@@ -17,7 +17,8 @@
     "test": "vitest run",
     "lint": "eslint .",
     "validate:catalog": "node scripts/validate-catalog.mjs",
-    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\""
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@devix-cli/core": "workspace:*",
