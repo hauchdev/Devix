@@ -281,6 +281,9 @@ importers:
 
   packages/doctor:
     dependencies:
+      '@devix-cli/cache':
+        specifier: workspace:*
+        version: link:../cache
       '@devix-cli/filesystem':
         specifier: ^0.1.0
         version: link:../filesystem

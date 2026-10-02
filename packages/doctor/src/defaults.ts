@@ -1,5 +1,6 @@
 import { runCommand, which } from "@devix-cli/shell";
 
+import { withCachedTools } from "./cached.js";
 import type { DoctorServices } from "./types.js";
 
 /** Extracts the first version-looking token from tool output. */
@@ -12,8 +13,12 @@ function parseVersionOutput(output: string): string | undefined {
  * Default tool probe: resolves the executable and, when present, runs
  * `<tool> --version` capturing its first version token. Missing tools
  * resolve to `undefined` (a `missing` check), never to thrown errors.
+ *
+ * Results are cached with a short TTL so repeated runs (and `devix
+ * status`, which also reports the environment) do not re-spawn every
+ * tool. Only successful probes are cached.
  */
-export const defaultServices: DoctorServices = {
+export const defaultServices: DoctorServices = withCachedTools({
   async getToolVersion(tool: string, versionArg: string): Promise<string | undefined> {
     const executable = await which(tool);
     if (executable === undefined) {
@@ -30,4 +35,4 @@ export const defaultServices: DoctorServices = {
       return undefined;
     }
   },
-};
+});

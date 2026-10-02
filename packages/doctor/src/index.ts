@@ -2,6 +2,7 @@ export { runDoctor, type RunDoctorOptions } from "./doctor.js";
 export { checkEnvironment } from "./environment.js";
 export { checkProject } from "./project.js";
 export { defaultServices } from "./defaults.js";
+export { withCachedTools, type CachedToolsOptions } from "./cached.js";
 
 export type {
   CheckResult,
