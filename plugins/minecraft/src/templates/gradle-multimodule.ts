@@ -78,4 +78,3 @@ export function renderExtraModuleBuilds(context: TemplateContext): TemplateFile[
   }
   return files;
 }
-

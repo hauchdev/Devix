@@ -8,6 +8,7 @@ import {
   MINECRAFT_PROJECT_KINDS,
   MinecraftError,
   MODULE_IDS,
+  planRun,
   PLATFORM_IDS,
   scaffold,
   summarizeScaffold,
@@ -44,7 +45,7 @@ export default class Minecraft extends Command {
     operation: Args.string({
       description: "Operation to run.",
       required: true,
-      options: ["list", "init", "check"],
+      options: ["list", "init", "check", "run"],
     }),
     kind: Args.string({
       description:
@@ -118,6 +119,11 @@ export default class Minecraft extends Command {
 
     if (args.operation === "check") {
       await this.runCheck(args.kind, flags.cwd, flags.json);
+      return;
+    }
+
+    if (args.operation === "run") {
+      await this.runRun(flags.cwd, flags.json);
       return;
     }
 
@@ -378,6 +384,50 @@ export default class Minecraft extends Command {
       }
     }
     return ids;
+  }
+
+  /** Prints how to run the Minecraft project at cwd (print-first). */
+  private async runRun(cwd: string, json: boolean): Promise<void> {
+    const plan = await planRun(cwd);
+
+    if (json) {
+      this.log(
+        JSON.stringify(
+          {
+            cwd: plan.cwd,
+            isMinecraft: plan.isMinecraft,
+            platforms: plan.platforms,
+            command: plan.command,
+            windowsCommand: plan.windowsCommand,
+            warnings: plan.warnings,
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    if (!plan.isMinecraft) {
+      this.error(plan.warnings[0] ?? "Not a Minecraft project.", { exit: 1 });
+    }
+
+    this.log(`Project root: ${plan.cwd}`);
+    this.log(`Platforms: ${plan.platforms.join(", ")}`);
+    this.log("");
+    this.log("Run with:");
+    this.log(`  ${plan.command}`);
+    if (plan.windowsCommand !== undefined) {
+      this.log(`  ${plan.windowsCommand}  (Windows)`);
+    }
+
+    if (plan.warnings.length > 0) {
+      this.log("");
+      this.log("Notes:");
+      for (const warning of plan.warnings) {
+        this.log(`  • ${warning}`);
+      }
+    }
   }
 
   /** Detects the Minecraft platforms of the directory tree at cwd. */

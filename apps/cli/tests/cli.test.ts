@@ -196,6 +196,22 @@ describe("devix CLI (compiled binary)", () => {
     await expect(runCli(["minecraft", "check", "wurm"])).rejects.toThrow(/Unknown platform/i);
   }, 30_000);
 
+  it("minecraft run prints the launch command for a scaffolded project", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-run-fabric-"));
+    try {
+      await runCli(["minecraft", "init", "fabric", "RunMod", "--here"], dir);
+
+      const { stdout } = await runCli(["minecraft", "run"], dir);
+      expect(stdout).toContain("Run with:");
+      expect(stdout).toContain("runClient");
+      expect(stdout).toContain("Project root:");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
   it("minecraft init without args on a non-interactive stream fails with the usage message", async () => {
     const { mkdtemp, readdir, rm } = await import("node:fs/promises");
     const { tmpdir } = await import("node:os");
