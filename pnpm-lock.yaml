@@ -236,8 +236,8 @@ importers:
         specifier: workspace:*
         version: link:../../plugins/web
       '@oclif/core':
-        specifier: ^5.0.0
-        version: 5.0.1
+        specifier: ^5.1.2
+        version: 5.1.2
     devDependencies:
       eslint:
         specifier: 9.39.1
@@ -777,8 +777,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@oclif/core@5.0.1':
-    resolution: {integrity: sha512-vJajq85xNxu6lheUEJ046lh9V61EAAGGDn1H+EOJzFL528iEr2iVY0OyHZjDmRteT/SvhlQbfhRpugKnCsT4yw==}
+  '@oclif/core@5.1.2':
+    resolution: {integrity: sha512-vgbWWFKjjsf7oAbJONFPnDkVNeqmy70DTBUjsprW/HRiTrXe8sMlFc0ih8GjpU+dn+m6V2ksaZjBV9HgnsmWVg==}
     engines: {node: '>=22.0.0'}
 
   '@pkgjs/parseargs@0.11.0':
@@ -2228,7 +2228,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.3
 
-  '@oclif/core@5.0.1':
+  '@oclif/core@5.1.2':
     dependencies:
       ansi-escapes: 4.3.2
       ansis: 3.17.0
