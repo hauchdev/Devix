@@ -7,7 +7,6 @@
       "@devix-cli/filesystem",
       "@devix-cli/shell",
       "@devix-cli/config",
-      "@devix-cli/logger",
       "@devix-cli/project-detector",
       "@devix-cli/git",
       "@devix-cli/doctor",

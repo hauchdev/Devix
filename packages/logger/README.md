@@ -1,10 +1,12 @@
 # @devix-cli/logger
 
-> Centralized logging for Devix: one tiny, dependency-free logging entry point.
+> **Deprecated.** This package is no longer maintained and will be removed in a future release. Please use your own logger or the upcoming structured output package instead.
 
 Part of [Devix](https://github.com/hauchdev/Devix) — a modular developer toolkit.
 
 ## Install
+
+Not recommended for new code.
 
 ```bash
 npm install @devix-cli/logger
@@ -24,7 +26,7 @@ log("hello from Devix");
 | ------ | ---------------------- |
 | `log`  | Emit a single log line |
 
-> Note: this package is intentionally minimal in 0.1.0. Structured levels, sinks and formatting are planned for a future release — see the [roadmap](https://github.com/hauchdev/Devix/blob/main/ROADMAP.md).
+> This package is intentionally minimal and deprecated. No new features will be added.
 
 ## Guarantees
 
