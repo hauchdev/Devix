@@ -13,6 +13,8 @@ const STEPS = [
   ["pnpm", ["typecheck"]],
   ["pnpm", ["test"]],
   ["pnpm", ["build"]],
+  // After the build, because it inspects what dist/ will actually ship.
+  ["node", ["scripts/pack-report.mjs"]],
   ["pnpm", ["exec", "prettier", "--check", "."]],
 ];
 
