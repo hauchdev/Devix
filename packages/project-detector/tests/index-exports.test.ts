@@ -7,6 +7,7 @@ describe("public API surface", () => {
     expect(Object.keys(api).sort()).toEqual([
       "DetectorRegistry",
       "ProjectDetectorError",
+      "WEB_FRAMEWORK_IDS",
       "bukkitDetector",
       "bunDetector",
       "bungeecordDetector",
@@ -14,11 +15,13 @@ describe("public API surface", () => {
       "defaultDetectors",
       "detectMinecraftPlatforms",
       "detectProject",
+      "detectWeb",
       "dockerDetector",
       "fabricDetector",
       "findProjectRoot",
       "forgeDetector",
       "gitDetector",
+      "isStaticWebFramework",
       "javaDetector",
       "neoforgeDetector",
       "nodeDetector",
@@ -31,6 +34,8 @@ describe("public API surface", () => {
       "summarizeProject",
       "typescriptDetector",
       "velocityDetector",
+      "webDetector",
+      "webFrameworkIdForMarker",
       "yarnDetector",
     ]);
   });

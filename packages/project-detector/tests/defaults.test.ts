@@ -26,6 +26,7 @@ describe("createDefaultRegistry", () => {
       "bun",
       "git",
       "docker",
+      "web",
       "fabric",
       "quilt",
       "forge",

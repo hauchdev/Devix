@@ -42,4 +42,13 @@ export { bukkitDetector } from "./detectors/bukkit.js";
 export { bungeecordDetector } from "./detectors/bungeecord.js";
 export { velocityDetector } from "./detectors/velocity.js";
 export { spongeDetector } from "./detectors/sponge.js";
+export {
+  webDetector,
+  isStaticWebFramework,
+  webFrameworkIdForMarker,
+  WEB_FRAMEWORK_IDS,
+} from "./detectors/web.js";
 export { createDefaultRegistry, defaultDetectors } from "./defaults.js";
+
+export { detectWeb } from "./compose-web.js";
+export type { DetectedWebFramework, WebDetection } from "./compose-web.js";

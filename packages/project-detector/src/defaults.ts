@@ -2,6 +2,7 @@ import { bukkitDetector } from "./detectors/bukkit.js";
 import { bungeecordDetector } from "./detectors/bungeecord.js";
 import { bunDetector } from "./detectors/bun.js";
 import { dockerDetector } from "./detectors/docker.js";
+import { webDetector } from "./detectors/web.js";
 import { fabricDetector } from "./detectors/fabric.js";
 import { forgeDetector } from "./detectors/forge.js";
 import { gitDetector } from "./detectors/git.js";
@@ -22,9 +23,9 @@ import { DetectorRegistry } from "./registry.js";
 /**
  * All built-in detectors, in a deterministic order: language first
  * (node, typescript, java, rust, python), then package managers
- * (npm, pnpm, yarn, bun), then tooling (git, docker), then Minecraft
- * server/mod platforms (fabric, quilt, forge, neoforge, bukkit,
- * bungeecord, velocity, sponge).
+ * (npm, pnpm, yarn, bun), then tooling (git, docker), then web
+ * frameworks, then Minecraft server/mod platforms (fabric, quilt,
+ * forge, neoforge, bukkit, bungeecord, velocity, sponge).
  */
 export const defaultDetectors: readonly import("./types.js").Detector[] = [
   nodeDetector,
@@ -38,6 +39,7 @@ export const defaultDetectors: readonly import("./types.js").Detector[] = [
   bunDetector,
   gitDetector,
   dockerDetector,
+  webDetector,
   fabricDetector,
   quiltDetector,
   forgeDetector,
