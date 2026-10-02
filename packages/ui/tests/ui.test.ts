@@ -257,6 +257,30 @@ describe("Ui output", () => {
     }
   });
 
+  it("never truncates an identifier column below its longest token", () => {
+    const lines = plain(
+      render(
+        (ui) =>
+          ui.table(
+            ["ID", "KIND", "DESCRIPTION"],
+            [
+              { cells: ["neoforge", "mod", "NeoForge mod skeleton ".repeat(4)] },
+              { cells: ["bungeecord", "proxy-plugin", "BungeeCord proxy plugin ".repeat(3)] },
+            ],
+            { width: 78 },
+          ),
+        { width: 78 },
+      ),
+    );
+
+    // Ids are single tokens: a truncated id is worse than no table.
+    expect(lines.some((line) => line.includes("neoforge"))).toBe(true);
+    expect(lines.some((line) => line.includes("bungeecord"))).toBe(true);
+    for (const line of lines) {
+      expect(visibleWidth(line)).toBeLessThanOrEqual(78);
+    }
+  });
+
   it("draws a bordered panel", () => {
     const lines = plain(render((ui) => ui.panel("Title", ["body line"])));
 

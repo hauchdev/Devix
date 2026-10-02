@@ -1,4 +1,4 @@
-import { Args, Command, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 
 import { isAbsolute, resolve } from "node:path";
 
@@ -14,6 +14,8 @@ import {
   type DevixConfig,
 } from "@devix-cli/config";
 
+import { DevixCommand, devixBaseFlags, field, type DevixBaseFlags } from "../lib/devix-command.js";
+
 /** Parses a CLI value as JSON, falling back to the raw string. */
 function parseValue(raw: string): unknown {
   try {
@@ -28,7 +30,7 @@ function renderValue(value: unknown): string {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
-export default class Config extends Command {
+export default class Config extends DevixCommand {
   static override description =
     "Read and write the Devix configuration (devix.config.json / devix.json).";
 
@@ -48,17 +50,7 @@ export default class Config extends Command {
     }),
   };
 
-  static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Directory to start the config search from. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
-    json: Flags.boolean({
-      description: "Output as JSON.",
-      default: false,
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Config);
@@ -67,16 +59,16 @@ export default class Config extends Command {
     try {
       switch (args.operation) {
         case "path":
-          await this.runPath(cwd, flags.json);
+          await this.runPath(cwd, flags);
           return;
         case "list":
-          await this.runList(cwd, flags.json);
+          await this.runList(cwd, flags);
           return;
         case "get":
-          await this.runGet(args.key, cwd, flags.json);
+          await this.runGet(args.key, cwd, flags);
           return;
         case "set":
-          await this.runSet(args.key, args.value, cwd, flags.json);
+          await this.runSet(args.key, args.value, cwd, flags);
           return;
         default:
           this.error(`Unknown operation: ${String(args.operation)}`, { exit: 1 });
@@ -97,41 +89,58 @@ export default class Config extends Command {
     return { path, config: config ?? {} };
   }
 
-  private async runPath(cwd: string, json: boolean): Promise<void> {
+  private async runPath(cwd: string, flags: DevixBaseFlags): Promise<void> {
     const { path } = await this.load(cwd);
 
-    if (json) {
+    if (flags.json) {
       this.log(JSON.stringify({ path, names: CONFIG_FILE_NAMES }, null, 2));
       return;
     }
 
-    this.log(path);
+    if (flags.quiet) {
+      return;
+    }
+
+    this.renderer(flags).line(path);
   }
 
-  private async runList(cwd: string, json: boolean): Promise<void> {
+  private async runList(cwd: string, flags: DevixBaseFlags): Promise<void> {
     const { path, config } = await this.load(cwd);
     const entries = listConfig(config);
 
-    if (json) {
+    if (flags.json) {
       this.log(JSON.stringify({ path, config: entries }, null, 2));
       return;
     }
 
-    const keys = Object.keys(entries);
-    if (keys.length === 0) {
-      this.log(`No configuration set (${path}).`);
-      this.log("");
-      this.log(`Set one with: devix config set <key> <value>`);
+    if (flags.quiet) {
       return;
     }
 
-    this.log(`Configuration (${path}):`);
-    for (const key of keys) {
-      this.log(`  ${key.padEnd(20)}${renderValue(entries[key])}`);
+    const ui = this.renderer(flags);
+    ui.title("devix config list");
+    ui.blank();
+
+    const keys = Object.keys(entries);
+    if (keys.length === 0) {
+      ui.fields([
+        field("File", path),
+        field("Settings", "none", "muted", "Nothing has been set yet."),
+      ]);
+      ui.blank();
+      ui.hint("devix config set <key> <value>");
+      ui.blank();
+      return;
     }
+
+    ui.heading("Settings", { count: keys.length });
+    ui.fields(keys.map((key) => field(key, renderValue(entries[key]))));
+    ui.blank();
+    ui.footnote(path);
+    ui.blank();
   }
 
-  private async runGet(key: string | undefined, cwd: string, json: boolean): Promise<void> {
+  private async runGet(key: string | undefined, cwd: string, flags: DevixBaseFlags): Promise<void> {
     if (key === undefined) {
       this.error("get requires a key: devix config get <key>", { exit: 1 });
     }
@@ -143,38 +152,47 @@ export default class Config extends Command {
       this.error(`Unknown config key: ${key} (looked in ${path})`, { exit: 1 });
     }
 
-    if (json) {
+    if (flags.json) {
       this.log(JSON.stringify({ key, value }, null, 2));
       return;
     }
 
-    this.log(renderValue(value));
+    if (flags.quiet) {
+      return;
+    }
+
+    this.renderer(flags).line(renderValue(value));
   }
 
   private async runSet(
     key: string | undefined,
     rawValue: string | undefined,
     cwd: string,
-    json: boolean,
+    flags: DevixBaseFlags,
   ): Promise<void> {
     if (key === undefined || rawValue === undefined) {
       this.error("set requires a key and a value: devix config set <key> <value>", { exit: 1 });
     }
 
     const path = await findConfigPath({ cwd });
-
-    // Re-read through readConfigFile so an existing file keeps its
-    // recognized name; a missing file starts from an empty config.
     const existing = await loadConfig({ cwd });
     const next = setConfigValue(existing ?? {}, key, parseValue(rawValue));
 
     await writeConfig(path, next);
 
-    if (json) {
+    if (flags.json) {
       this.log(JSON.stringify({ path, key, value: getConfigValue(next, key) }, null, 2));
       return;
     }
 
-    this.log(`Set ${key} in ${path}`);
+    if (flags.quiet) {
+      return;
+    }
+
+    const ui = this.renderer(flags);
+    ui.fields([field("Key", key, "ok"), field("Value", renderValue(getConfigValue(next, key)))]);
+    ui.blank();
+    ui.hint(`Written to ${path}`);
+    ui.blank();
   }
 }

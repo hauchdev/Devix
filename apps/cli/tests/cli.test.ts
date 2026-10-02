@@ -208,7 +208,7 @@ describe("devix CLI (compiled binary)", () => {
       expect(requestedParsed.requested).toEqual({ id: "fabric", detected: true });
 
       const human = await runCli(["minecraft", "check"], dir);
-      expect(human.stdout).toContain("✓ fabric");
+      expect(human.stdout).toMatch(/fabric\s+checkmod/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -226,9 +226,9 @@ describe("devix CLI (compiled binary)", () => {
       await runCli(["minecraft", "init", "fabric", "RunMod", "--here"], dir);
 
       const { stdout } = await runCli(["minecraft", "run"], dir);
-      expect(stdout).toContain("Run with:");
+      expect(stdout).toContain("Run with");
       expect(stdout).toContain("runClient");
-      expect(stdout).toContain("Project root:");
+      expect(stdout).toMatch(/^\s+Root\s+/m);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -302,7 +302,7 @@ describe("devix CLI (compiled binary)", () => {
         dir,
       );
 
-      expect(stdout).toContain("modules: main, api, core");
+      expect(stdout).toMatch(/^\s+Modules\s+main, api, core$/m);
       const settings = await readFile(join(dir, "settings.gradle"), "utf8");
       expect(settings).toContain("include ':api'");
       expect(await readFile(join(dir, "api/build.gradle"), "utf8")).toContain("java-library");
@@ -322,8 +322,8 @@ describe("devix CLI (compiled binary)", () => {
         dir,
       );
 
-      expect(stdout).toContain("kind: proxy-plugin");
-      expect(stdout).toContain("platform: velocity");
+      expect(stdout).toMatch(/^\s+Kind\s+proxy-plugin$/m);
+      expect(stdout).toMatch(/^\s+Platforms\s+velocity$/m);
       expect(await readFile(join(dir, "build.gradle"), "utf8")).toContain("velocity-api");
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -333,9 +333,10 @@ describe("devix CLI (compiled binary)", () => {
   it("minecraft list shows the kinds, platforms and modules", async () => {
     const { stdout } = await runCli(["minecraft", "list"]);
 
-    expect(stdout).toContain("Project kinds:");
+    expect(stdout).toMatch(/^Project kinds\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/^Platforms\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/^Optional modules\s+\d+\s+-+$/m);
     expect(stdout).toContain("neoforge");
-    expect(stdout).toContain("Optional modules:");
   }, 30_000);
 
   it("web detect reports no framework outside web projects", async () => {
@@ -365,9 +366,9 @@ describe("devix CLI (compiled binary)", () => {
       );
 
       const { stdout } = await runCli(["web", "detect"], dir);
-      expect(stdout).toContain("Frameworks:");
-      expect(stdout).toContain("next");
+      expect(stdout).toMatch(/^Frameworks\s+\d+\s+-+$/m);
       expect(stdout).toContain("Next.js");
+      expect(stdout).toContain("dynamic");
 
       const asJson = await runCli(["web", "detect", "--json"], dir);
       const parsed = JSON.parse(asJson.stdout) as {
@@ -483,7 +484,7 @@ describe("devix CLI (compiled binary)", () => {
 
       const { stdout } = await runCli(["web", "doctor"], dir);
 
-      expect(stdout).toContain("Web:");
+      expect(stdout).toMatch(/^Checks\s+\d+\s+-+$/m);
       expect(stdout).toContain("build script");
       expect(stdout).toContain("dev script");
       expect(stdout).toContain("Not built yet");

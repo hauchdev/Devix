@@ -1,4 +1,4 @@
-import { Command, Args, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 import { isAbsolute, join, resolve } from "node:path";
 
 import {
@@ -10,9 +10,18 @@ import {
   MODULE_IDS,
   PLATFORM_IDS,
   scaffold,
-  summarizeScaffold,
 } from "@devix-cli/minecraft";
 import { pluginCommandRegistry } from "../lib/plugin-commands.js";
+import { DevixCommand, devixBaseFlags, field } from "../lib/devix-command.js";
+import {
+  MINECRAFT_HANDLED_OPERATIONS,
+  renderMinecraftCheck,
+  renderMinecraftList,
+  renderMinecraftRun,
+  type CheckData,
+  type ListData,
+  type RunData,
+} from "../lib/minecraft-render.js";
 import { promptScaffoldSpec, PromptCancelledError, type PromptChoice } from "../lib/prompts.js";
 
 /** `Cool Sword!` -> `cool-sword`: a filesystem-friendly folder name. */
@@ -37,7 +46,7 @@ function parseList(value: string | undefined): string[] | undefined {
   return items;
 }
 
-export default class Minecraft extends Command {
+export default class Minecraft extends DevixCommand {
   static override description =
     "Scaffold and inspect Minecraft projects: mods (fabric, forge, neoforge, architectury), plugins (paper, folia, spigot) and proxies (velocity, bungeecord) — with multi-loader, multi-module and multi-version support.";
 
@@ -59,6 +68,7 @@ export default class Minecraft extends Command {
   };
 
   static override flags = {
+    ...devixBaseFlags,
     kind: Flags.string({
       description:
         "Project kind for init (mod, plugin, proxy-plugin); resolves the default platform.",
@@ -67,14 +77,6 @@ export default class Minecraft extends Command {
     modules: Flags.string({
       description: `Comma/plus separated extra modules for init (${MODULE_IDS.join(", ")}); any module makes the project multi-module.`,
       default: undefined,
-    }),
-    cwd: Flags.string({
-      char: "d",
-      description:
-        "Parent directory where the project folder is created. Defaults to the current directory.",
-      // Lazy: evaluated at parse time so tests (execFile cwd) and
-      // embedders get their own working directory, not the module's.
-      default: async () => process.cwd(),
     }),
     here: Flags.boolean({
       description:
@@ -103,16 +105,12 @@ export default class Minecraft extends Command {
         "Allow initializing into a directory that already contains template files (existing files are skipped, never overwritten).",
       default: false,
     }),
-    json: Flags.boolean({
-      description: "Output as JSON.",
-      default: false,
-    }),
   };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Minecraft);
 
-    if (["list", "check", "run"].includes(args.operation)) {
+    if (MINECRAFT_HANDLED_OPERATIONS.includes(args.operation)) {
       const handler = await pluginCommandRegistry.load("minecraft");
       const result = await handler({
         argv: [args.operation, ...(args.kind === undefined ? [] : [args.kind])],
@@ -128,51 +126,23 @@ export default class Minecraft extends Command {
         return;
       }
 
+      if (flags.quiet) {
+        return;
+      }
+
+      const ui = this.renderer(flags);
+
       if (args.operation === "list") {
-        this.renderList(
-          result.data as {
-            kinds: { id: string; name: string; description: string }[];
-            platforms: { id: string; kind: string; name: string; description: string }[];
-            modules: { id: string; name: string; description: string }[];
-          },
-        );
+        renderMinecraftList(ui, result.data as ListData);
         return;
       }
 
       if (args.operation === "check") {
-        this.renderCheck(
-          result.data as {
-            isMinecraft: boolean;
-            platforms: { id: string; name: string; detail?: string; markers: string[] }[];
-            requested?: { id: string; detected: boolean };
-          },
-        );
+        renderMinecraftCheck(ui, result.data as CheckData);
         return;
       }
 
-      // run
-      const runResult = result.data as {
-        cwd: string;
-        platforms: string[];
-        command: string;
-        windowsCommand?: string;
-        warnings: string[];
-      };
-      this.log(`Project root: ${runResult.cwd}`);
-      this.log(`Platforms: ${runResult.platforms.join(", ")}`);
-      this.log("");
-      this.log("Run with:");
-      this.log(`  ${runResult.command}`);
-      if (runResult.windowsCommand !== undefined) {
-        this.log(`  ${runResult.windowsCommand}  (Windows)`);
-      }
-      if (runResult.warnings.length > 0) {
-        this.log("");
-        this.log("Notes:");
-        for (const warning of runResult.warnings) {
-          this.log(`  • ${warning}`);
-        }
-      }
+      renderMinecraftRun(ui, result.data as RunData);
       return;
     }
 
@@ -226,20 +196,52 @@ export default class Minecraft extends Command {
         return;
       }
 
-      for (const line of summarizeScaffold(result)) {
-        this.log(line);
+      if (flags.quiet) {
+        return;
       }
-      if (result.dryRun) {
-        this.log("");
-        this.log("Dry run: nothing was written. Drop --dry-run to create the files.");
-      } else {
-        this.log("");
-        this.log(
-          result.root === parent
-            ? "Next steps: review the build files and run your first build."
-            : `Next steps: cd ${folderName(name)} and run your first build.`,
+
+      const ui = this.renderer(flags);
+      const written = result.files.filter((entry) => !entry.skipped).length;
+      const skipped = result.files.length - written;
+
+      ui.title(result.dryRun ? "devix minecraft init — dry run" : "devix minecraft init");
+      ui.blank();
+
+      ui.fields([
+        field("Name", result.name),
+        field("Kind", result.kind),
+        field("Platforms", result.platforms.join(" + ")),
+        field("Minecraft", result.minecraftVersion),
+        field("Java", String(result.javaVersion)),
+        ...(result.modules.length > 1 ? [field("Modules", result.modules.join(", "))] : []),
+        field("Root", result.root),
+        field(
+          "Files",
+          `${String(written)} written${skipped > 0 ? `, ${String(skipped)} skipped` : ""}`,
+          "ok",
+        ),
+      ]);
+
+      for (const note of result.targetPlatforms) {
+        ui.blank();
+        ui.hint(
+          `Target already looks like a ${note.name} project${note.detail === undefined ? "" : ` (${note.detail})`}`,
         );
       }
+
+      if (result.dryRun) {
+        ui.blank();
+        ui.hint("Nothing was written. Drop --dry-run to create the files.");
+      } else {
+        ui.blank();
+        ui.hint(
+          result.root === parent
+            ? "Review the build files, then run your first build."
+            : `cd ${folderName(name)} and run your first build.`,
+        );
+      }
+
+      ui.blank();
     } catch (error) {
       if (error instanceof MinecraftError) {
         this.error(error.message, { exit: 1 });
@@ -433,46 +435,5 @@ export default class Minecraft extends Command {
       }
     }
     return ids;
-  }
-
-  private renderList(data: {
-    kinds: { id: string; name: string; description: string }[];
-    platforms: { id: string; kind: string; name: string; description: string }[];
-    modules: { id: string; name: string; description: string }[];
-  }): void {
-    this.log("Project kinds:");
-    for (const kind of data.kinds) {
-      this.log(`  ${kind.id.padEnd(14)}${kind.description}`);
-    }
-    this.log("");
-    this.log("Platforms:");
-    for (const platform of data.platforms) {
-      this.log(`  ${platform.id.padEnd(14)}${platform.kind.padEnd(14)}${platform.description}`);
-    }
-    this.log("");
-    this.log(`Optional modules: ${data.modules.map((module) => module.id).join(", ")}`);
-    this.log("");
-    this.log(
-      "Init one with: devix minecraft init <platform(s)> <name> [--kind mod] [--modules api,core] [--mc 26.3]",
-    );
-    this.log("Detect an existing one with: devix minecraft check [platform]");
-  }
-
-  private renderCheck(data: {
-    isMinecraft: boolean;
-    platforms: { id: string; name: string; detail?: string; markers: string[] }[];
-    requested?: { id: string; detected: boolean };
-  }): void {
-    if (!data.isMinecraft) {
-      this.log("No Minecraft platform detected in this directory tree.");
-      return;
-    }
-    for (const entry of data.platforms) {
-      const label = entry.detail === undefined ? entry.name : `${entry.name} (${entry.detail})`;
-      this.log(`  ✓ ${entry.id} — ${label}`);
-      for (const marker of entry.markers) {
-        this.log(`      ${marker}`);
-      }
-    }
   }
 }

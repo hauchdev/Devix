@@ -276,30 +276,51 @@ export class Ui {
     // budget before any column is sized.
     const budget = Math.max(4, this.capabilities.width - MARKER_WIDTH);
 
-    // Shrink the widest non-final column first: the final column is the
-    // one most likely to hold prose worth truncating.
+    /**
+     * A column may never shrink below its longest single word. Prose
+     * columns can therefore compress, but an identifier column (whose
+     * value is one unbroken token) keeps its full width, because a
+     * truncated id is worse than no table at all.
+     */
+    const floorFor = (index: number): number => {
+      const header = headers[index] ?? "";
+      let longest = visibleWidth(header);
+      for (const row of rows) {
+        for (const word of (row.cells[index] ?? "").split(/\s+/)) {
+          longest = Math.max(longest, visibleWidth(word));
+        }
+      }
+      return Math.min(longest, Math.floor(budget / columnCount));
+    };
+
+    // Shrink the widest shrinkable column first: the final column is
+    // the one most likely to hold prose worth truncating.
     let overflow = total() - budget;
     while (overflow > 0 && columnCount > 1) {
       const lastIndex = columnCount - 2;
-      let widest = 0;
-      for (let index = 1; index <= lastIndex; index++) {
-        if ((widths[index] ?? 0) > (widths[widest] ?? 0)) {
+      let widest = -1;
+      for (let index = 0; index <= lastIndex; index++) {
+        if ((widths[index] ?? 0) <= (floorFor(index) ?? 0)) {
+          continue;
+        }
+        if (widest === -1 || (widths[index] ?? 0) > (widths[widest] ?? 0)) {
           widest = index;
         }
       }
 
-      const current = widths[widest] ?? 0;
-      const minimum = 6;
-      if (current <= minimum) {
+      if (widest === -1) {
         break;
       }
 
-      const shrink = Math.min(overflow, current - minimum);
+      const current = widths[widest] ?? 0;
+      const floor = floorFor(widest);
+      const shrink = Math.min(overflow, current - floor);
       widths[widest] = current - shrink;
       overflow -= shrink;
     }
 
-    // Anything still over budget comes off the last column.
+    // Anything still over budget comes off the last column, which is
+    // truncated at the width it has left.
     const finalIndex = columnCount - 1;
     if (overflow > 0) {
       widths[finalIndex] = Math.max(4, (widths[finalIndex] ?? 4) - overflow);

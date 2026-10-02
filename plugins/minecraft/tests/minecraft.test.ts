@@ -1,6 +1,6 @@
 import { mkdtemp, readFile, readdir, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -124,7 +124,9 @@ describe("scaffold", () => {
     const dir = await makeTempDir();
 
     const result = await scaffold({ root: dir, platform: "fabric", name: "MetaMod" });
-    const paths = result.files.map((f) => f.path.replace(dir + "\\", "").replaceAll("\\", "/"));
+    // relative() understands the platform separator; a hardcoded "\\"
+    // only works on Windows and silently fails on CI.
+    const paths = result.files.map((file) => relative(dir, file.path).split(sep).join("/"));
 
     expect(paths).toContain(".gitignore");
     expect(paths).toContain(".editorconfig");

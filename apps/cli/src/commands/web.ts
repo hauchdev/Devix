@@ -1,121 +1,53 @@
-import { Args, Command, Flags } from "@oclif/core";
+import { Args, Flags } from "@oclif/core";
 
 import { isAbsolute, resolve } from "node:path";
 
+import type { Ui } from "@devix-cli/ui";
+
+import { DevixCommand, devixBaseFlags, field, row } from "../lib/devix-command.js";
 import { pluginCommandRegistry } from "../lib/plugin-commands.js";
 
-/** Human-readable rendering of one `web detect` result. */
-function renderDetect(data: {
-  isWeb: boolean;
-  root: string;
-  frameworks?: { id: string; label: string; package: string; static: boolean }[];
-  message?: string;
-}): string[] {
-  if (!data.isWeb) {
-    return [`Project root: ${data.root}`, "", data.message ?? "No web framework detected."];
-  }
-
-  const lines = [`Project root: ${data.root}`, "Frameworks:"];
-  for (const framework of data.frameworks ?? []) {
-    const kind = framework.static ? "static" : "dynamic";
-    lines.push(
-      `  ✓ ${framework.id.padEnd(12)}${framework.label} (${kind}, via ${framework.package})`,
-    );
-  }
-  return lines;
+interface DetectData {
+  readonly isWeb: boolean;
+  readonly root: string;
+  readonly frameworks?: { id: string; label: string; package: string; static: boolean }[];
+  readonly message?: string;
 }
 
-/** Human-readable rendering of one `web env` result. */
-function renderEnv(data: {
-  count: number;
-  note?: string;
-  variables?: { name: string; source: string }[];
-}): string[] {
-  const lines = [`Environment variables (${String(data.count)}):`];
-  if (data.count === 0) {
-    lines.push("  (none found — no .env file in this directory)");
-  }
-  for (const variable of data.variables ?? []) {
-    lines.push(`  ${variable.name.padEnd(24)}${variable.source}`);
-  }
-  lines.push("", data.note ?? "Values are never read or shown, only variable names.");
-  return lines;
+interface EnvData {
+  readonly count: number;
+  readonly variables?: { name: string; source: string }[];
+  readonly note?: string;
 }
 
-/** Human-readable rendering of one `web scripts` result. */
-function renderScripts(data: {
-  count: number;
-  scripts?: { name: string; command: string }[];
-}): string[] {
-  const lines = [`Scripts (${String(data.count)}):`];
-  if (data.count === 0) {
-    lines.push("  (none declared in package.json)");
-  }
-  for (const script of data.scripts ?? []) {
-    lines.push(`  ${script.name.padEnd(12)}${script.command}`);
-  }
-  return lines;
+interface ScriptsData {
+  readonly count: number;
+  readonly scripts?: { name: string; command: string }[];
 }
 
-/** Human-readable rendering of one `web serve` result. */
-function renderServe(data: {
-  directory: string;
-  framework: string;
-  port: number;
-  command: string;
-  note?: string;
-}): string[] {
-  return [
-    `Build output: ${data.directory} (${data.framework})`,
-    "",
-    "Serve it with:",
-    `  ${data.command}`,
-    "",
-    data.note ?? "",
-  ];
+interface ServeData {
+  readonly directory: string;
+  readonly framework: string;
+  readonly port: number;
+  readonly command: string;
+  readonly note?: string;
 }
 
-/** Human-readable rendering of one `web build` result. */
-function renderBuild(data: {
-  frameworks?: string[];
-  command: string;
-  alternative?: string;
-  note?: string;
-}): string[] {
-  const lines: string[] = [];
-  if (data.frameworks !== undefined && data.frameworks.length > 0) {
-    lines.push(`Frameworks: ${data.frameworks.join(", ")}`);
-  }
-  lines.push("", "Build it with:", `  ${data.command}`);
-  if (data.alternative !== undefined) {
-    lines.push(`  ${data.alternative}`);
-  }
-  lines.push("", data.note ?? "");
-  return lines;
+interface BuildData {
+  readonly frameworks?: string[];
+  readonly command: string;
+  readonly alternative?: string;
+  readonly note?: string;
 }
 
-/** Human-readable rendering of one `web doctor` result. */
-function renderWebDoctor(data: {
-  isWeb: boolean;
-  frameworks?: string[];
-  checks?: { id: string; name: string; status: string; detail?: string }[];
-  message?: string;
-}): string[] {
-  if (!data.isWeb) {
-    return [data.message ?? "No web framework detected; nothing to diagnose."];
-  }
-
-  const lines = [`Frameworks: ${(data.frameworks ?? []).join(", ")}`, "", "Web:"];
-  for (const check of data.checks ?? []) {
-    const symbol = check.status === "ok" ? "✓" : "!";
-    lines.push(
-      `  ${symbol} ${check.name}${check.detail === undefined ? "" : ` — ${check.detail}`}`,
-    );
-  }
-  return lines;
+interface WebDoctorData {
+  readonly isWeb: boolean;
+  readonly frameworks?: string[];
+  readonly checks?: { id: string; name: string; status: string; detail?: string }[];
+  readonly message?: string;
 }
 
-export default class Web extends Command {
+export default class Web extends DevixCommand {
   static override description =
     "Inspect web projects: detect frameworks, review environment variable names, list scripts and print build/serve commands.";
 
@@ -132,22 +64,10 @@ export default class Web extends Command {
   };
 
   static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Project directory. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
+    ...devixBaseFlags,
     port: Flags.integer({
       description: "Port printed by serve (print-only).",
       default: undefined,
-    }),
-    run: Flags.boolean({
-      description: "Reserved for future execution; build and serve stay print-first.",
-      default: false,
-    }),
-    json: Flags.boolean({
-      description: "Output as JSON.",
-      default: false,
     }),
   };
 
@@ -158,11 +78,7 @@ export default class Web extends Command {
     const handler = await pluginCommandRegistry.load("web");
     const result = await handler({
       argv: [args.operation, ...(args.platform === undefined ? [] : [args.platform])],
-      flags: {
-        ...flags,
-        cwd,
-        ...(flags.port === undefined ? {} : { port: flags.port }),
-      },
+      flags: { ...flags, cwd, ...(flags.port === undefined ? {} : { port: flags.port }) },
     });
 
     if (!result.ok) {
@@ -174,35 +90,158 @@ export default class Web extends Command {
       return;
     }
 
+    if (flags.quiet) {
+      return;
+    }
+
+    const ui = this.renderer(flags);
+
     switch (args.operation) {
       case "detect":
-        this.logLines(renderDetect(result.data as never));
+        renderDetect(ui, result.data as DetectData);
         return;
       case "env":
-        this.logLines(renderEnv(result.data as never));
+        renderEnv(ui, result.data as EnvData);
         return;
       case "scripts":
-        this.logLines(renderScripts(result.data as never));
+        renderScripts(ui, result.data as ScriptsData);
         return;
       case "serve":
-        this.logLines(renderServe(result.data as never));
+        renderServe(ui, result.data as ServeData);
         return;
       case "build":
-        this.logLines(renderBuild(result.data as never));
+        renderBuild(ui, result.data as BuildData);
         return;
       case "doctor":
-        this.logLines(renderWebDoctor(result.data as never));
+        renderWebDoctor(ui, result.data as WebDoctorData);
         return;
       default:
         this.error(`Unknown operation: ${String(args.operation)}`, { exit: 1 });
     }
   }
+}
 
-  private logLines(lines: readonly string[]): void {
-    for (const line of lines) {
-      if (line.length > 0) {
-        this.log(line);
-      }
-    }
+function renderDetect(ui: Ui, data: DetectData): void {
+  ui.title("devix web detect");
+  ui.blank();
+
+  if (!data.isWeb) {
+    ui.fields([
+      field("Root", data.root),
+      field("Frameworks", "none", "muted", data.message ?? "No web framework detected."),
+    ]);
+    ui.blank();
+    return;
   }
+
+  ui.fields([field("Root", data.root)]);
+  ui.blank();
+  ui.heading("Frameworks", { count: data.frameworks?.length ?? 0 });
+  ui.table(
+    // The label is what a human reads; the machine id stays in --json.
+    ["FRAMEWORK", "OUTPUT", "PROVEN BY"],
+    (data.frameworks ?? []).map((framework) =>
+      row(
+        [framework.label, framework.static ? "static" : "dynamic", framework.package],
+        framework.static ? "ok" : "info",
+      ),
+    ),
+  );
+  ui.blank();
+}
+
+function renderEnv(ui: Ui, data: EnvData): void {
+  ui.title("devix web env");
+  ui.blank();
+
+  ui.fields([field("Declared", String(data.count))]);
+
+  if (data.count === 0) {
+    ui.blank();
+    ui.hint("No .env file in this directory.");
+  } else {
+    ui.blank();
+    ui.table(
+      ["VARIABLE", "SOURCE"],
+      (data.variables ?? []).map((variable) => row([variable.name, variable.source])),
+    );
+  }
+
+  ui.blank();
+  ui.note(data.note ?? "Values are never read or shown, only variable names.");
+  ui.blank();
+}
+
+function renderScripts(ui: Ui, data: ScriptsData): void {
+  ui.title("devix web scripts");
+  ui.blank();
+
+  if (data.count === 0) {
+    ui.fields([field("Scripts", "none", "muted", "Nothing declared in package.json.")]);
+    ui.blank();
+    return;
+  }
+
+  ui.heading("Scripts", { count: data.count });
+  ui.table(
+    ["NAME", "COMMAND"],
+    (data.scripts ?? []).map((script) => row([script.name, script.command])),
+  );
+  ui.blank();
+}
+
+function renderServe(ui: Ui, data: ServeData): void {
+  ui.title("devix web serve");
+  ui.blank();
+
+  ui.fields([
+    field("Output", data.directory),
+    field("Framework", data.framework),
+    field("Port", String(data.port)),
+  ]);
+
+  ui.blank();
+  ui.panel("Serve it with", [data.command], { status: "warn" });
+  ui.blank();
+  ui.note(data.note ?? "Serve is print-first: Devix does not start a server for you.");
+  ui.blank();
+}
+
+function renderBuild(ui: Ui, data: BuildData): void {
+  ui.title("devix web build");
+  ui.blank();
+
+  if (data.frameworks !== undefined && data.frameworks.length > 0) {
+    ui.fields([field("Frameworks", data.frameworks.join(", "))]);
+    ui.blank();
+  }
+
+  const commands =
+    data.alternative === undefined ? [data.command] : [data.command, data.alternative];
+  ui.panel("Build it with", commands, { status: "warn" });
+  ui.blank();
+  ui.note(data.note ?? "Build is print-first.");
+  ui.blank();
+}
+
+function renderWebDoctor(ui: Ui, data: WebDoctorData): void {
+  ui.title("devix web doctor");
+  ui.blank();
+
+  if (!data.isWeb) {
+    ui.fields([field("Frameworks", "none", "muted", data.message ?? "Nothing to diagnose.")]);
+    ui.blank();
+    return;
+  }
+
+  ui.fields([field("Frameworks", (data.frameworks ?? []).join(", "))]);
+  ui.blank();
+
+  ui.heading("Checks", { count: data.checks?.length ?? 0 });
+  ui.fields(
+    (data.checks ?? []).map((check) =>
+      field(check.name, check.detail, check.status === "ok" ? "ok" : "warn"),
+    ),
+  );
+  ui.blank();
 }
