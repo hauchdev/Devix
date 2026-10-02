@@ -1,156 +1,154 @@
 # Devix — Roadmap
 
-Plan de fases del proyecto. Cada fase produce **software funcional y verificable**. No se avanza a la siguiente si la actual está rota.
+Phase-by-phase project plan. Each phase ships **working, verifiable software**. We do not move to the next phase while the current one is broken.
 
-**Cómo leerlo:** `[x]` completado y verificado · `[ ]` pendiente. El estado se actualiza al cerrar cada fase.
+**How to read this:** `[x]` completed and verified · `[ ]` pending. Status is updated when a phase closes.
 
 ---
 
-## Estado actual
+## Current status
 
 ```text
-Fase actual:   FASE 10 — Higiene y deuda técnica
-Última fase:   FASE 8 — Plugin System ✓ (API mínima + plugin list)
-Objetivo:      v1.0.0 (plataforma estable) + plugins web e IA
+Current phase: FASE 10 — Hygiene and technical debt
+Last phase:    FASE 8 — Plugin System ✓ (minimal API + plugin list)
+Goal:          v1.0.0 (stable platform) + web and AI plugins
 ```
 
-| Fase                   | Versión objetivo | Estado        |
-| ---------------------- | ---------------- | ------------- |
-| 0 — Foundation         | 0.1.x            | ✅ Completada |
-| 1 — Core Architecture  | 0.2.x            | ✅ Completada |
-| 2 — Project Detector   | 0.3.x            | ✅ Completada |
-| 3 — CLI                | 0.4.x            | ✅ Completada |
-| 4 — Doctor             | 0.5.x            | ✅ Completada |
-| 5 — Git                | 0.6.x            | ✅ Completada |
-| 6 — Dependencies       | 0.7.x            | ✅ Completada |
-| 7 — Docker             | 0.8.x            | ✅ Completada |
-| 8 — Plugin System      | 0.9.x            | ✅ Completada |
-| 9 — Release 1.0 prep   | 1.0.0            | ✅ Completada |
-| 10 — Higiene y deuda   | 0.4.x            | 🔵 En curso   |
-| 11 — Plataforma real   | 0.5.x            | `[ ]`         |
-| 12 — Calidad y CI      | 0.5.x            | `[ ]`         |
-| 13 — Docker a fondo    | 0.6.x            | `[ ]`         |
-| 14 — Web               | 0.7.x            | `[ ]`         |
-| 15 — Minecraft a fondo | 0.7.x            | `[ ]`         |
-| 16 — IA propia         | 0.8.x            | `[ ]`         |
+| Phase                 | Target version | Status         |
+| --------------------- | -------------- | -------------- |
+| 0 — Foundation        | 0.1.x          | ✅ Completed   |
+| 1 — Core Architecture | 0.2.x          | ✅ Completed   |
+| 2 — Project Detector  | 0.3.x          | ✅ Completed   |
+| 3 — CLI               | 0.4.x          | ✅ Completed   |
+| 4 — Doctor            | 0.5.x          | ✅ Completed   |
+| 5 — Git               | 0.6.x          | ✅ Completed   |
+| 6 — Dependencies      | 0.7.x          | ✅ Completed   |
+| 7 — Docker            | 0.8.x          | ✅ Completed   |
+| 8 — Plugin System     | 0.9.x          | ✅ Completed   |
+| 9 — Release 1.0 prep  | 1.0.0          | ✅ Completed   |
+| 10 — Hygiene          | 0.4.x          | 🔵 In progress |
+| 11 — Real platform    | 0.5.x          | `[ ]`          |
+| 12 — Quality & CI     | 0.5.x          | `[ ]`          |
+| 13 — Docker depth     | 0.6.x          | `[ ]`          |
+| 14 — Web              | 0.7.x          | `[ ]`          |
+| 15 — Minecraft depth  | 0.7.x          | `[ ]`          |
+| 16 — Own AI           | 0.8.x          | `[ ]`          |
 
-> FASE 9 se considera cerrada en términos de preparación: CI, release, README y docs están listos. El bump a `1.0.0` se hará cuando las APIs de la FASE 11 sean estables.
+> FASE 9 is considered closed in terms of preparation: CI, release, README and docs are ready. The `1.0.0` version bump will happen once FASE 11 APIs are stable.
 
 ---
 
 ## FASE 0 — Foundation ✅
 
-Base del monorepo. Todo lo demás se construye sobre esto.
+Monorepo foundation. Everything else builds on top of this.
 
 ```text
 [x] pnpm workspace (apps/*, packages/*, plugins/*)
 [x] Turborepo: build, dev, test, lint, typecheck, clean
-[x] TypeScript estricto (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes)
+[x] Strict TypeScript (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes)
 [x] ESLint 9 (flat config) + Prettier
-[x] Vitest con tests mínimos en core y logger
-[x] Changesets configurado (@changesets/cli + .changeset/config.json)
+[x] Vitest with minimal tests in core and logger
+[x] Changesets configured (@changesets/cli + .changeset/config.json)
 [x] @devix-cli/core (base)
 [x] @devix-cli/logger (base)
-[x] DEVELOPMENT.md verificada
-[x] GitHub Actions CI (transversal, ver sección CI)
+[x] DEVELOPMENT.md verified
+[x] GitHub Actions CI (cross-cutting, see CI section)
 ```
 
-**Criterio de aceptación:** `pnpm install && pnpm build && pnpm test && pnpm lint && pnpm typecheck` en verde. — **Verificado.**
+**Acceptance criteria:** `pnpm install && pnpm build && pnpm test && pnpm lint && pnpm typecheck` green. — **Verified.**
 
 ---
 
 ## FASE 1 — Core Architecture ✅
 
-Paquetes fundamentales que usarán todos los demás.
+Fundamental packages that everyone else will use.
 
 ```text
-[x] @devix-cli/filesystem  — abstracciones de lectura/escritura, existencia, rutas seguras
+[x] @devix-cli/filesystem  — read/write abstractions, existence checks, safe paths
     (exists/isFile/isDirectory, read/write, readJson, walkUp/findUp,
-    resolveWithin, listDir/listDirSafe, errores tipados FilesystemError;
-    API revisada; 30 tests)
-[x] @devix-cli/shell       — ejecución controlada de procesos (spawn seguro, sin shell concat)
-    (runCommand con timeout/abort/límite de salida, which/commandExists,
-    guard EUNSAFE_ARG para shims .cmd/.bat de Windows; 26 tests)
-[x] @devix-cli/config      — carga de configuración (devix.config.json / devix.json)
-    (loadConfig con búsqueda walkUp y precedencia devix.config.json > devix.json,
-    JSON estricto sin eval/import dinámico, validación de forma con claves
-    desconocidas rechazadas, fichero vacío = config vacía, errores tipados
-    ConfigError; 20 tests)
-[x] AGENTS.md por paquete (raíz + core, logger, filesystem, shell, config)
-[x] Tests por paquete (filesystem 30, shell 26, config 20; core y logger con
-    tests mínimos)
+    resolveWithin, listDir/listDirSafe, typed FilesystemError;
+    API revised; 30 tests)
+[x] @devix-cli/shell       — controlled process execution (safe spawn, no shell concat)
+    (runCommand with timeout/abort/output limit, which/commandExists,
+    EUNSAFE_ARG guard for Windows .cmd/.bat shims; 26 tests)
+[x] @devix-cli/config      — configuration loading (devix.config.json / devix.json)
+    (loadConfig with upward walkUp and precedence devix.config.json > devix.json,
+    strict JSON with no eval/dynamic import, shape validation rejecting unknown
+    keys, empty file = empty config, typed ConfigError; 20 tests)
+[x] AGENTS.md per package (root + core, logger, filesystem, shell, config)
+[x] Tests per package (filesystem 30, shell 26, config 20; core and logger with
+    minimal tests)
 ```
 
-**Criterios de aceptación:**
+**Acceptance criteria:**
 
-- Cada paquete: `package.json` propio, ESM, tsconfig estricto, `build`/`test`/`lint`/`typecheck`.
-- Dependencias internas solo con `workspace:*`.
-- `@devix-cli/filesystem` y `@devix-cli/shell` no dependen entre sí; ambas pueden depender de `@devix-cli/core`.
-- Todos los comandos raíz en verde con los nuevos paquetes.
+- Each package: own `package.json`, ESM, strict tsconfig, `build`/`test`/`lint`/`typecheck`.
+- Internal dependencies only via `workspace:*`.
+- `@devix-cli/filesystem` and `@devix-cli/shell` do not depend on each other; both may depend on `@devix-cli/core`.
+- All root commands green with the new packages.
 
 ---
 
 ## FASE 2 — Project Detector ✅
 
-Detección automática de características del proyecto actual.
+Automatic detection of the current project's characteristics.
 
 ```text
-[x] DetectorRegistry extensible (id estable, orden determinista,
-    duplicados y markers vacíos rechazados con ProjectDetectorError)
-[x] findProjectRoot(startDir, detectors) — markers declarados por los
-    detectores, el más cercano hacia arriba gana
+[x] Extensible DetectorRegistry (stable id, deterministic order,
+    duplicates and empty markers rejected with ProjectDetectorError)
+[x] findProjectRoot(startDir, detectors) — declared markers, nearest upward wins
 [x] detectProject(registry, { cwd }) → { root, isProject, detectors: Map }
 [x] createDefaultRegistry + defaultDetectors
-[x] Detectores: node, npm, pnpm, yarn, bun, typescript, git, docker, java,
+[x] Detectors: node, npm, pnpm, yarn, bun, typescript, git, docker, java,
     rust, python, fabric, quilt, forge, neoforge, bukkit, bungeecord,
     velocity, sponge
-[x] summarizeProject() agrupa por languages, packageManagers, tools
-[x] detectMinecraftPlatforms() compone detectores de categoría minecraft
-[x] Fixtures commitadas + test de integración (109 tests en el paquete)
+[x] summarizeProject() groups by languages, packageManagers, tools
+[x] detectMinecraftPlatforms() composes minecraft-category detectors
+[x] Committed fixtures + integration test (109 tests in the package)
 ```
 
-**Criterios de aceptación:** añadir un detector nuevo no requiere tocar los existentes; fixtures cubren los gestores de paquetes principales.
+**Acceptance criteria:** adding a new detector does not require touching existing ones; fixtures cover the main package managers.
 
 ---
 
 ## FASE 3 — CLI ✅
 
-Bootstrap de la interfaz de línea de comandos.
+Command-line interface bootstrap.
 
 ```text
-[x] apps/cli con oclif (v5, descubrimiento pattern sobre dist/commands compilado)
-[x] devix (help por defecto)
+[x] apps/cli with oclif (v5, pattern discovery over dist/commands)
+[x] devix (help by default)
 [x] devix --help / devix --version
-[x] bin funcional vía node apps/cli/bin/run.js
+[x] Working bin via node apps/cli/bin/run.js
 [x] devix detect
-[x] Test de presupuesto de arranque
+[x] Cold-start budget test
 ```
 
-**Criterios de aceptación:** arranque rápido (<300ms en frío razonable), help claro, códigos de salida correctos.
+**Acceptance criteria:** fast startup (<300ms cold start), clear help, correct exit codes.
 
 ---
 
 ## FASE 4 — Doctor ✅
 
 ```text
-[x] Servicio Doctor desacoplado del comando (CLI solo coordina)
-[x] Sección Environment: Node.js, pnpm/npm/yarn/bun, Git (versiones detectadas)
-[x] Sección Project: usa @devix-cli/project-detector
-[x] Salida legible con ✓/✗ y resumen de estado
-[x] Tests del servicio con inyección de detectores (sin depender del sistema real)
+[x] Doctor service decoupled from the command (CLI only coordinates)
+[x] Environment section: Node.js, pnpm/npm/yarn/bun, Git (detected versions)
+[x] Project section: uses @devix-cli/project-detector
+[x] Readable output with ✓/✗ and status summary
+[x] Service tests with injectable detectors (no dependency on the real system)
 ```
 
-**Criterios de aceptación:** `devix doctor` refleja correctamente el estado de este mismo repo y de un proyecto vacío.
+**Acceptance criteria:** `devix doctor` correctly reflects the state of this repo and of an empty directory.
 
 ---
 
 ## FASE 5 — Git ✅
 
 ```text
-[x] @devix-cli/git sobre @devix-cli/shell (sin reinventar Git)
+[x] @devix-cli/git over @devix-cli/shell (without reinventing Git)
 [x] devix git status / branches / diff / sync
-[x] Nunca ejecutar comandos destructivos sin confirmación explícita
-[x] Manejo de: no-repo, git ausente, salida localizada (parsear solo lo necesario)
+[x] Never run destructive commands without explicit confirmation
+[x] Handles: no-repo, missing git, localized output (parse only what's needed)
 ```
 
 ---
@@ -158,9 +156,9 @@ Bootstrap de la interfaz de línea de comandos.
 ## FASE 6 — Dependencies ✅
 
 ```text
-[x] Detección automática del package manager (reusa project-detector)
+[x] Automatic package manager detection (reuses project-detector)
 [x] devix deps list / outdated / audit
-[x] Delegar en el gestor detectado (pnpm outdated, npm outdated…), sin parseo propio de registries
+[x] Delegate to detected manager (pnpm outdated, npm outdated…), no custom registry parsing
 ```
 
 ---
@@ -168,10 +166,10 @@ Bootstrap de la interfaz de línea de comandos.
 ## FASE 7 — Docker ✅
 
 ```text
-[x] plugins/docker desacoplado del core
+[x] plugins/docker decoupled from core
 [x] devix docker status / ps / images
-[x] Degradación elegante si Docker no está instalado
-[ ] devix docker compose (ver FASE 13)
+[x] Graceful degradation when Docker is not installed
+[ ] devix docker compose (see FASE 13)
 ```
 
 ---
@@ -179,178 +177,178 @@ Bootstrap de la interfaz de línea de comandos.
 ## FASE 8 — Plugin System ✅
 
 ```text
-[x] API de plugins mínima: registrar manifests con id, nombre, versión, descripción
+[x] Minimal plugin API: register manifests with id, name, version, description
 [x] devix plugin list
-[x] Validación de shapes y rechazo de duplicados
-[x] Sin ejecución de código arbitrario sin control (seguridad primero)
-[ ] Capacidades reales: comandos, doctor checks, detectores, hooks (ver FASE 11)
+[x] Shape validation and duplicate rejection
+[x] No arbitrary code execution without control (security first)
+[ ] Real capabilities: commands, doctor checks, detectors, hooks (see FASE 11)
 [ ] plugin install / remove (post-1.0)
 ```
 
-**Criterio de aceptación parcial:** el docker plugin se registra sin cambios en core.
+**Partial acceptance criteria:** the docker plugin registers without changes in core.
 
 ---
 
 ## FASE 9 — Release 1.0 prep ✅
 
 ```text
-[x] CI estable en verde de forma sostenida
-[x] Release automatizado con Changesets
-[x] README.md orientado a usuarios
+[x] CI stable and green
+[x] Automated release with Changesets
+[x] User-oriented README.md
 [x] Docs: architecture/, cli/, plugins/, project-detection/
-[ ] Versiones 1.0.0 de los paquetes públicos (bump final tras FASE 11)
+[ ] 1.0.0 versions of public packages (final bump after FASE 11)
 ```
 
 ---
 
-## FASE 10 — Higiene y deuda técnica 🔵
+## FASE 10 — Hygiene and technical debt 🔵
 
-Pagar la deuda documental y de código muerto antes de mover la arquitectura.
+Pay off documentation debt and dead code before moving the architecture.
 
 ```text
-[ ] README.md: tabla de paquetes sin columnas rotas
-[ ] DEVELOPMENT.md: tablas y referencias de scope @devix-cli/* actualizadas
-[ ] ROADMAP.md: fuente de verdad coherente
-[ ] AGENTS.md faltantes en git, doctor, deps, plugins/docker, plugins/minecraft
-[ ] Directorios vacíos: packages/testing, plugins/github, tests/
-[ ] default: process.cwd() → default: async () => process.cwd() en flags
-[ ] Borrar void join(flags.cwd) muerto en docker.ts
-[ ] git/index.ts: listar sync en el help
-[ ] deps.ts: deduplicar imports dinámicos
-[ ] Scripts raíz: verify y format:check
-[ ] CONTRIBUTING.md: reglas cortas para agentes/contribuidores
-[ ] Deprecar @devix-cli/logger (changeset) y quitarlo de linked packages
+[ ] README.md: package table without broken columns
+[ ] DEVELOPMENT.md: tables and @devix-cli/* scope references updated
+[ ] ROADMAP.md: single coherent source of truth
+[ ] Missing AGENTS.md for git, doctor, deps, plugins/docker, plugins/minecraft
+[ ] Empty directories: packages/testing, plugins/github, tests/
+[ ] default: process.cwd() → default: async () => process.cwd() in flags
+[ ] Remove dead void join(flags.cwd) in docker.ts
+[ ] git/index.ts: list sync in help
+[ ] deps.ts: deduplicate dynamic imports
+[ ] Root scripts: verify and format:check
+[ ] CONTRIBUTING.md: short rules for agents/contributors
+[ ] Deprecate @devix-cli/logger (changeset) and remove from linked packages
 ```
 
-**Criterios de aceptación:**
+**Acceptance criteria:**
 
-- `pnpm verify` en verde.
-- Sin tablas markdown rotas.
-- Sin `void join` ni imports duplicados.
-- Todos los paquetes tienen su `AGENTS.md` (privado, no tracked).
+- `pnpm verify` green.
+- No broken markdown tables.
+- No `void join` or duplicated imports.
+- Every package has its `AGENTS.md` (private, not tracked).
 
 ---
 
-## FASE 11 — Plataforma real
+## FASE 11 — Real platform
 
-Convertir el "plugin system" en una extensión real y unificar la experiencia de CLI.
+Turn the "plugin system" into real extension points and unify the CLI experience.
 
 ```text
-[ ] @devix-cli/output: JSON canónico { ok, data | error } y exit codes 0/1/2
-[ ] DevixCommand base con --json, --cwd, --no-color, --quiet, --verbose, --config
-[ ] Config global + de proyecto mergeada; devix config get|set|list|path
-[ ] @devix-cli/cache: TTL en ~/.cache/devix para sondeos de herramientas
-[ ] PluginManifest con capabilities (commands, doctorChecks, detectors, hooks) y apiVersion
-[ ] Registro de comandos propio: el CLI resuelve desde manifests, no imports hardcodeados
-[ ] Migrar docker y minecraft a la API de capacidades sin tocar su lógica
+[ ] @devix-cli/output: canonical JSON { ok, data | error } and exit codes 0/1/2
+[ ] DevixCommand base with --json, --cwd, --no-color, --quiet, --verbose, --config
+[ ] Global + project config merged; devix config get|set|list|path
+[ ] @devix-cli/cache: TTL in ~/.cache/devix for tool probes
+[ ] PluginManifest with capabilities (commands, doctorChecks, detectors, hooks) and apiVersion
+[ ] Own command registry: CLI resolves from manifests, not hardcoded imports
+[ ] Migrate docker and minecraft to the capabilities API without touching their logic
 ```
 
-**Criterios de aceptación:** añadir un plugin nuevo = paquete nuevo + manifest, **cero cambios en apps/cli**. Docker y minecraft migrados.
+**Acceptance criteria:** adding a new plugin = new package + manifest, **zero changes in apps/cli**. Docker and minecraft migrated.
 
-> **Breaking change en 0.x:** la API pública de `@devix-cli/core` cambia. Se documenta como incompatible en CHANGELOG y docs/plugins.md.
+> **Breaking change in 0.x:** the public API of `@devix-cli/core` changes. Documented as breaking in CHANGELOG and docs/plugins.md.
 
 ---
 
-## FASE 12 — Calidad y CI
+## FASE 12 — Quality & CI
 
 ```text
-[ ] @vitest/coverage-v8 + vitest.config.ts compartido + umbrales 80%
-[ ] turbo.json: outputs correctos en test para cacheo real
-[ ] Harness e2e en proceso (reducir 23 spawns del binario)
+[ ] @vitest/coverage-v8 + shared vitest.config.ts + 80% thresholds
+[ ] turbo.json: correct test outputs for real caching
+[ ] In-process e2e harness (reduce 23 binary spawns)
 [ ] CI: CodeQL, dependency-review, Dependabot/Renovate
 [ ] npm publish --provenance + permissions hardening
-[ ] Arreglar step "Guard against workspace-only protocols" en release.yml
+[ ] Fix "Guard against workspace-only protocols" step in release.yml
 ```
 
 ---
 
-## FASE 13 — Docker a fondo
+## FASE 13 — Docker depth
 
 ```text
-[ ] Parseo de compose v2: devix docker compose config|ps|logs|images
-[ ] Dockerfile lint read-only (FROM, USER, HEALTHCHECK, .dockerignore)
-[ ] Salud por contenedor, puertos mapeados, stats puntual
-[ ] Acciones mutantes (up/down/prune): print-first, --yes explícito
+[ ] Compose v2 parsing: devix docker compose config|ps|logs|images
+[ ] Read-only Dockerfile lint (FROM, USER, HEALTHCHECK, .dockerignore)
+[ ] Per-container health, mapped ports, point-in-time stats
+[ ] Mutating actions (up/down/prune): print-first, explicit --yes
 ```
 
 ---
 
 ## FASE 14 — Web
 
-Nuevo `plugins/web` como primer consumidor real de las capacidades de la FASE 11.
+New `plugins/web` as the first real consumer of FASE 11 capabilities.
 
 ```text
-[ ] Detectores web en project-detector: Next, Nuxt, Astro, SvelteKit, Remix, Vite, Angular, estático
+[ ] Web detectors in project-detector: Next, Nuxt, Astro, SvelteKit, Remix, Vite, Angular, static
 [ ] devix web detect
-[ ] devix web env (nombres de variables, nunca valores secretos)
+[ ] devix web env (variable names only, never secret values)
 [ ] devix web scripts
-[ ] devix web serve (estático, --port)
-[ ] devix web build (print-first, --run para ejecutar)
+[ ] devix web serve (static, --port)
+[ ] devix web build (print-first, --run to execute)
 [ ] devix web doctor
 ```
 
 ---
 
-## FASE 15 — Minecraft a fondo
+## FASE 15 — Minecraft depth
 
 ```text
-[ ] Catálogo de versiones a catalog/versions.json + script de refresco
-[ ] Generar Gradle wrapper, .gitignore, LICENSE, README, CI, .editorconfig
+[ ] Version catalog to catalog/versions.json + refresh script
+[ ] Generate Gradle wrapper, .gitignore, LICENSE, README, CI, .editorconfig
 [ ] devix minecraft run (print-first)
-[ ] Checks de Java/Gradle vía doctor capabilities
+[ ] Java/Gradle checks via doctor capabilities
 ```
 
 ---
 
-## FASE 16 — IA propia
+## FASE 16 — Own AI
 
-El diseño se fija en FASE 11; la implementación es posterior.
+Design is fixed in FASE 11; implementation comes later.
 
 ```text
-[ ] AiProvider agnóstico, local primero (Ollama / llama.cpp)
-[ ] Config es datos: apiKeyEnv, nunca el valor de la clave
-[ ] Consentimiento explícito por comando + preview de lo enviado
-[ ] Print-first: la IA propone, Devix imprime
-[ ] Redactor obligatorio (tokens, claves, emails, rutas absolutas)
-[ ] Auditoría en ~/.local/state/devix/ai.log
+[ ] Provider-agnostic AiProvider, local first (Ollama / llama.cpp)
+[ ] Config is data: apiKeyEnv, never the key value
+[ ] Explicit per-command consent + preview of what is sent
+[ ] Print-first: AI proposes, Devix prints
+[ ] Mandatory redactor (tokens, keys, emails, absolute paths)
+[ ] Audit log in ~/.local/state/devix/ai.log
 [ ] devix ai explain / doctor / fix-plan
 ```
 
 ---
 
-## Trabajo transversal (continuo, no bloquea una fase)
+## Cross-cutting work (continuous, does not block a phase)
 
 ```text
 [x] CI (GitHub Actions): install → format → lint → typecheck → test → build
-    Matriz: ubuntu-latest (Node 22, 24) + windows-latest (Node 22)
-[x] AGENTS.md raíz + por subdirectorio, actualizados con cada fase
-    (documentación de trabajo local: no se rastrea en el repo, ver .gitignore)
-[ ] Changeset por cambio que afecte a usuarios
+    Matrix: ubuntu-latest (Node 22, 24) + windows-latest (Node 22)
+[x] AGENTS.md root + per subdirectory, updated with each phase
+    (local working docs: not tracked in the repo, see .gitignore)
+[ ] Changeset per user-facing change
 [ ] CodeQL / security scanning
-[ ] Coverage con umbrales
+[ ] Coverage with thresholds
 ```
 
 ---
 
-## Fuera de alcance por ahora
+## Out of scope for now
 
-Explícitamente **no** planificado hasta que las fases abiertas estén estables:
+Explicitly **not** planned until open phases are stable:
 
 ```text
 devix railway / npm / vercel
-Integraciones con el ecosistema Hauchdev (salvo IA propia)
-Publicación automática de releases manualmente controladas
+Hauchdev ecosystem integrations (except own AI)
+Manually controlled automatic release publishing
 ```
 
-Cualquier idea nueva entra por esta lista hasta que una fase abierta la justifique.
+Any new idea enters this list until an open phase justifies it.
 
 ---
 
-## Reglas de avance
+## Advance rules
 
-Una fase se considera cerrada cuando:
+A phase is considered closed when:
 
-1. Todos sus criterios de aceptación pasan.
-2. `pnpm lint && pnpm typecheck && pnpm test && pnpm build` en verde.
-3. `DEVELOPMENT.md` y `ROADMAP.md` reflejan el nuevo estado.
-4. Existe al menos un commit `feat(...)` convencional por unidad de funcionalidad.
+1. All its acceptance criteria pass.
+2. `pnpm lint && pnpm typecheck && pnpm test && pnpm build` is green.
+3. `DEVELOPMENT.md` and `ROADMAP.md` reflect the new state.
+4. There is at least one `feat(...)` conventional commit per functional unit.
