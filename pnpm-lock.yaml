@@ -339,8 +339,11 @@ importers:
 
   plugins/docker:
     dependencies:
+      '@devix-cli/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@devix-cli/shell':
-        specifier: ^0.1.0
+        specifier: workspace:*
         version: link:../../packages/shell
     devDependencies:
       eslint:

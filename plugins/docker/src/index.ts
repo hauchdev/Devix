@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 
+import type { PluginManifest } from "@devix-cli/core";
 import { runCommand } from "@devix-cli/shell";
 
 const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
@@ -12,6 +13,24 @@ const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.
  * released package.
  */
 export const PLUGIN_VERSION: string = manifest.version ?? "0.0.0";
+
+/** Manifest of the docker plugin for the CLI registry. */
+export const DOCKER_PLUGIN_MANIFEST: PluginManifest = {
+  id: "docker",
+  name: "Docker",
+  version: PLUGIN_VERSION,
+  description: "Docker diagnostics: availability, containers and images.",
+  apiVersion: "1",
+  capabilities: {
+    commands: [
+      {
+        id: "docker",
+        description: "Docker diagnostics and container/image listings.",
+        module: "@devix-cli/docker",
+      },
+    ],
+  },
+};
 
 /** Availability of the Docker installation on this machine. */
 export interface DockerAvailability {

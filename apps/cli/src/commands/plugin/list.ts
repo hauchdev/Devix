@@ -31,10 +31,12 @@ export default class PluginList extends Command {
     }
 
     for (const plugin of plugins) {
-      const commands = plugin.commands?.join(", ") ?? "none";
+      const commandIds = plugin.capabilities?.commands?.map((command) => command.id) ?? [];
+      const legacyCommands = plugin.commands ?? [];
+      const allCommands = [...new Set([...commandIds, ...legacyCommands])];
       this.log(`  ${plugin.id} ${plugin.version}`);
       this.log(`    ${plugin.description}`);
-      this.log(`    commands: ${commands}`);
+      this.log(`    commands: ${allCommands.join(", ") || "none"}`);
     }
   }
 }

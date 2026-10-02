@@ -57,5 +57,14 @@ export const MINECRAFT_PLUGIN_MANIFEST: PluginManifest = {
   version: PLUGIN_VERSION,
   description:
     "Scaffolds Minecraft projects: mods, plugins and proxies with multi-loader, multi-module and multi-version support.",
-  commands: ["minecraft"],
+  apiVersion: "1",
+  capabilities: {
+    commands: [
+      {
+        id: "minecraft",
+        description: "Scaffold and inspect Minecraft projects.",
+        module: "@devix-cli/minecraft",
+      },
+    ],
+  },
 };

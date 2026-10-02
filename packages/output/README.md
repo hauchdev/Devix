@@ -18,11 +18,11 @@ console.log(formatJson(failure));
 
 ## Exit codes
 
-| Code | Value | Meaning                                |
-| ---- | ----- | -------------------------------------- |
-| `Success`    | 0 | Command completed as expected.         |
-| `Failure`    | 1 | User-facing failure (input, tooling).  |
-| `Unexpected` | 2 | Internal/programming error.            |
+| Code         | Value | Meaning                               |
+| ------------ | ----- | ------------------------------------- |
+| `Success`    | 0     | Command completed as expected.        |
+| `Failure`    | 1     | User-facing failure (input, tooling). |
+| `Unexpected` | 2     | Internal/programming error.           |
 
 ## Guarantees
 
