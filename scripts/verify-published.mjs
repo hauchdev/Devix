@@ -1,0 +1,95 @@
+#!/usr/bin/env node
+/**
+ * Post-publish verification.
+ *
+ * pnpm resolves `workspace:` when packing, so a leaked protocol only
+ * shows up on the registry, where it becomes a broken install for
+ * consumers. After publishing, this confirms every package that went out
+ * is actually installable and carries concrete dependency ranges.
+ *
+ * Usage: node scripts/verify-published.mjs @devix-cli/core@0.1.1 ...
+ */
+
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const run = promisify(execFile);
+
+const DEPENDENCY_FIELDS = ["dependencies", "peerDependencies", "optionalDependencies"];
+
+/** Splits `name@version`, tolerating scoped names. */
+function parseSpec(spec) {
+  const at = spec.lastIndexOf("@");
+  if (at <= 0) {
+    return { name: spec, version: "latest" };
+  }
+  return { name: spec.slice(0, at), version: spec.slice(at + 1) };
+}
+
+/** Reads one published manifest from the registry. */
+async function fetchManifest(name, version) {
+  const { stdout } = await run("npm", ["view", `${name}@${version}`, "--json"], {
+    encoding: "utf8",
+    maxBuffer: 8 * 1024 * 1024,
+  });
+
+  const parsed = JSON.parse(stdout);
+  // `npm view pkg@ver --json` returns a string when there is a single
+  // field; ask for the fields we need explicitly when that happens.
+  return typeof parsed === "string" ? { version: parsed } : parsed;
+}
+
+const specs = process.argv.slice(2);
+
+if (specs.length === 0) {
+  console.log("No packages to verify.");
+  process.exit(0);
+}
+
+const problems = [];
+
+for (const spec of specs) {
+  const { name, version } = parseSpec(spec);
+
+  let manifest;
+  try {
+    manifest = await fetchManifest(name, version);
+  } catch (error) {
+    problems.push(`${name}@${version} is not on the registry: ${error.message}`);
+    continue;
+  }
+
+  const leaks = [];
+  for (const field of DEPENDENCY_FIELDS) {
+    const section = manifest?.[field];
+    if (typeof section !== "object" || section === null || Array.isArray(section)) {
+      continue;
+    }
+    for (const [dependency, range] of Object.entries(section)) {
+      if (typeof range === "string" && range.includes("workspace:")) {
+        leaks.push(`${field}.${dependency} = "${range}"`);
+      }
+    }
+  }
+
+  if (leaks.length > 0) {
+    problems.push(
+      `${name}@${version} leaked the workspace protocol:\n    - ${leaks.join("\n    - ")}`,
+    );
+    continue;
+  }
+
+  console.log(`  v  ${name}@${version}`);
+}
+
+if (problems.length > 0) {
+  console.error("");
+  console.error("Published packages failed verification:");
+  for (const problem of problems) {
+    console.error(`  x ${problem}`);
+  }
+  process.exit(1);
+}
+
+console.log("");
+console.log(`Verified ${specs.length} published package(s).`);

@@ -8,15 +8,22 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+# Only what the release needs. Anything wider is a credential waiting to
+# be misused by a compromised dependency.
+permissions:
+  contents: read
+
 jobs:
   release:
     name: Release to npm
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # Required for npm provenance: the registry verifies the build
+      # against this workflow's identity.
       id-token: write
-      # The changesets action opens the "Version Packages" PR when there are
-      # pending changesets, which needs pull request write access.
+      # The changesets action opens the "Version Packages" PR when there
+      # are pending changesets, which needs pull request write access.
       pull-requests: write
     steps:
       - name: Checkout
@@ -42,19 +49,25 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Verify
+        run: pnpm verify
+
       - name: Publish
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm exec changeset publish
+          # --provenance links the published tarballs to this workflow
+          # run, so consumers can verify they were built from this repo.
+          publish: pnpm exec changeset publish --provenance
           version: pnpm exec changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Guard against workspace-only protocols
+      - name: Verify published packages
         if: steps.changesets.outputs.published == 'true'
         run: |
-          echo "Published packages:"
-          echo "${{ steps.changesets.outputs.publishedPackages }}"
+          node scripts/verify-published.mjs ${{ steps.changesets.outputs.publishedPackages }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
