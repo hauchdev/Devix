@@ -50,6 +50,7 @@
     "@devix-cli/minecraft": "workspace:*",
     "@devix-cli/output": "workspace:*",
     "@devix-cli/project-detector": "workspace:*",
+    "@devix-cli/ui": "workspace:*",
     "@devix-cli/web": "workspace:*",
     "@oclif/core": "^5.0.0"
   },

@@ -13,11 +13,13 @@ async function runCli(
   args: string[],
   cwd?: string,
   stdin?: string,
+  env?: Record<string, string>,
 ): Promise<{ stdout: string; stderr: string }> {
   return execFileAsync(process.execPath, [binPath, ...args], {
     cwd: cwd ?? cliRoot,
     encoding: "utf8",
     ...(stdin === undefined ? {} : { input: stdin }),
+    ...(env === undefined ? {} : { env: { ...process.env, ...env } }),
   });
 }
 
@@ -124,12 +126,28 @@ describe("devix CLI (compiled binary)", () => {
   }, 30_000);
 
   it("status combines project, environment, git and docker", async () => {
-    const { stdout } = await runCli(["status"]);
+    const { stdout } = await runCli(["status", "--no-color"]);
 
-    expect(stdout).toContain("Project:");
-    expect(stdout).toContain("Environment:");
-    expect(stdout).toContain("Git:");
-    expect(stdout).toContain("Docker:");
+    expect(stdout).toContain("devix status");
+    expect(stdout).toMatch(/^Project\s+-+$/m);
+    expect(stdout).toMatch(/^Environment\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/^Git\s+-+$/m);
+    expect(stdout).toMatch(/^Docker\s+-+$/m);
+  }, 30_000);
+
+  it("status degrades to ascii and no color on a legacy terminal", async () => {
+    const { stdout } = await runCli(["status", "--no-color"], undefined, undefined, {
+      DEVIX_UNICODE: "0",
+      NO_COLOR: "1",
+    });
+
+    // No ANSI escapes and no box drawing: a legacy Windows console or a
+    // piped log file must stay readable.
+    // eslint-disable-next-line no-control-regex
+    expect(stdout).not.toMatch(/\[/);
+    expect(stdout).not.toContain("─");
+    expect(stdout).not.toContain("✓");
+    expect(stdout).toMatch(/^Project\s+-+$/m);
   }, 30_000);
 
   it("status --json emits all sections parseable", async () => {

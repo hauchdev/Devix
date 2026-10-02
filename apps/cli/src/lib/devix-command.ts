@@ -1,5 +1,6 @@
 import { err, formatJson, ok, type CommandOutput, type ErrorOutput } from "@devix-cli/output";
 import { Command, Flags } from "@oclif/core";
+import { createUi, type Field, type Row, type Status, type Ui } from "@devix-cli/ui";
 
 /** Common Devix command flags. */
 export const devixBaseFlags = {
@@ -42,9 +43,52 @@ export interface DevixBaseFlags {
   readonly config?: string;
 }
 
-/** Base class for Devix commands. */
+/** Options used to build the renderer. */
+export interface RendererOptions {
+  /** Disables color regardless of detection. */
+  readonly color?: boolean;
+  /** Overrides the detected width. */
+  readonly width?: number;
+  /** Captures output instead of writing to stdout. */
+  readonly write?: (text: string) => void;
+}
+
+/**
+ * Base class for Devix commands.
+ *
+ * Owns two responsibilities so individual commands do not repeat them:
+ * the canonical JSON envelope, and terminal rendering. Commands decide
+ * *what* to show; this class decides *how*.
+ */
 export abstract class DevixCommand extends Command {
   static override baseFlags = devixBaseFlags;
+
+  private cachedUi: Ui | undefined;
+
+  /**
+   * The renderer for this invocation.
+   *
+   * Cached per command instance so a command that renders several
+   * sections does not re-detect capabilities each time.
+   */
+  protected ui(options: RendererOptions = {}): Ui {
+    if (this.cachedUi === undefined || options.width !== undefined || options.write !== undefined) {
+      this.cachedUi = createUi({
+        ...(options.color === false ? { color: "none" as const } : {}),
+        ...(options.width === undefined ? {} : { width: options.width }),
+        ...(options.write === undefined ? {} : { write: options.write }),
+      });
+    }
+    return this.cachedUi;
+  }
+
+  /** The renderer configured from parsed flags. */
+  protected renderer(flags: DevixBaseFlags, options: RendererOptions = {}): Ui {
+    return this.ui({
+      ...(flags["no-color"] ? { color: false as const } : {}),
+      ...options,
+    });
+  }
 
   /**
    * Print a successful result. With `--json` the canonical output shape
@@ -60,9 +104,7 @@ export abstract class DevixCommand extends Command {
       return;
     }
 
-    for (const line of plainText(data)) {
-      this.log(line);
-    }
+    this.renderer(flags).lines(plainText(data));
   }
 
   /** Print an error using the canonical output shape. */
@@ -100,4 +142,36 @@ export abstract class DevixCommand extends Command {
   ): ErrorOutput {
     return err(code, message, details);
   }
+}
+
+/** Maps a service status onto a renderer status. */
+export function toUiStatus(status: string): Status {
+  switch (status) {
+    case "ok":
+      return "ok";
+    case "warn":
+      return "warn";
+    case "error":
+    case "missing":
+      return "error";
+    case "muted":
+      return "muted";
+    default:
+      return "info";
+  }
+}
+
+/** Builds a field row without repeating the shape everywhere. */
+export function field(label: string, value?: string, status?: Status, hint?: string): Field {
+  return {
+    label,
+    ...(value === undefined ? {} : { value }),
+    ...(status === undefined ? {} : { status }),
+    ...(hint === undefined ? {} : { hint }),
+  };
+}
+
+/** Builds a table row without repeating the shape everywhere. */
+export function row(cells: readonly string[], status?: Status): Row {
+  return { cells, ...(status === undefined ? {} : { status }) };
 }

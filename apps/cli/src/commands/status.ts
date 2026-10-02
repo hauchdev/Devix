@@ -1,21 +1,12 @@
-import { Command, Flags } from "@oclif/core";
 import { join } from "node:path";
 
-export default class Status extends Command {
+import { DevixCommand, devixBaseFlags, field, toUiStatus } from "../lib/devix-command.js";
+
+export default class Status extends DevixCommand {
   static override description =
     "One glance at your environment, project and repository. Read-only.";
 
-  static override flags = {
-    cwd: Flags.string({
-      char: "d",
-      description: "Directory to inspect. Defaults to the current directory.",
-      default: async () => process.cwd(),
-    }),
-    json: Flags.boolean({
-      description: "Output everything as JSON.",
-      default: false,
-    }),
-  };
+  static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Status);
@@ -52,41 +43,92 @@ export default class Status extends Command {
       return;
     }
 
-    this.log(`Project: ${report.project.root}`);
-    if (report.project.isProject) {
-      this.log(`  Languages: ${report.project.languages.join(", ") || "none"}`);
-      this.log(`  Package managers: ${report.project.packageManagers.join(", ") || "none"}`);
-      this.log(`  Tools: ${report.project.tools.join(", ") || "none"}`);
-    } else {
-      this.log("  No project markers found.");
+    const ui = this.renderer(flags);
+    if (flags.quiet) {
+      return;
     }
-    this.log("");
 
-    this.log("Environment:");
-    for (const check of report.environment.checks) {
-      this.log(
-        `  ${check.status === "ok" ? "✓" : "✗"} ${check.name} ${check.detail ?? "(not found)"}`,
-      );
-    }
-    this.log("");
+    ui.title("devix status");
+    ui.blank();
 
+    ui.heading("Project");
+    ui.fields([
+      field("Root", report.project.root),
+      ...(report.project.isProject
+        ? [
+            field("Languages", report.project.languages.join(", ") || "none"),
+            field("Managers", report.project.packageManagers.join(", ") || "none"),
+            field("Tools", report.project.tools.join(", ") || "none"),
+            ...(report.project.minecraft.length > 0
+              ? [field("Minecraft", report.project.minecraft.join(", "))]
+              : []),
+          ]
+        : [field("Markers", "none found", "warn", "This directory does not look like a project.")]),
+    ]);
+    ui.blank();
+
+    ui.heading("Environment", { count: report.environment.checks.length });
+    ui.fields(
+      report.environment.checks.map((check) =>
+        field(check.name, check.detail, toUiStatus(check.status)),
+      ),
+    );
+    ui.blank();
+
+    ui.heading("Git");
     if (sync.ok) {
       const { upstream, ahead, behind } = sync.state;
-      this.log(`Git: ${upstream}`);
-      if (ahead === 0 && behind === 0) {
-        this.log("  Up to date.");
-      } else {
-        this.log(`  Ahead ${ahead}, behind ${behind}. Run devix git sync for the commands.`);
+      const drifted = ahead !== 0 || behind !== 0;
+      ui.fields([
+        field("Upstream", upstream),
+        field(
+          "State",
+          drifted ? `ahead ${String(ahead)}, behind ${String(behind)}` : "up to date",
+          drifted ? "warn" : "ok",
+          drifted ? "Local commits are not pushed yet." : undefined,
+        ),
+      ]);
+      if (drifted) {
+        ui.blank();
+        ui.hint("devix git sync    show the commands to reconcile");
       }
     } else {
-      this.log("Git: no upstream or not a repository.");
+      ui.fields([
+        field("Upstream", undefined, "muted", "No upstream configured, or not a repository."),
+      ]);
     }
-    this.log("");
+    ui.blank();
 
-    this.log(
-      availability.available
-        ? `Docker: ✓ ${availability.version ?? ""}`
-        : `Docker: ✗ ${availability.reason === "cli-missing" ? "CLI not installed" : "daemon not running"}`,
-    );
+    ui.heading("Docker");
+    ui.fields([
+      field(
+        "Status",
+        availability.available ? (availability.version ?? "running") : undefined,
+        availability.available ? "ok" : "muted",
+        availability.available
+          ? undefined
+          : availability.reason === "cli-missing"
+            ? "Docker CLI is not installed."
+            : "Docker CLI found, but the daemon is not running.",
+      ),
+    ]);
+
+    if (availability.available && docker.runningContainers !== undefined) {
+      const containers = await docker.runningContainers();
+      if (containers !== undefined && containers.length > 0) {
+        ui.blank();
+        ui.heading("Containers", { count: containers.length });
+        ui.table(
+          ["NAME", "IMAGE", "STATUS"],
+          containers.map((container) => ({
+            cells: [container.names, container.image, container.status],
+            status: "ok" as const,
+          })),
+        );
+      }
+    }
+
+    ui.blank();
+    ui.footnote("devix doctor for the full report");
   }
 }

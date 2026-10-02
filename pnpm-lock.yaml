@@ -226,6 +226,9 @@ importers:
       '@devix-cli/project-detector':
         specifier: workspace:*
         version: link:../../packages/project-detector
+      '@devix-cli/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@devix-cli/web':
         specifier: workspace:*
         version: link:../../plugins/web
@@ -344,6 +347,12 @@ importers:
         version: 9.39.1(supports-color@8.1.1)
 
   packages/shell:
+    devDependencies:
+      eslint:
+        specifier: 9.39.1
+        version: 9.39.1(supports-color@8.1.1)
+
+  packages/ui:
     devDependencies:
       eslint:
         specifier: 9.39.1
