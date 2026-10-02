@@ -276,7 +276,12 @@ Turn the "plugin system" into real extension points and unify the CLI experience
 > drive the compiled binary as a subprocess, which v8 coverage cannot see. It is
 > verified end-to-end instead.
 
-**Remaining:** in-process e2e harness to cut the 23+ binary spawns per run.
+**Cutting the e2e cost:** the suite spent 31s on ~50 sequential spawns of the
+compiled binary. An in-process oclif harness was built and rejected: oclif binds
+its stdout reference at load time, so under Vitest the capture silently returned
+nothing on the second run — a failure mode that hides itself as a passing suite.
+Splitting the suite into one file per domain instead lets Vitest run them in
+parallel: 31s → 10s, same 50 tests, still exercising the real binary.
 
 ---
 
