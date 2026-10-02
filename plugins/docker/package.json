@@ -1,6 +1,6 @@
 {
   "name": "@devix-cli/docker",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "type": "module",
   "description": "Docker integration for Devix with graceful degradation when the daemon is unavailable.",
   "main": "./dist/index.js",

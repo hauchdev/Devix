@@ -1,6 +1,6 @@
 {
   "name": "@devix-cli/web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Web project integration for Devix: detect frameworks, inspect environment variables, list scripts, serve static builds and print build commands.",
   "main": "./dist/index.js",

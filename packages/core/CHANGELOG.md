@@ -1,5 +1,15 @@
 # @devix-cli/core
 
+## 1.0.0
+
+### Minor Changes
+
+- 048d318: Extend `PluginManifest` with `capabilities` (commands, doctorChecks, detectors, hooks) and `apiVersion`. The legacy top-level `commands` array is kept for backwards compatibility but marked deprecated.
+
+### Patch Changes
+
+- 6e9c4f7: Add a plugin command registry in the CLI that discovers commands from plugin capability manifests. Exported capability types from `@devix-cli/core` so consumers can reference them.
+
 ## 0.1.1
 
 ### Patch Changes

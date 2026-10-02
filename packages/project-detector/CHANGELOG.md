@@ -1,5 +1,12 @@
 # @devix-cli/project-detector
 
+## 1.0.0
+
+### Minor Changes
+
+- 493c8d9: Adds `detectMinecraftPlatforms(registry, { cwd | root })`: composes every `minecraft`-category detector into a flat answer with one entry per detected platform (id, name, manifest detail, marker evidence), plus `isMinecraft` and the resolved root. Also adds an exact-directory `root` option to `detectProject` (takes precedence over the upward `cwd` search), which `detectMinecraftPlatforms` accepts as well.
+- 46294ed: Add web framework detection. The `web` detector recognizes Next.js, Nuxt, Astro, SvelteKit, Remix, Angular, SolidStart, Gatsby, Eleventy, Vite, webpack and Parcel from the project's dependency list, plus `detectWeb` to compose the result and `isStaticWebFramework` to tell static-output frameworks apart.
+
 ## 0.2.0
 
 ### Minor Changes

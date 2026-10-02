@@ -1,6 +1,6 @@
 {
   "name": "@devix-cli/git",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Safe, read-first Git operations for Devix, built on @devix-cli/shell.",
   "main": "./dist/index.js",

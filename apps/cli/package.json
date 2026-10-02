@@ -1,6 +1,6 @@
 {
   "name": "devix-cli",
-  "version": "0.3.2",
+  "version": "1.0.0",
   "type": "module",
   "description": "The Devix CLI: understands your environment (Node, pnpm, Git, Docker) and your project, so you don't have to memorize it.",
   "license": "MIT",
