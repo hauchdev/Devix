@@ -23,7 +23,7 @@
     "@devix-cli/filesystem": "workspace:*"
   },
   "devDependencies": {
-    "eslint": "9.39.1"
+    "eslint": "10.11.0"
   },
   "description": "TTL filesystem cache for Devix tool probes and expensive computations.",
   "license": "MIT",

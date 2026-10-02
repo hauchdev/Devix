@@ -25,7 +25,7 @@
     "@devix-cli/shell": "^0.1.0"
   },
   "devDependencies": {
-    "eslint": "9.39.1"
+    "eslint": "10.11.0"
   },
   "license": "MIT",
   "author": "hauchdev <hauch8bingo@proton.me>",

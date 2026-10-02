@@ -22,7 +22,7 @@
     "@devix-cli/core": "workspace:*"
   },
   "devDependencies": {
-    "eslint": "9.39.1"
+    "eslint": "10.11.0"
   },
   "description": "Canonical output and exit codes for Devix commands.",
   "license": "MIT",
