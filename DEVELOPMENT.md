@@ -56,18 +56,19 @@ All four commands must finish without errors before you start coding.
 
 All commands run from the repository root.
 
-| Command             | What it does                                          |
-| ------------------- | ----------------------------------------------------- |
-| `pnpm install`      | Install dependencies for the whole workspace          |
-| `pnpm build`        | Build all packages (dependency order respected)       |
-| `pnpm test`         | Run tests (Vitest)                                    |
-| `pnpm lint`         | Analyze code (ESLint)                                 |
-| `pnpm typecheck`    | Type-check without emitting output                    |
-| `pnpm format`       | Format code (Prettier)                                |
-| `pnpm clean`        | Remove build artifacts (`dist/`)                      |
-| `pnpm dev`          | Reserved for CLI watch mode (no tasks yet)            |
-| `pnpm verify`       | Run lint, typecheck, test, build and prettier --check |
-| `pnpm format:check` | Check formatting without writing                      |
+| Command              | What it does                                                  |
+| -------------------- | ------------------------------------------------------------- |
+| `pnpm install`       | Install dependencies for the whole workspace                  |
+| `pnpm build`         | Build all packages (dependency order respected)               |
+| `pnpm test`          | Run tests (Vitest)                                            |
+| `pnpm lint`          | Analyze code (ESLint)                                         |
+| `pnpm typecheck`     | Type-check without emitting output                            |
+| `pnpm format`        | Format code (Prettier)                                        |
+| `pnpm clean`         | Remove build artifacts (`dist/`)                              |
+| `pnpm dev`           | Reserved for CLI watch mode (no tasks yet)                    |
+| `pnpm verify`        | Run lint, typecheck, test, build and prettier --check         |
+| `pnpm test:coverage` | Run tests with v8 coverage and enforce the per-package floors |
+| `pnpm format:check`  | Check formatting without writing                              |
 
 ### CI (GitHub Actions)
 
@@ -222,6 +223,30 @@ Conventions:
 - Tests import from `../src/...` directly (no build required).
 - Cover: normal cases, empty cases, missing files, invalid projects.
 - Cross-platform behavior (Windows/Linux/macOS) is tested with `node:path` and Node APIs, never with hardcoded paths.
+  A hardcoded `"\\"` in a path assertion passes on Windows and fails on Linux CI — use `relative()` and `sep`.
+
+### Coverage
+
+Every package opts into a shared Vitest configuration:
+
+```ts
+// packages/<name>/vitest.config.ts
+import { defineConfig } from "vitest/config";
+import { sharedTestConfig } from "../../vitest.shared.js";
+
+export default defineConfig(sharedTestConfig("@devix-cli/<name>"));
+```
+
+Coverage floors live in `vitest.shared.ts`, one per package:
+
+```bash
+pnpm test:coverage   # runs every package with v8 coverage and enforces the floors
+```
+
+Two rules keep the floors meaningful:
+
+- **A floor nobody meets is theatre.** Each one is set at what the package actually achieves, so a regression fails and an improvement can raise it.
+- **Test the logic, inject the environment.** Anything that shells out takes a runner (`DockerClient`, `createToolProbe`, `DepsRunner`, `GitRunner`). A test that only asserts "if the real machine has Docker, fine" covers nothing.
 
 ---
 
@@ -234,14 +259,10 @@ Conventions:
 Checklist before considering something done:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm exec prettier --check .
+pnpm verify
 ```
 
-All five must pass.
+All five stages must pass.
 
 ---
 

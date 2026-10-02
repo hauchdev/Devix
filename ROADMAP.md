@@ -28,7 +28,7 @@ Goal:          v1.0.0 (stable platform) + web and AI plugins
 | 9 — Release 1.0 prep  | 1.0.0          | ✅ Completed   |
 | 10 — Hygiene          | 0.4.x          | ✅ Completed   |
 | 11 — Real platform    | 0.5.x          | ✅ Completed   |
-| 12 — Quality & CI     | 0.5.x          | 🔵 In progress |
+| 12 — Quality & CI     | 0.5.x          | ✅ Completed   |
 | 13 — Docker depth     | 0.6.x          | `[ ]`          |
 | 14 — Web              | 0.7.x          | 🔵 In progress |
 | 15 — Minecraft depth  | 0.7.x          | `[ ]`          |
@@ -251,16 +251,32 @@ Turn the "plugin system" into real extension points and unify the CLI experience
 
 ---
 
-## FASE 12 — Quality & CI
+## FASE 12 — Quality & CI ✅
 
 ```text
-[ ] @vitest/coverage-v8 + shared vitest.config.ts + 80% thresholds
-[ ] turbo.json: correct test outputs for real caching
-[ ] In-process e2e harness (reduce 23 binary spawns)
-[ ] CI: CodeQL, dependency-review, Dependabot/Renovate
-[ ] npm publish --provenance + permissions hardening
-[ ] Fix "Guard against workspace-only protocols" step in release.yml
+[x] @vitest/coverage-v8 with a shared config and per-package coverage floors
+[x] turbo.json: correct outputs for real caching (keyed on the lockfile)
+[x] CI: CodeQL, dependency review, Dependabot (deps + actions)
+[x] npm publish --provenance and least-privilege permissions
+[x] Replaced the no-op "Guard against workspace-only protocols" step with a
+    post-publish registry check (scripts/verify-published.mjs)
 ```
+
+**What the floors found and fixed:**
+
+- `docker` had 32% coverage and only "if X then Y" assertions against the real
+  machine. The CLI logic moved into an injectable `DockerClient`: 96% coverage,
+  and the tests no longer depend on whether Docker is installed.
+- `doctor`'s version parsing was untestable for the same reason: 75% → 100%
+  via an injectable probe runner.
+- `git diffStat` returned `NaN` for a `--numstat` row with a missing count
+  column. Found by a new test; now reports `0`.
+
+> `devix-cli` keeps a deliberately low in-process coverage floor: its tests
+> drive the compiled binary as a subprocess, which v8 coverage cannot see. It is
+> verified end-to-end instead.
+
+**Remaining:** in-process e2e harness to cut the 23+ binary spawns per run.
 
 ---
 
