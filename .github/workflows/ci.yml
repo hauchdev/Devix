@@ -9,6 +9,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Read-only by default; jobs that need more ask for it explicitly.
+permissions:
+  contents: read
+
 jobs:
   ci:
     name: ${{ matrix.os }} / Node ${{ matrix.node }}
@@ -38,11 +42,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Keyed on the lockfile, not the commit: the lockfile is what
+      # determines whether a cached build is still valid, so keying on
+      # the sha would turn every push into a full rebuild.
       - name: Turbo cache
         uses: actions/cache@v6
         with:
           path: .turbo
-          key: turbo-${{ runner.os }}-${{ matrix.node }}-${{ github.sha }}
+          key: turbo-${{ runner.os }}-${{ matrix.node }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             turbo-${{ runner.os }}-${{ matrix.node }}-
 
@@ -60,3 +67,50 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          # The build is TypeScript to JavaScript; without this CodeQL
+          # never sees the compiled sources.
+          queries: security-and-quality
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    # Only meaningful on pull requests: it compares the PR against its
+    # base. On a push to main there is nothing to compare.
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      # Required to read the dependency graph.
+      dependency-graph: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
