@@ -126,7 +126,7 @@ Devix/
 │   ├── doctor/               # Environment and project diagnostics ✓
 │   └── deps/                 # Package manager delegation ✓
 │
-├── plugins/                  # Optional integrations (docker, minecraft) ✓
+├── plugins/                  # Optional integrations (docker, minecraft, web) ✓
 ├── docs/                     # Specific documentation ✓
 ├── .changeset/               # Versioning and releases ✓
 ├── .github/                  # CI and releases ✓

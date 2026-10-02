@@ -65,7 +65,7 @@ devix deps list         # also: outdated, audit
 devix docker status     # also: ps, images
 
 # What is installed?
-devix plugin list       # docker, minecraft
+devix plugin list       # docker, minecraft, web
 ```
 
 ### Scaffold a Minecraft project
@@ -77,6 +77,17 @@ devix minecraft init paper "QueueBoard" --cwd ./projects/queueboard
 devix minecraft init fabric+forge "DualSword" --mc 1.21.1   # multi-loader
 devix minecraft init paper "QueueBoard" --modules api,core  # multi-module
 devix minecraft init                          # interactive: kind -> platforms -> modules -> name
+```
+
+### Inspect a web project
+
+```bash
+devix web detect                              # framework and whether it builds to static output
+devix web env                                 # variable NAMES only — values are never read
+devix web scripts                             # the scripts declared in package.json
+devix web build                               # prints the command; never runs it
+devix web serve --port 4173                   # prints the command for a built project
+devix web doctor                              # scripts, build output and env vars
 ```
 
 Most commands accept `--json` for machine-readable output and `--cwd` to inspect another directory. Errors are one line and actionable; exit codes are `0` on success and `1` on failure. Every command is in [docs/cli.md](./docs/cli.md).
@@ -100,6 +111,7 @@ Everything the CLI uses is a small, standalone npm package you can reuse in your
 | [`@devix-cli/deps`](./packages/deps)                         | Package manager detection and delegation                                                                                                                    |                                                  |
 | [`@devix-cli/docker`](./plugins/docker)                      | Docker integration with graceful degradation                                                                                                                |                                                  |
 | [`@devix-cli/minecraft`](./plugins/minecraft)                | Scaffolds Minecraft projects (multi-loader, multi-module, multi-version): fabric, forge, neoforge, architectury, spigot, paper, folia, velocity, bungeecord |                                                  |
+| [`@devix-cli/web`](./plugins/web)                            | Web projects: framework detection, environment variable names, scripts, build/serve commands, static server                                                 |                                                  |
 | [`devix-cli`](./apps/cli)                                    | The `devix` CLI                                                                                                                                             | [cli](./docs/cli.md)                             |
 
 ## Why Devix

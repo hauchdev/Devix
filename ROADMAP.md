@@ -280,13 +280,14 @@ Turn the "plugin system" into real extension points and unify the CLI experience
 New `plugins/web` as the first real consumer of FASE 11 capabilities.
 
 ```text
-[ ] Web detectors in project-detector: Next, Nuxt, Astro, SvelteKit, Remix, Vite, Angular, static
-[ ] devix web detect
-[ ] devix web env (variable names only, never secret values)
-[ ] devix web scripts
-[ ] devix web serve (static, --port)
-[ ] devix web build (print-first, --run to execute)
-[ ] devix web doctor
+[x] Web detectors in project-detector: Next, Nuxt, Astro, SvelteKit, Remix, Angular,
+    SolidStart, Gatsby, Eleventy, Vite, webpack, Parcel (+ static-output classification)
+[x] devix web detect
+[x] devix web env (variable names only, never secret values)
+[x] devix web scripts
+[x] devix web serve (print-first, --port; dependency-free read-only static server)
+[x] devix web build (print-first)
+[x] devix web doctor
 ```
 
 ---

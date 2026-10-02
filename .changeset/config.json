@@ -11,8 +11,11 @@
       "@devix-cli/git",
       "@devix-cli/doctor",
       "@devix-cli/deps",
+      "@devix-cli/cache",
+      "@devix-cli/output",
       "@devix-cli/docker",
       "@devix-cli/minecraft",
+      "@devix-cli/web",
       "devix-cli"
     ]
   ],
