@@ -1,5 +1,4 @@
 import { Command, Args, Flags } from "@oclif/core";
-import { join } from "node:path";
 
 export default class Docker extends Command {
   static override description =
@@ -17,7 +16,7 @@ export default class Docker extends Command {
     cwd: Flags.string({
       char: "d",
       description: "Project directory (reserved for compose detection). Defaults to cwd.",
-      default: process.cwd(),
+      default: async () => process.cwd(),
     }),
     json: Flags.boolean({
       description: "Output as JSON.",
@@ -27,7 +26,7 @@ export default class Docker extends Command {
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Docker);
-    void join(flags.cwd);
+    void flags.cwd;
 
     const docker = await import("@devix-cli/docker");
     const availability = await docker.dockerAvailability();
