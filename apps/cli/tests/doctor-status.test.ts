@@ -70,8 +70,7 @@ describe("devix doctor and status", () => {
 
     // No ANSI escapes and no box drawing: a legacy Windows console or a
     // piped log file must stay readable.
-    // eslint-disable-next-line no-control-regex
-    expect(legacy.stdout).not.toMatch(/\[/);
+    expect(legacy.stdout).not.toContain(String.fromCharCode(27));
     expect(legacy.stdout).not.toContain("─");
     expect(legacy.stdout).not.toContain("✓");
     expect(legacy.stdout).toMatch(/^Project\s+-+$/m);

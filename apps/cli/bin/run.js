@@ -15,7 +15,27 @@ if (process.platform === "win32" && !process.env.SHELL) {
 
 const packageDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+const argv = process.argv.slice(2);
+
+// With no command oclif prints its help text, which is a reference
+// rather than an introduction: it lists what exists without saying
+// anything about where the user is. `devix home` is that introduction,
+// so it is what a bare `devix` runs.
+//
+// The check is on the first *command* rather than on argv being empty,
+// because `devix --no-color` is the same request with a flag attached,
+// and inserting `home` ahead of it would make oclif read the flag as a
+// command name. Only the flags oclif itself handles are left alone, so
+// `devix --help` and `devix --version` keep their own behaviour.
+const OCLIF_OWN_FLAGS = new Set(["--help", "--version"]);
+
+const startsWithCommand =
+  argv.length === 0 || (argv[0]?.startsWith("-") === true && !OCLIF_OWN_FLAGS.has(argv[0]));
+
+const args = startsWithCommand ? ["home", ...argv] : argv;
+
 await execute({
+  args,
   dir: packageDir,
   loadOptions: { root: packageDir, pjson: packageJson() },
 }).then(

@@ -194,8 +194,10 @@ export class Deck {
   private renderCardRow(slice: readonly Card[], cell: number): void {
     const widthFor = (): number => cell;
 
-    const heights = slice.map((item) => 2 + item.lines.length + 1);
-    const rows = Math.max(...heights);
+    // One row for the top border, one per line of the tallest card, and
+    // one for the bottom border. The body loop reserves row 0 as the gap
+    // under the title, so the count is lines + 1, not lines.
+    const bodyRows = Math.max(...slice.map((item) => item.lines.length)) + 1;
 
     const top = slice
       .map((item) => {
@@ -214,13 +216,15 @@ export class Deck {
       .join(" ".repeat(CARD_GAP));
     this.put(top);
 
-    for (let row = 0; row < rows; row += 1) {
+    for (let row = 0; row < bodyRows; row += 1) {
       const cells = slice.map((item) => {
         const accent = item.accent ?? "border";
         const width = widthFor();
         const raw = item.lines[row - 1];
-        if (row === 0 || raw === undefined) {
-          return " ".repeat(width);
+        if (raw === undefined) {
+          // A card shorter than the tallest one still needs its side
+          // rails, or its content looks clipped rather than finished.
+          return `${this.p.paint(accent, this.sym.bar)}${" ".repeat(width - 2)}${this.p.paint(accent, this.sym.bar)}`;
         }
         const text = truncateVisible(raw, Math.max(1, width - 4));
         return `${this.p.paint(accent, this.sym.bar)} ${padEndVisible(text, width - 4)} ${this.p.paint(accent, this.sym.bar)}`;
