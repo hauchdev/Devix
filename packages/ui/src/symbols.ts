@@ -42,6 +42,22 @@ export interface SymbolSet {
   readonly pipe: string;
   /** Three-dot leader for truncated values. */
   readonly ellipsis: string;
+  /** Full block, for progress bars. */
+  readonly blockFull: string;
+  /** Empty cell, for progress bars. */
+  readonly blockEmpty: string;
+  /** A right-pointing chevron, for collapsed trees and next steps. */
+  readonly chevronRight: string;
+  /** A down-pointing chevron, for expanded trees. */
+  readonly chevronDown: string;
+  /** A keyboard key cap, used in usage hints. */
+  readonly keyLeft: string;
+  /** The right-hand edge of a key cap. */
+  readonly keyRight: string;
+  /** A filled lozenge, used as a separator dot between metadata. */
+  readonly dot: string;
+  /** Double horizontal rule, for a heavier separator. */
+  readonly doubleRule: string;
 }
 
 const UNICODE: SymbolSet = {
@@ -61,6 +77,14 @@ const UNICODE: SymbolSet = {
   elbow: "└",
   pipe: "│",
   ellipsis: "…",
+  blockFull: "█",
+  blockEmpty: "░",
+  chevronRight: "›",
+  chevronDown: "▾",
+  keyLeft: "[",
+  keyRight: "]",
+  dot: "·",
+  doubleRule: "═",
 };
 
 const ASCII: SymbolSet = {
@@ -80,6 +104,14 @@ const ASCII: SymbolSet = {
   elbow: "`",
   pipe: "|",
   ellipsis: "...",
+  blockFull: "#",
+  blockEmpty: ".",
+  chevronRight: ">",
+  chevronDown: "v",
+  keyLeft: "[",
+  keyRight: "]",
+  dot: "|",
+  doubleRule: "=",
 };
 
 /** Returns the symbol set for the detected capabilities. */

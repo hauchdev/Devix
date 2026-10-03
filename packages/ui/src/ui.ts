@@ -1,7 +1,9 @@
 import type { Capabilities } from "./capabilities.js";
 import { detectCapabilities } from "./capabilities.js";
+import { Deck } from "./deck.js";
 import { Styler, padEndVisible, padStartVisible, truncateVisible, visibleWidth } from "./style.js";
 import { symbolsFor, type SymbolSet } from "./symbols.js";
+import { createPainter, type Painter } from "./theme.js";
 
 /** Semantic state of a single row, item or check. */
 export type Status = "ok" | "warn" | "error" | "info" | "muted";
@@ -61,8 +63,11 @@ export class Ui {
   readonly capabilities: Capabilities;
   readonly style: Styler;
   readonly symbols: SymbolSet;
+  /** The theme-bound painter, for themed output. */
+  readonly theme: Painter;
 
   private readonly write: (text: string) => void;
+  private cachedDeck: Deck | undefined;
 
   constructor(options: UiOptions = {}) {
     const stream = options.stream ?? process.stdout;
@@ -81,8 +86,26 @@ export class Ui {
     };
 
     this.style = new Styler(this.capabilities.color);
+    this.theme = createPainter(this.capabilities.color);
     this.symbols = symbolsFor(this.capabilities.unicode);
     this.write = options.write ?? ((text: string) => void process.stdout.write(text));
+  }
+
+  /**
+   * The layout deck: boxes, cards, meters, trees and chips.
+   *
+   * Built once and reused, because it holds no state beyond a reference
+   * to this renderer's sink and symbols.
+   */
+  get deck(): Deck {
+    this.cachedDeck ??= new Deck({
+      capabilities: this.capabilities,
+      symbols: this.symbols,
+      painter: this.theme,
+      write: this.write,
+      line: (text = "") => this.line(text),
+    });
+    return this.cachedDeck;
   }
 
   /** Writes one line followed by a newline. */

@@ -14,6 +14,19 @@ export {
 
 export { Styler, padEndVisible, padStartVisible, truncateVisible, visibleWidth } from "./style.js";
 
+export { Painter, createPainter, DEFAULT_THEME, type Theme, type ThemeColor } from "./theme.js";
+
+export {
+  Deck,
+  createDeck,
+  type BoxOptions,
+  type Card,
+  type DeckOptions,
+  type KeyHint,
+  type Meter,
+  type TreeNode,
+} from "./deck.js";
+
 export { symbolsFor, type SymbolSet } from "./symbols.js";
 
 export { createUi, Ui, type Field, type Row, type Status, type UiOptions } from "./ui.js";
