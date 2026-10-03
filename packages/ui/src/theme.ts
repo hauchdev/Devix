@@ -14,9 +14,14 @@ import { Styler } from "./style.js";
  * backgrounds, because a terminal theme is not ours to assume.
  */
 
-/** A colour for one meaning, at each fidelity the CLI supports. */
+/**
+ * A colour for one meaning, at each fidelity the CLI supports.
+ *
+ * `basic` is a foreground SGR code. Backgrounds are always derived from
+ * it by `behind`, so a role never stores two different code families.
+ */
 export interface ThemeColor {
-  /** A standard 16-colour SGR code. */
+  /** A standard 16-colour foreground SGR code (30-37 or 90-97). */
   readonly basic: number;
   /** A 256-palette index, for terminals that can show it. */
   readonly rich: number;
@@ -48,6 +53,11 @@ export interface Theme {
  * `secondary` is a cooler blue than `primary` so the two read as related
  * but distinct; `muted` sits at 244 in the 256 palette, dark enough to
  * recede on white and light enough to stay readable on black.
+ *
+ * Every `basic` value is a foreground code, because `behind` derives a
+ * background by adding ten. That is why `surface` is a mid grey rather
+ * than the 100-107 range a reader might reach for: `100` is already a
+ * background, and using it as a foreground would emit an invalid code.
  */
 export const DEFAULT_THEME: Theme = {
   primary: { basic: 36, rich: 39 },
@@ -57,7 +67,7 @@ export const DEFAULT_THEME: Theme = {
   danger: { basic: 31, rich: 203 },
   muted: { basic: 90, rich: 244 },
   border: { basic: 90, rich: 240 },
-  surface: { basic: 100, rich: 236 },
+  surface: { basic: 37, rich: 236 },
 };
 
 const ESC = "";
