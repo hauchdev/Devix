@@ -23,7 +23,7 @@
     "eslint": "9.39.1",
     "globals": "^17.12.0",
     "prettier": "3.6.2",
-    "turbo": "2.11.2",
+    "turbo": "2.11.5",
     "typescript": "6.0.3",
     "typescript-eslint": "8.46.4",
     "vitest": "3.2.4"
