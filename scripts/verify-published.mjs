@@ -17,6 +17,16 @@ const run = promisify(execFile);
 
 const DEPENDENCY_FIELDS = ["dependencies", "peerDependencies", "optionalDependencies"];
 
+/**
+ * Whether a missing attestation is a failure.
+ *
+ * On by default, because the release workflow publishes with provenance
+ * and a tarball without one is indistinguishable from a tampered one.
+ * Set DEVIX_SKIP_PROVENANCE_CHECK=1 to verify older versions that were
+ * legitimately published before the workflow enabled it.
+ */
+const REQUIRE_PROVENANCE = process.env["DEVIX_SKIP_PROVENANCE_CHECK"] !== "1";
+
 /** Splits `name@version`, tolerating scoped names. */
 function parseSpec(spec) {
   const at = spec.lastIndexOf("@");
@@ -90,6 +100,18 @@ for (const spec of specs) {
   if (leaks.length > 0) {
     problems.push(
       `${name}@${version} leaked the workspace protocol:\n    - ${leaks.join("\n    - ")}`,
+    );
+    continue;
+  }
+
+  // Provenance is what lets a consumer trace a tarball back to the
+  // workflow run that built it. It is easy to lose silently: the flag
+  // has to reach `npm publish` through the environment, and nothing
+  // fails when it does not. Checking the registry catches that, because
+  // by this point the version is immutable and cannot be redone.
+  if (REQUIRE_PROVENANCE && typeof manifest?.dist?.attestations?.url !== "string") {
+    problems.push(
+      `${name}@${version} published without provenance (no attestation on the registry)`,
     );
     continue;
   }
