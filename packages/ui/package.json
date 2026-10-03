@@ -19,7 +19,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "eslint": "9.39.1"
+    "eslint": "10.11.0"
   },
   "description": "Terminal rendering primitives for Devix: capability detection, theme and layout components.",
   "license": "MIT",

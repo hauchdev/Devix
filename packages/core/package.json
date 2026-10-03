@@ -19,7 +19,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "eslint": "9.39.1"
+    "eslint": "10.11.0"
   },
   "description": "Devix foundations: version constant and the plugin API.",
   "license": "MIT",
