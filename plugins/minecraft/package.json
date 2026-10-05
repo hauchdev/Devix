@@ -27,7 +27,7 @@
     "@devix-cli/project-detector": "workspace:*"
   },
   "devDependencies": {
-    "eslint": "9.39.1"
+    "eslint": "10.11.0"
   },
   "license": "MIT",
   "author": "hauchdev <hauch8bingo@proton.me>",
