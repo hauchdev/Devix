@@ -27,7 +27,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           # The changesets action needs history and a full token to push
           # version commits and tags.
@@ -37,7 +37,7 @@ jobs:
         uses: pnpm/action-setup@v6
 
       - name: Install Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -54,7 +54,7 @@ jobs:
 
       - name: Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           # `changeset publish` has no --provenance flag: it builds the
           # `npm publish` argv itself (--access, --tag, --json) and will
