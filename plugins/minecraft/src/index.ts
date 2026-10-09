@@ -42,8 +42,15 @@ export {
 export type { MinecraftVersionSpec, ResolvedVersions } from "./versions.js";
 export { scaffold, summarizeScaffold } from "./scaffold.js";
 export type { ScaffoldEntry, ScaffoldOptions, ScaffoldResult } from "./scaffold.js";
-export { planRun, requireMinecraftRun } from "./run.js";
-export type { RunPlan } from "./run.js";
+export { planRun, planBuild, requireMinecraftRun } from "./run.js";
+export type { BuildPlan, RunPlan } from "./run.js";
+export { doctorMinecraft } from "./doctor.js";
+export type {
+  MinecraftCheck,
+  MinecraftCheckStatus,
+  MinecraftDoctorReport,
+  MinecraftDoctorServices,
+} from "./doctor.js";
 export { commandHandlers } from "./handlers.js";
 export type { DetectedMinecraftPlatform } from "@devix-cli/project-detector";
 import type { PluginManifest } from "@devix-cli/core";

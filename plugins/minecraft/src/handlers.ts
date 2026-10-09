@@ -7,7 +7,7 @@ import {
   MINECRAFT_PROJECT_KINDS,
   PLATFORM_IDS,
 } from "./catalog.js";
-import { planRun } from "./run.js";
+import { planBuild, planRun } from "./run.js";
 
 function listHandler(): CommandHandler {
   return async () => {
@@ -72,6 +72,24 @@ function unknownSubcommand(subcommand: string | undefined) {
   return err("EUNKNOWN_SUBCOMMAND", `Unknown minecraft subcommand: ${String(subcommand)}`);
 }
 
+/** Plans how to build the project; the CLI prints the command. */
+function buildHandler(): CommandHandler {
+  return async ({ flags }) => {
+    const cwd = typeof flags.cwd === "string" ? flags.cwd : process.cwd();
+    const plan = await planBuild(cwd);
+    if (!plan.isMinecraft) {
+      return err("ENOT_MINECRAFT", plan.warnings[0] ?? "Not a Minecraft project.");
+    }
+    return ok({
+      cwd: plan.cwd,
+      platforms: plan.platforms,
+      command: plan.command,
+      windowsCommand: plan.windowsCommand,
+      warnings: plan.warnings,
+    });
+  };
+}
+
 /** Minecraft command handlers contributed via plugin capabilities. */
 export const commandHandlers: Record<string, CommandHandler> = {
   minecraft: async (context) => {
@@ -84,6 +102,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return checkHandler()({ ...context, argv: rest });
       case "run":
         return runHandler()({ ...context, argv: rest });
+      case "build":
+        return buildHandler()({ ...context, argv: rest });
       default:
         return unknownSubcommand(subcommand);
     }
