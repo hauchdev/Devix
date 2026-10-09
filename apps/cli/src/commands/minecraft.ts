@@ -2,6 +2,7 @@ import { Args, Flags } from "@oclif/core";
 import { isAbsolute, join, resolve } from "node:path";
 
 import {
+  doctorMinecraft,
   getPlatform,
   MINECRAFT_MODULES,
   MINECRAFT_PLATFORMS,
@@ -12,13 +13,16 @@ import {
   scaffold,
 } from "@devix-cli/minecraft";
 import { pluginCommandRegistry } from "../lib/plugin-commands.js";
-import { DevixCommand, devixBaseFlags, field } from "../lib/devix-command.js";
+import { DevixCommand, devixBaseFlags, field, type DevixBaseFlags } from "../lib/devix-command.js";
 import {
   MINECRAFT_HANDLED_OPERATIONS,
+  renderMinecraftBuild,
   renderMinecraftCheck,
+  renderMinecraftDoctor,
   renderMinecraftList,
   renderMinecraftRun,
   type CheckData,
+  type DoctorData,
   type ListData,
   type RunData,
 } from "../lib/minecraft-render.js";
@@ -54,7 +58,7 @@ export default class Minecraft extends DevixCommand {
     operation: Args.string({
       description: "Operation to run.",
       required: true,
-      options: ["list", "init", "check", "run"],
+      options: ["list", "init", "check", "run", "build", "doctor"],
     }),
     kind: Args.string({
       description:
@@ -110,6 +114,11 @@ export default class Minecraft extends DevixCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Minecraft);
 
+    if (args.operation === "doctor") {
+      await this.runDoctor(flags);
+      return;
+    }
+
     if (MINECRAFT_HANDLED_OPERATIONS.includes(args.operation)) {
       const handler = await pluginCommandRegistry.load("minecraft");
       const result = await handler({
@@ -139,6 +148,11 @@ export default class Minecraft extends DevixCommand {
 
       if (args.operation === "check") {
         renderMinecraftCheck(ui, result.data as CheckData);
+        return;
+      }
+
+      if (args.operation === "build") {
+        renderMinecraftBuild(ui, result.data as RunData);
         return;
       }
 
@@ -435,5 +449,49 @@ export default class Minecraft extends DevixCommand {
       }
     }
     return ids;
+  }
+
+  /**
+   * Diagnoses the Minecraft project in the working directory.
+   *
+   * The Java probe is built here rather than in the minecraft package:
+   * that package stays free of process execution, and this is the layer
+   * that already owns the machine. The probe reuses the doctor service
+   * so a Java check costs the same one spawn everywhere in the CLI.
+   */
+  private async runDoctor(flags: DevixBaseFlags): Promise<void> {
+    const { defaultServices } = await import("@devix-cli/doctor");
+    const cwd = join(flags.cwd);
+
+    const report = await doctorMinecraft(cwd, {
+      async javaMajorVersion(): Promise<number | undefined> {
+        const version = await defaultServices.getToolVersion("java", "-version");
+        if (version === undefined) {
+          return undefined;
+        }
+        const [first, second] = version.split(".");
+        const major = Number.parseInt(first ?? "", 10);
+        if (!Number.isFinite(major)) {
+          return undefined;
+        }
+        // Java 8 and older report "1.8"; modern JDKs report "21".
+        if (major === 1 && second !== undefined) {
+          const legacy = Number.parseInt(second, 10);
+          return Number.isFinite(legacy) ? legacy : undefined;
+        }
+        return major;
+      },
+    });
+
+    if (flags.json) {
+      this.log(JSON.stringify(report, null, 2));
+      return;
+    }
+
+    if (flags.quiet) {
+      return;
+    }
+
+    renderMinecraftDoctor(this.renderer(flags), report satisfies DoctorData);
   }
 }

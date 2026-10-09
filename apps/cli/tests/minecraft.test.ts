@@ -79,4 +79,98 @@ describe("devix minecraft", () => {
     expect(stdout).toMatch(/^Optional modules\s+\d+\s+-+$/m);
     expect(stdout).toContain("neoforge");
   }, 30_000);
+
+  it("minecraft build prints the build command for a scaffolded project", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-build-fabric-"));
+    try {
+      await runCli(["minecraft", "init", "fabric", "BuildMod", "--here"], dir);
+
+      const { stdout } = await runCli(["minecraft", "build"], dir);
+      expect(stdout).toContain("Build with");
+      expect(stdout).toContain("build");
+      // Building must never launch the game.
+      expect(stdout).not.toContain("runClient");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft build emits parseable json", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-build-json-"));
+    try {
+      await runCli(["minecraft", "init", "paper", "JsonMod", "--here"], dir);
+
+      const { stdout } = await runCli(["minecraft", "build", "--json"], dir);
+      const parsed = JSON.parse(stdout) as { command: string; platforms: string[] };
+
+      expect(parsed.command).toContain("build");
+      // The Paper detector reports the bukkit family id.
+      expect(parsed.platforms).toContain("bukkit");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft doctor reports the checks of a scaffolded project", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-doctor-mc-"));
+    try {
+      await runCli(["minecraft", "init", "fabric", "DoctorMod", "--here"], dir);
+
+      const { stdout } = await runCli(["minecraft", "doctor"], dir);
+
+      expect(stdout).toContain("devix minecraft doctor");
+      expect(stdout).toContain("Platforms");
+      expect(stdout).toContain("fabric");
+      expect(stdout).toContain("Checks");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft doctor emits parseable json with a check list", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-doctor-json-"));
+    try {
+      await runCli(["minecraft", "init", "paper", "DoctorJson", "--here"], dir);
+
+      const { stdout } = await runCli(["minecraft", "doctor", "--json"], dir);
+      const parsed = JSON.parse(stdout) as {
+        isMinecraft: boolean;
+        platforms: string[];
+        checks: { id: string; status: string }[];
+      };
+
+      expect(parsed.isMinecraft).toBe(true);
+      expect(parsed.platforms).toContain("bukkit");
+      expect(parsed.checks.map((check) => check.id)).toContain("project");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("minecraft doctor reports a directory that is not a Minecraft project", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-doctor-empty-"));
+    try {
+      const { stdout } = await runCli(["minecraft", "doctor", "--json"], dir);
+      const parsed = JSON.parse(stdout) as { isMinecraft: boolean };
+
+      expect(parsed.isMinecraft).toBe(false);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

@@ -141,8 +141,93 @@ export function renderMinecraftRun(ui: Ui, data: RunData): void {
   ui.blank();
 }
 
+/** The doctor report shape the renderer needs. */
+export interface DoctorData {
+  readonly root: string;
+  readonly isMinecraft: boolean;
+  readonly platforms: readonly string[];
+  readonly buildSystem: string;
+  readonly checks: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly status: "ok" | "warn" | "missing";
+    readonly detail?: string;
+    readonly hint?: string;
+  }[];
+}
+
+/** Renders the `minecraft build` plan. */
+export function renderMinecraftBuild(ui: Ui, data: RunData): void {
+  ui.title("devix minecraft build");
+  ui.blank();
+
+  ui.fields([
+    { label: "Root", value: data.cwd },
+    { label: "Platforms", value: data.platforms.join(", ") },
+  ]);
+  ui.blank();
+
+  ui.panel(
+    "Build with",
+    data.windowsCommand === undefined
+      ? [data.command]
+      : [data.command, `${data.windowsCommand}   (Windows)`],
+    { status: "info" },
+  );
+
+  if (data.warnings.length > 0) {
+    ui.blank();
+    ui.heading("Notes", { count: data.warnings.length });
+    for (const warning of data.warnings) {
+      ui.line(`  ${ui.style.muted(ui.symbols.arrow)} ${ui.style.muted(warning)}`);
+    }
+  }
+
+  ui.blank();
+}
+
+/** Renders the `minecraft doctor` report. */
+export function renderMinecraftDoctor(ui: Ui, data: DoctorData): void {
+  ui.title("devix minecraft doctor");
+  ui.blank();
+
+  if (!data.isMinecraft) {
+    ui.fields([
+      { label: "Root", value: data.root },
+      { label: "Project", value: "none", status: "warn", hint: "Not a Minecraft project." },
+    ]);
+    ui.blank();
+    return;
+  }
+
+  const ready = data.checks.filter((check) => check.status === "ok").length;
+  ui.fields([
+    { label: "Root", value: data.root },
+    { label: "Platforms", value: data.platforms.join(", ") },
+    { label: "Build", value: data.buildSystem },
+    { label: "Checks", value: `${String(ready)} of ${String(data.checks.length)} passing` },
+  ]);
+  ui.blank();
+
+  ui.heading("Checks", { count: data.checks.length });
+  ui.fields(
+    data.checks.map((check) => ({
+      label: check.name,
+      ...(check.detail === undefined ? {} : { value: check.detail }),
+      status:
+        check.status === "ok"
+          ? ("ok" as const)
+          : check.status === "warn"
+            ? ("warn" as const)
+            : ("error" as const),
+      ...(check.hint === undefined ? {} : { hint: check.hint }),
+    })),
+  );
+  ui.blank();
+}
+
 /** The operations routed through the plugin handler. */
-export const MINECRAFT_HANDLED_OPERATIONS: readonly string[] = ["list", "check", "run"];
+export const MINECRAFT_HANDLED_OPERATIONS: readonly string[] = ["list", "check", "run", "build"];
 
 /** Arg definition shared by the routed operations. */
 export const handledOperationArg = Args.string({
