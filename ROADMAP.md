@@ -31,7 +31,7 @@ Goal:          v1.0.0 (stable platform) + web and AI plugins
 | 12 — Quality & CI     | 0.5.x          | ✅ Completed   |
 | 13 — Docker depth     | 0.6.x          | `[ ]`          |
 | 14 — Web              | 0.7.x          | 🔵 In progress |
-| 15 — Minecraft depth  | 0.7.x          | 🔵 In progress |
+| 15 — Minecraft depth  | 0.7.x          | ✅ Completed   |
 | 16 — Own AI           | 0.8.x          | `[ ]`          |
 
 > FASE 9 is considered closed in terms of preparation: CI, release, README and docs are ready. The `1.0.0` version bump happens once FASE 12 and 13 APIs are stable.
@@ -313,17 +313,23 @@ New `plugins/web` as the first real consumer of FASE 11 capabilities.
 
 ---
 
-## FASE 15 — Minecraft depth
+## FASE 15 — Minecraft depth ✅
 
 ```text
 [x] Version catalog to catalog/versions.json + refresh script
-[ ] Generate Gradle wrapper, .gitignore, LICENSE, README, CI, .editorconfig
+[x] Generate Gradle wrapper, .gitignore, LICENSE, README, CI, .editorconfig
 [x] devix minecraft run (print-first)
 [x] Java/Gradle checks via doctor capabilities
 [x] devix minecraft build and clean (print-first)
 [x] Interactive operation menu for `devix minecraft` with no operation
 ```
 
+> The wrapper jar is deliberately not generated: it is a binary, and
+> shipping it would mean vendoring Gradle's. The scripts, properties,
+> `.gitignore`, `.editorconfig`, `LICENSE`, `README` and CI workflow are
+> all written, and `doctor` tells the user to run `gradle wrapper` once
+> when the jar is missing.
+>
 > `devix minecraft doctor` diagnoses an existing project: platform, build
 > wrapper, wrapper jar, Java toolchain and whether the declared Minecraft
 > version is one the catalog knows. The Java probe is injected from the

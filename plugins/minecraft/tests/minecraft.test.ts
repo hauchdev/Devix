@@ -144,6 +144,13 @@ describe("scaffold", () => {
     const gitignore = await readFile(join(dir, ".gitignore"), "utf8");
     expect(gitignore).toContain(".gradle/");
     expect(gitignore).toContain("run/");
+
+    // The generated LICENSE names a holder; a blank one leaves a dangling
+    // "Copyright (c) 2026 " line that looks like a template someone forgot
+    // to fill in.
+    const license = await readFile(join(dir, "LICENSE"), "utf8");
+    expect(license).toContain("MIT License");
+    expect(license).toMatch(/^Copyright \(c\) \d{4} MetaMod contributors$/m);
   });
 
   it("writes a spigot maven skeleton with plugin.yml", async () => {

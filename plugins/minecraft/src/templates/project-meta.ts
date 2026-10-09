@@ -301,11 +301,11 @@ function editorConfig(): string {
   ].join("\n");
 }
 
-function license(): string {
+function license(context: TemplateContext): string {
   return [
     "MIT License",
     "",
-    "Copyright (c) " + String(YEAR) + " ",
+    `Copyright (c) ${String(YEAR)} ${context.name} contributors`,
     "",
     "Permission is hereby granted, free of charge, to any person obtaining a copy",
     'of this software and associated documentation files (the "Software"), to deal',
@@ -436,7 +436,7 @@ export function renderProjectMeta(context: TemplateContext): TemplateFile[] {
     { path: "gradlew.bat", contents: gradlewBat() },
     { path: ".gitignore", contents: gitignore(context) },
     { path: ".editorconfig", contents: editorConfig() },
-    { path: "LICENSE", contents: license() },
+    { path: "LICENSE", contents: license(context) },
     { path: "README.md", contents: projectReadme(context) },
     { path: ".github/workflows/build.yml", contents: ciWorkflow() },
   ];
