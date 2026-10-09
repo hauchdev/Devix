@@ -173,4 +173,14 @@ describe("devix minecraft", () => {
       await rm(dir, { recursive: true, force: true });
     }
   }, 30_000);
+
+  it("minecraft with no operation fails cleanly off a TTY instead of hanging", async () => {
+    // A menu cannot read keys from a pipe, so the command must say what
+    // it needs rather than wait forever for input that will not come.
+    await expect(runCli(["minecraft"])).rejects.toThrow(/needs an operation/i);
+  }, 30_000);
+
+  it("minecraft with no operation and --json also refuses to prompt", async () => {
+    await expect(runCli(["minecraft", "--json"])).rejects.toThrow(/needs an operation/i);
+  }, 30_000);
 });

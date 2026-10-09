@@ -56,8 +56,8 @@ export default class Minecraft extends DevixCommand {
 
   static override args = {
     operation: Args.string({
-      description: "Operation to run.",
-      required: true,
+      description: "Operation to run. Omitted on a TTY, a menu asks which one to run.",
+      required: false,
       options: ["list", "init", "check", "run", "build", "doctor"],
     }),
     kind: Args.string({
@@ -114,15 +114,26 @@ export default class Minecraft extends DevixCommand {
   async run(): Promise<void> {
     const { args, flags } = await this.parse(Minecraft);
 
-    if (args.operation === "doctor") {
+    // With no operation a TTY gets a menu; a pipe gets the usage error,
+    // because a menu cannot read keys from a stream that is not a TTY.
+    const operation = args.operation ?? (await this.chooseOperation(flags));
+    if (operation === undefined) {
+      this.error(
+        "minecraft needs an operation: list, init, check, run, build or doctor. " +
+          "Run it on a TTY to pick from a menu.",
+        { exit: 1 },
+      );
+    }
+
+    if (operation === "doctor") {
       await this.runDoctor(flags);
       return;
     }
 
-    if (MINECRAFT_HANDLED_OPERATIONS.includes(args.operation)) {
+    if (MINECRAFT_HANDLED_OPERATIONS.includes(operation)) {
       const handler = await pluginCommandRegistry.load("minecraft");
       const result = await handler({
-        argv: [args.operation, ...(args.kind === undefined ? [] : [args.kind])],
+        argv: [operation, ...(args.kind === undefined ? [] : [args.kind])],
         flags,
       });
 
@@ -141,17 +152,17 @@ export default class Minecraft extends DevixCommand {
 
       const ui = this.renderer(flags);
 
-      if (args.operation === "list") {
+      if (operation === "list") {
         renderMinecraftList(ui, result.data as ListData);
         return;
       }
 
-      if (args.operation === "check") {
+      if (operation === "check") {
         renderMinecraftCheck(ui, result.data as CheckData);
         return;
       }
 
-      if (args.operation === "build") {
+      if (operation === "build") {
         renderMinecraftBuild(ui, result.data as RunData);
         return;
       }
@@ -449,6 +460,34 @@ export default class Minecraft extends DevixCommand {
       }
     }
     return ids;
+  }
+
+  /**
+   * Asks which operation to run, on a TTY.
+   *
+   * Returns undefined off a TTY or under `--json`: a menu cannot read
+   * keys from a pipe, and prompts would corrupt machine-readable output,
+   * so both fall back to the usage error rather than hanging.
+   */
+  private async chooseOperation(flags: DevixBaseFlags): Promise<string | undefined> {
+    if (flags.json || process.stdin.isTTY !== true) {
+      return undefined;
+    }
+
+    const { runMenu } = await import("@devix-cli/ui");
+    const result = await runMenu({
+      prompt: "What do you want to do",
+      items: [
+        { id: "init", name: "Init", description: "scaffold a new project" },
+        { id: "check", name: "Check", description: "detect the platforms in this directory" },
+        { id: "doctor", name: "Doctor", description: "diagnose an existing project" },
+        { id: "build", name: "Build", description: "print how to build it" },
+        { id: "run", name: "Run", description: "print how to launch it" },
+        { id: "list", name: "List", description: "show every platform, kind and module" },
+      ],
+    });
+
+    return result.cancelled ? undefined : result.selected[0];
   }
 
   /**
