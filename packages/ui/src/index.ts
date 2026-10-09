@@ -30,3 +30,10 @@ export {
 export { symbolsFor, type SymbolSet } from "./symbols.js";
 
 export { createUi, Ui, type Field, type Row, type Status, type UiOptions } from "./ui.js";
+
+export {
+  runMenu,
+  type MenuItem,
+  type MenuOptions,
+  type MenuResult,
+} from "./menu.js";
