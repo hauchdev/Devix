@@ -113,7 +113,28 @@ function fieldRequested(
 
 /** Renders the `minecraft run` launch plan. */
 export function renderMinecraftRun(ui: Ui, data: RunData): void {
-  ui.title("devix minecraft run");
+  renderTaskPlan(ui, "devix minecraft run", "Run with", data);
+}
+
+/** Renders the `minecraft build` plan. */
+export function renderMinecraftBuild(ui: Ui, data: RunData): void {
+  renderTaskPlan(ui, "devix minecraft build", "Build with", data);
+}
+
+/** Renders the `minecraft clean` plan. */
+export function renderMinecraftClean(ui: Ui, data: RunData): void {
+  renderTaskPlan(ui, "devix minecraft clean", "Clean with", data);
+}
+
+/**
+ * Renders one Gradle task plan.
+ *
+ * Run, build and clean differ only in their title and the word before
+ * the command, so they share this rather than three near-identical
+ * functions that drift apart.
+ */
+function renderTaskPlan(ui: Ui, title: string, label: string, data: RunData): void {
+  ui.title(title);
   ui.blank();
 
   ui.fields([
@@ -123,7 +144,7 @@ export function renderMinecraftRun(ui: Ui, data: RunData): void {
   ui.blank();
 
   ui.panel(
-    "Run with",
+    label,
     data.windowsCommand === undefined
       ? [data.command]
       : [data.command, `${data.windowsCommand}   (Windows)`],
@@ -154,36 +175,6 @@ export interface DoctorData {
     readonly detail?: string;
     readonly hint?: string;
   }[];
-}
-
-/** Renders the `minecraft build` plan. */
-export function renderMinecraftBuild(ui: Ui, data: RunData): void {
-  ui.title("devix minecraft build");
-  ui.blank();
-
-  ui.fields([
-    { label: "Root", value: data.cwd },
-    { label: "Platforms", value: data.platforms.join(", ") },
-  ]);
-  ui.blank();
-
-  ui.panel(
-    "Build with",
-    data.windowsCommand === undefined
-      ? [data.command]
-      : [data.command, `${data.windowsCommand}   (Windows)`],
-    { status: "info" },
-  );
-
-  if (data.warnings.length > 0) {
-    ui.blank();
-    ui.heading("Notes", { count: data.warnings.length });
-    for (const warning of data.warnings) {
-      ui.line(`  ${ui.style.muted(ui.symbols.arrow)} ${ui.style.muted(warning)}`);
-    }
-  }
-
-  ui.blank();
 }
 
 /** Renders the `minecraft doctor` report. */
@@ -227,7 +218,13 @@ export function renderMinecraftDoctor(ui: Ui, data: DoctorData): void {
 }
 
 /** The operations routed through the plugin handler. */
-export const MINECRAFT_HANDLED_OPERATIONS: readonly string[] = ["list", "check", "run", "build"];
+export const MINECRAFT_HANDLED_OPERATIONS: readonly string[] = [
+  "list",
+  "check",
+  "run",
+  "build",
+  "clean",
+];
 
 /** Arg definition shared by the routed operations. */
 export const handledOperationArg = Args.string({

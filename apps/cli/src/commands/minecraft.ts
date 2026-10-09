@@ -18,6 +18,7 @@ import {
   MINECRAFT_HANDLED_OPERATIONS,
   renderMinecraftBuild,
   renderMinecraftCheck,
+  renderMinecraftClean,
   renderMinecraftDoctor,
   renderMinecraftList,
   renderMinecraftRun,
@@ -58,7 +59,7 @@ export default class Minecraft extends DevixCommand {
     operation: Args.string({
       description: "Operation to run. Omitted on a TTY, a menu asks which one to run.",
       required: false,
-      options: ["list", "init", "check", "run", "build", "doctor"],
+      options: ["list", "init", "check", "run", "build", "clean", "doctor"],
     }),
     kind: Args.string({
       description:
@@ -164,6 +165,11 @@ export default class Minecraft extends DevixCommand {
 
       if (operation === "build") {
         renderMinecraftBuild(ui, result.data as RunData);
+        return;
+      }
+
+      if (operation === "clean") {
+        renderMinecraftClean(ui, result.data as RunData);
         return;
       }
 
@@ -482,6 +488,7 @@ export default class Minecraft extends DevixCommand {
         { id: "check", name: "Check", description: "detect the platforms in this directory" },
         { id: "doctor", name: "Doctor", description: "diagnose an existing project" },
         { id: "build", name: "Build", description: "print how to build it" },
+        { id: "clean", name: "Clean", description: "print how to remove the build output" },
         { id: "run", name: "Run", description: "print how to launch it" },
         { id: "list", name: "List", description: "show every platform, kind and module" },
       ],

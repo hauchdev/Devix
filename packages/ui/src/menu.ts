@@ -185,9 +185,7 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
   const visible = (): readonly MenuItem[] =>
     state.query.length === 0
       ? options.items
-      : options.items.filter((item) =>
-          item.name.toLowerCase().includes(state.query.toLowerCase()),
-        );
+      : options.items.filter((item) => item.name.toLowerCase().includes(state.query.toLowerCase()));
 
   const draw = (): void => {
     const items = visible();

@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { planBuild } from "../src/index.js";
+import { planBuild, planClean } from "../src/index.js";
 
 const tempDirs: string[] = [];
 
@@ -81,5 +81,39 @@ describe("planBuild", () => {
     const plan = await planBuild(dir);
 
     expect(plan.platforms).toContain("fabric");
+  });
+});
+
+describe("planClean", () => {
+  it("cleans with the wrapper when it is present", async () => {
+    const dir = await makeTempDir();
+    await makeFabric(dir);
+    await writeFile(join(dir, "gradlew"), "#!/bin/sh\n", "utf8");
+    const wrapperDir = join(dir, "gradle", "wrapper");
+    await mkdir(wrapperDir, { recursive: true });
+    await writeFile(join(wrapperDir, "gradle-wrapper.jar"), "", "utf8");
+
+    const plan = await planClean(dir);
+
+    expect(plan.command).toBe("./gradlew clean");
+  });
+
+  it("uses the clean task, never build or run", async () => {
+    const dir = await makeTempDir();
+    await makeFabric(dir);
+
+    const plan = await planClean(dir);
+
+    expect(plan.command).toBe("gradle clean");
+    expect(plan.command).not.toContain("build");
+  });
+
+  it("reports no command outside a Minecraft project", async () => {
+    const dir = await makeTempDir();
+
+    const plan = await planClean(dir);
+
+    expect(plan.isMinecraft).toBe(false);
+    expect(plan.command).toBe("");
   });
 });

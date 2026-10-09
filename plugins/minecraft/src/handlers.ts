@@ -7,7 +7,7 @@ import {
   MINECRAFT_PROJECT_KINDS,
   PLATFORM_IDS,
 } from "./catalog.js";
-import { planBuild, planRun } from "./run.js";
+import { planBuild, planClean, planRun } from "./run.js";
 
 function listHandler(): CommandHandler {
   return async () => {
@@ -90,6 +90,24 @@ function buildHandler(): CommandHandler {
   };
 }
 
+/** Plans how to clean the project; the CLI prints the command. */
+function cleanHandler(): CommandHandler {
+  return async ({ flags }) => {
+    const cwd = typeof flags.cwd === "string" ? flags.cwd : process.cwd();
+    const plan = await planClean(cwd);
+    if (!plan.isMinecraft) {
+      return err("ENOT_MINECRAFT", plan.warnings[0] ?? "Not a Minecraft project.");
+    }
+    return ok({
+      cwd: plan.cwd,
+      platforms: plan.platforms,
+      command: plan.command,
+      windowsCommand: plan.windowsCommand,
+      warnings: plan.warnings,
+    });
+  };
+}
+
 /** Minecraft command handlers contributed via plugin capabilities. */
 export const commandHandlers: Record<string, CommandHandler> = {
   minecraft: async (context) => {
@@ -104,6 +122,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return runHandler()({ ...context, argv: rest });
       case "build":
         return buildHandler()({ ...context, argv: rest });
+      case "clean":
+        return cleanHandler()({ ...context, argv: rest });
       default:
         return unknownSubcommand(subcommand);
     }

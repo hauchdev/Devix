@@ -174,6 +174,24 @@ describe("devix minecraft", () => {
     }
   }, 30_000);
 
+  it("minecraft clean prints the clean command for a scaffolded project", async () => {
+    const { mkdtemp, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "devix-cli-clean-fabric-"));
+    try {
+      await runCli(["minecraft", "init", "fabric", "CleanMod", "--here"], dir);
+
+      const { stdout } = await runCli(["minecraft", "clean"], dir);
+      expect(stdout).toContain("Clean with");
+      expect(stdout).toContain("clean");
+      // Cleaning must not build or launch anything.
+      expect(stdout).not.toContain("runClient");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 30_000);
+
   it("minecraft with no operation fails cleanly off a TTY instead of hanging", async () => {
     // A menu cannot read keys from a pipe, so the command must say what
     // it needs rather than wait forever for input that will not come.

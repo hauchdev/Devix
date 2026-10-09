@@ -123,6 +123,22 @@ export interface BuildPlan {
  * the two never drift.
  */
 export async function planBuild(cwd: string): Promise<BuildPlan> {
+  return planTask(cwd, "build");
+}
+
+/** Plans how to remove the build output of the project at `cwd`. */
+export async function planClean(cwd: string): Promise<BuildPlan> {
+  return planTask(cwd, "clean");
+}
+
+/**
+ * Plans one Gradle task for the Minecraft project at `cwd`.
+ *
+ * Shared by `planBuild` and `planClean`: the only thing that differs is
+ * the task name, so the wrapper resolution and the warnings stay
+ * identical between them.
+ */
+export async function planTask(cwd: string, task: string): Promise<BuildPlan> {
   const resolved = isAbsolute(cwd) ? resolve(cwd) : resolve(process.cwd(), cwd);
 
   const detection = await detectMinecraftPlatforms(createDefaultRegistry(), { cwd: resolved });
@@ -138,7 +154,7 @@ export async function planBuild(cwd: string): Promise<BuildPlan> {
   }
 
   const platformIds = detection.platforms.map((platform) => platform.id);
-  const { command, windowsCommand, warnings } = await resolveWrapperCommand(resolved, "build");
+  const { command, windowsCommand, warnings } = await resolveWrapperCommand(resolved, task);
 
   return {
     cwd: resolved,

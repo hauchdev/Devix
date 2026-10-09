@@ -42,7 +42,7 @@ export {
 export type { MinecraftVersionSpec, ResolvedVersions } from "./versions.js";
 export { scaffold, summarizeScaffold } from "./scaffold.js";
 export type { ScaffoldEntry, ScaffoldOptions, ScaffoldResult } from "./scaffold.js";
-export { planRun, planBuild, requireMinecraftRun } from "./run.js";
+export { planRun, planBuild, planClean, planTask, requireMinecraftRun } from "./run.js";
 export type { BuildPlan, RunPlan } from "./run.js";
 export { doctorMinecraft } from "./doctor.js";
 export type {
