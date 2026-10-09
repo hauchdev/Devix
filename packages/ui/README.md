@@ -28,6 +28,22 @@ ui.blank();
 ui.hint("run devix doctor for the full report");
 ```
 
+### Interactive menus
+
+```ts
+import { runMenu } from "@devix-cli/ui";
+
+const { selected, cancelled } = await runMenu({
+  prompt: "What do you want to do",
+  items: [
+    { id: "init", name: "Init", description: "scaffold a new project" },
+    { id: "check", name: "Check", description: "detect the platforms here" },
+  ],
+});
+```
+
+Arrow keys move, Enter picks, Escape or Ctrl+C cancels, and typing filters the list. The reader buffers, because one `data` event can carry several keys — a paste or a fast typist — and treating a chunk as a single key would swallow the Enter after a typed filter. Off a TTY the menu degrades to a numbered list read a line at a time, so the same command works in a pipe and in CI.
+
 ## Layout rules
 
 - Every line is capped at the detected width; long values are truncated with an ellipsis.

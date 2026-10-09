@@ -2,7 +2,7 @@
 
 > Minecraft project scaffolding for Devix: generate mods, plugins and proxy plugins for Fabric, Forge, NeoForge, Architectury, Paper, Folia, Spigot, Velocity and BungeeCord — with multi-loader, multi-module and multi-version support.
 
-Part of [Devix](https://github.com/hauchdev/Devix) — a modular developer toolkit. Ships as a Devix plugin: `devix minecraft list`, `devix minecraft init` and `devix minecraft check`.
+Part of [Devix](https://github.com/hauchdev/Devix) - a modular developer toolkit. Ships as a Devix plugin: `devix minecraft list`, `devix minecraft init`, `devix minecraft check`, `devix minecraft doctor`, `devix minecraft build`, `devix minecraft clean` and `devix minecraft run`.
 
 ## Install
 
@@ -81,9 +81,23 @@ devix minecraft init spigot "EggCannon" --json
 # Detect an existing Minecraft project (any supported platform)
 devix minecraft check
 devix minecraft check fabric
+
+# Diagnose an existing project: wrapper, Java, version catalog
+devix minecraft doctor
+
+# Print how to build, clean or launch it (print-first)
+devix minecraft build
+devix minecraft clean
+devix minecraft run
 ```
 
 `check` walks up from the directory and reports every detected platform with its manifest detail (`fabric (mymod)`), or `isMinecraft: false` outside Minecraft projects. With a platform id it also reports whether that specific one matched. It reads the same markers as `@devix-cli/project-detector`'s `detectMinecraftPlatforms`.
+
+`doctor` is the diagnosis for a project that already exists: whether a platform was detected, whether the build wrapper and its jar are present, whether the Java toolchain meets what the target version needs, and whether the declared Minecraft version is one the catalog knows. Every check degrades to `warn` or `missing` with a hint rather than throwing.
+
+`build`, `clean` and `run` print the command instead of executing it. Building always uses the `build` task and cleaning the `clean` task; only `run` launches the game.
+
+Run `devix minecraft` with no operation on a TTY to pick one from a menu.
 
 Flags: `--kind` (project kind), `--modules` (extra modules), `--cwd` (target directory), `--package` (Java package), `--version`, `--mc` (Minecraft version or alias), `--dry-run`, `--overwrite`, `--json`.
 

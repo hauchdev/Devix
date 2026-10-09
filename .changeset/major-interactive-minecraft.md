@@ -1,17 +1,23 @@
 ---
 "devix-cli": minor
 "@devix-cli/minecraft": minor
+"@devix-cli/ui": minor
 ---
 
-Add an interactive menu engine and rework the Minecraft workflow.
+Add an interactive menu engine and deepen the Minecraft workflow.
 
-The CLI gains a `menu` primitive: a navigable list of options with
-keyboard support (arrows, enter, number keys), a multi-select mode, and
-a search filter. It degrades to plain numbered lists when stdout is not
-a TTY, so piped input still works.
+`@devix-cli/ui` gains `runMenu`: a keyboard-navigable list with arrow
+keys, Enter to pick, Escape or Ctrl+C to cancel, and typing to filter.
+It buffers its input, because one `data` event can carry several keys and
+treating a chunk as a single key swallows the Enter after a typed filter.
+Off a TTY it degrades to a numbered list, so the same command works in a
+pipe and in CI.
 
-Minecraft gets a `doctor` command for existing projects (checks the
-wrapper, the Java toolchain and the dependency catalog), a `build`
-command that runs the right Gradle/Maven task, and a `clean` command.
-The scaffold output now shows a next-steps panel instead of a flat
-hint.
+`devix minecraft` with no operation on a TTY now asks which one to run
+instead of erroring. Two commands join the workflow: `doctor` diagnoses
+an existing project (platform, build wrapper, wrapper jar, Java
+toolchain, catalog version) and `build`/`clean` print the task to run,
+distinct from `run` which launches the game. Every check degrades to a
+warning with a hint rather than throwing, and the Java probe is injected
+from the CLI so the plugin keeps its dependency set and stays testable
+without a JDK.
