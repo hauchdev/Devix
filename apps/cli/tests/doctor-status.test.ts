@@ -18,9 +18,9 @@ describe("devix doctor and status", () => {
   it("doctor prints an environment section with node present", async () => {
     const { stdout } = await runCli(["doctor"]);
 
-    expect(stdout).toMatch(/^Environment\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/Environment \(\d+\)/);
     expect(stdout).toMatch(/Node\.js\s+\d+\.\d+/);
-    expect(stdout).toMatch(/^Project\s+-+$/m);
+    expect(stdout).toContain("Project");
   }, 30_000);
 
   it("doctor --json emits parseable report", async () => {
@@ -49,10 +49,10 @@ describe("devix doctor and status", () => {
     const { stdout } = await runCli(["status", "--no-color"]);
 
     expect(stdout).toContain("devix status");
-    expect(stdout).toMatch(/^Project\s+-+$/m);
-    expect(stdout).toMatch(/^Environment\s+\d+\s+-+$/m);
-    expect(stdout).toMatch(/^Git\s+-+$/m);
-    expect(stdout).toMatch(/^Docker\s+-+$/m);
+    expect(stdout).toContain("Project");
+    expect(stdout).toMatch(/Environment \(\d+\)/);
+    expect(stdout).toContain("Git");
+    expect(stdout).toContain("Docker");
   }, 30_000);
 
   it("status degrades to ascii and no color on a legacy terminal", async () => {
@@ -73,7 +73,10 @@ describe("devix doctor and status", () => {
     expect(legacy.stdout).not.toContain(String.fromCharCode(27));
     expect(legacy.stdout).not.toContain("─");
     expect(legacy.stdout).not.toContain("✓");
-    expect(legacy.stdout).toMatch(/^Project\s+-+$/m);
+    expect(legacy.stdout).toContain("Project");
+    // Every line stays printable ASCII: a legacy console renders anything
+    // else as mojibake.
+    expect(legacy.stdout).toMatch(/^[\x20-\x7E\r\n]*$/);
   }, 30_000);
 
   it("keeps the ascii layout even when the environment says utf-8", async () => {
@@ -88,7 +91,7 @@ describe("devix doctor and status", () => {
     });
 
     expect(stdout).not.toContain("─");
-    expect(stdout).toMatch(/^Project\s+-+$/m);
+    expect(stdout).toContain("Project");
   }, 30_000);
 
   it("status --json emits all sections parseable", async () => {

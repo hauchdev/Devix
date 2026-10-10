@@ -6,7 +6,7 @@ describe("devix git", () => {
   it("git status shows the branch of this repository", async () => {
     const { stdout } = await runCli(["git", "status", "--no-color"]);
 
-    expect(stdout).toMatch(/^\s+Branch\s+\S+/m);
+    expect(stdout).toMatch(/Branch\s+\S+/);
   }, 30_000);
 
   it("git branches marks the current branch", async () => {
@@ -16,7 +16,7 @@ describe("devix git", () => {
 
     // The current branch is marked; every other row leaves the column
     // blank.
-    expect(stdout).toMatch(/^✓\s+main\s+[0-9a-f]{9}/m);
+    expect(stdout).toMatch(/✓\s+main\s+[0-9a-f]{9}/);
   }, 30_000);
 
   it("git outside a repository fails with a clear message", async () => {

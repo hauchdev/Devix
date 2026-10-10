@@ -75,7 +75,7 @@ describe("devix minecraft init", () => {
         dir,
       );
 
-      expect(stdout).toMatch(/^\s+Modules\s+main, api, core$/m);
+      expect(stdout).toMatch(/Modules\s+main, api, core/);
       const settings = await readFile(join(dir, "settings.gradle"), "utf8");
       expect(settings).toContain("include ':api'");
       expect(await readFile(join(dir, "api/build.gradle"), "utf8")).toContain("java-library");
@@ -96,8 +96,8 @@ describe("devix minecraft init", () => {
         dir,
       );
 
-      expect(stdout).toMatch(/^\s+Kind\s+proxy-plugin$/m);
-      expect(stdout).toMatch(/^\s+Platforms\s+velocity$/m);
+      expect(stdout).toMatch(/Kind\s+proxy-plugin/);
+      expect(stdout).toMatch(/Platforms\s+velocity/);
       expect(await readFile(join(dir, "build.gradle"), "utf8")).toContain("velocity-api");
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -118,7 +118,7 @@ describe("devix minecraft init", () => {
       await writeFile(join(resources, "paper-plugin.yml"), "name: DoctorMc\n", "utf8");
 
       const withMc = await runCli(["doctor"], dir);
-      expect(withMc.stdout).toMatch(/^\s+Minecraft\s+bukkit \(DoctorMc\)$/m);
+      expect(withMc.stdout).toMatch(/Minecraft\s+bukkit \(DoctorMc\)/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

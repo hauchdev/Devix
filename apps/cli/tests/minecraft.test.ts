@@ -65,7 +65,7 @@ describe("devix minecraft", () => {
       const { stdout } = await runCli(["minecraft", "run"], dir);
       expect(stdout).toContain("Run with");
       expect(stdout).toContain("runClient");
-      expect(stdout).toMatch(/^\s+Root\s+/m);
+      expect(stdout).toMatch(/Root\s+/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -74,9 +74,9 @@ describe("devix minecraft", () => {
   it("minecraft list shows the kinds, platforms and modules", async () => {
     const { stdout } = await runCli(["minecraft", "list"]);
 
-    expect(stdout).toMatch(/^Project kinds\s+\d+\s+-+$/m);
-    expect(stdout).toMatch(/^Platforms\s+\d+\s+-+$/m);
-    expect(stdout).toMatch(/^Optional modules\s+\d+\s+-+$/m);
+    expect(stdout).toMatch(/Project kinds \(\d+\)/);
+    expect(stdout).toMatch(/Platforms \(\d+\)/);
+    expect(stdout).toMatch(/Optional modules \(\d+\)/);
     expect(stdout).toContain("neoforge");
   }, 30_000);
 

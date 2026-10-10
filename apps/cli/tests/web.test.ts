@@ -32,7 +32,7 @@ describe("devix web", () => {
       );
 
       const { stdout } = await runCli(["web", "detect"], dir);
-      expect(stdout).toMatch(/^Frameworks\s+\d+\s+-+$/m);
+      expect(stdout).toMatch(/Frameworks \(\d+\)/);
       expect(stdout).toContain("Next.js");
       expect(stdout).toContain("dynamic");
 
@@ -135,7 +135,13 @@ describe("devix web", () => {
       await mkdir(join(dir, "dist"), { recursive: true });
       const { stdout } = await runCli(["web", "serve", "--port", "5000"], dir);
       expect(stdout).toContain("5000");
-      expect(stdout).toContain("dist");
+      expect(stdout).toContain("Astro");
+
+      // The human output truncates the absolute path, so the directory is
+      // asserted where it is exact.
+      const asJson = await runCli(["web", "serve", "--port", "5000", "--json"], dir);
+      const parsed = JSON.parse(asJson.stdout) as { directory: string };
+      expect(parsed.directory.endsWith("dist")).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -155,7 +161,7 @@ describe("devix web", () => {
 
       const { stdout } = await runCli(["web", "doctor"], dir);
 
-      expect(stdout).toMatch(/^Checks\s+\d+\s+-+$/m);
+      expect(stdout).toMatch(/Checks \(\d+\)/);
       expect(stdout).toContain("build script");
       expect(stdout).toContain("dev script");
       expect(stdout).toContain("Not built yet");
