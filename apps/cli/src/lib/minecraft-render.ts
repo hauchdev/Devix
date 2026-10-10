@@ -1,5 +1,3 @@
-import { Args } from "@oclif/core";
-
 import type { Ui } from "@devix-cli/ui";
 
 export interface ListData {
@@ -225,9 +223,3 @@ export const MINECRAFT_HANDLED_OPERATIONS: readonly string[] = [
   "build",
   "clean",
 ];
-
-/** Arg definition shared by the routed operations. */
-export const handledOperationArg = Args.string({
-  description: "Operation to run.",
-  required: false,
-});

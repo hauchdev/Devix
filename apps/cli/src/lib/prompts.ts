@@ -364,24 +364,3 @@ function createLineQueue(rl: ReturnType<typeof createInterface>): {
     },
   };
 }
-
-/**
- * Legacy two-question helper kept for compatibility: platform + name.
- */
-export async function promptMissingScaffoldArgs(
-  choices: readonly PromptChoice[],
-  platform: string | undefined,
-  name: string | undefined,
-  streams: PromptStreams = DEFAULT_STREAMS,
-): Promise<{ platform: string; name: string }> {
-  const session = new PromptSession(streams);
-  try {
-    const resolvedPlatform =
-      platform === undefined ? await session.choice("Platform", choices) : platform;
-    const resolvedName =
-      name === undefined || name.trim().length === 0 ? await session.text("Project name") : name;
-    return { platform: resolvedPlatform, name: resolvedName };
-  } finally {
-    session.close();
-  }
-}

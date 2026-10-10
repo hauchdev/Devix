@@ -3,7 +3,6 @@ import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
 
 import {
-  promptMissingScaffoldArgs,
   promptScaffoldSpec,
   PromptCancelledError,
   PromptSession,
@@ -273,34 +272,5 @@ describe("PromptSession on a TTY", () => {
     const session = new PromptSession(streams);
     await expect(session.choice("Pick", CHOICES)).rejects.toBeInstanceOf(PromptCancelledError);
     session.close();
-  });
-});
-
-describe("promptMissingScaffoldArgs (legacy)", () => {
-  it("passes provided values through without prompting", async () => {
-    const { streams, outputText } = makeStreams();
-
-    const answers = await promptMissingScaffoldArgs(CHOICES, "forge", "My Mod", streams);
-
-    expect(answers).toEqual({ platform: "forge", name: "My Mod" });
-    expect(outputText()).toBe("");
-  });
-
-  it("accepts a platform id typed directly and re-asks empty names", async () => {
-    const { streams, outputText } = makeStreams("", "QueueBoard");
-
-    const answers = await promptMissingScaffoldArgs(CHOICES, "paper", undefined, streams);
-
-    expect(answers).toEqual({ platform: "paper", name: "QueueBoard" });
-    expect(outputText()).not.toContain("Platform:");
-    expect(outputText()).toContain("cannot be empty");
-  });
-
-  it("rejects with PromptCancelledError when input ends immediately", async () => {
-    const { streams } = makeStreams();
-
-    await expect(
-      promptMissingScaffoldArgs(CHOICES, undefined, "My Mod", streams),
-    ).rejects.toBeInstanceOf(PromptCancelledError);
   });
 });
