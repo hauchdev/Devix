@@ -8,10 +8,10 @@ import type { Capabilities } from "./capabilities.js";
  * arrow keys, search through with a filter, and pick without counting
  * rows.
  *
- * It degrades deliberately. When stdout is not a TTY the menu renders
- * as a plain numbered list and reads a line, because there is no cursor
- * to move and no key to capture. That is what makes the same command
- * work in a terminal, in a pipe and in CI.
+ * It degrades deliberately. When either stream is not a TTY the menu
+ * renders as a plain numbered list and reads a line, because there is no
+ * cursor to move and no key to capture. That is what makes the same
+ * command work in a terminal, in a pipe and in CI.
  */
 
 /** One row of a menu. */
@@ -73,6 +73,17 @@ const CLEAR_LINE = `${ESC}[1A${ESC}[2K`;
 const MAX_ROWS = 12;
 
 /**
+ * How long to wait for the rest of an escape sequence.
+ *
+ * A terminal may send `ESC` and `[B` in separate reads, so a lone
+ * `ESC` is ambiguous: it is either the user pressing Escape or the start
+ * of an arrow key. Waiting this long before calling it a cancel is what
+ * stops the arrow keys from closing the menu. 50ms is below the
+ * threshold where a keypress feels delayed.
+ */
+const ESCAPE_TIMEOUT_MS = 50;
+
+/**
  * A buffered key reader.
  *
  * A single `data` event can carry several keys — a paste, a fast typist,
@@ -85,40 +96,71 @@ class KeyReader {
   private waiting:
     | { resolve: (key: KeyEvent) => void; reject: (error: unknown) => void }
     | undefined;
+  private timer: NodeJS.Timeout | undefined;
+  private readonly onData: (chunk: Buffer | string) => void;
+  private readonly onError: (error: Error) => void;
 
   constructor(private readonly stream: NodeJS.ReadStream) {
-    stream.on("data", (chunk: Buffer | string) => {
+    this.onData = (chunk) => {
       this.buffer += typeof chunk === "string" ? chunk : chunk.toString("utf8");
       this.drain();
-    });
-    stream.on("error", (error: Error) => {
+    };
+    this.onError = (error) => {
       const waiter = this.waiting;
       this.waiting = undefined;
+      this.clearTimer();
       waiter?.reject(error);
-    });
+    };
+    stream.on("data", this.onData);
+    stream.on("error", this.onError);
   }
 
   /** Resolves the pending read as soon as a complete key is buffered. */
   private drain(): void {
-    if (this.waiting === undefined || this.buffer.length === 0) {
+    if (this.waiting === undefined) {
       return;
     }
+
     const decoded = this.take();
-    if (decoded === undefined) {
+    if (decoded !== undefined) {
+      const waiter = this.waiting;
+      this.waiting = undefined;
+      this.clearTimer();
+      waiter.resolve(decoded);
       return;
     }
-    const waiter = this.waiting;
-    this.waiting = undefined;
-    waiter.resolve(decoded);
+
+    // The buffer holds a lone Escape: it is either the user pressing
+    // Escape or the start of an arrow sequence whose bytes have not
+    // arrived yet. Give the terminal a moment to finish before deciding.
+    // The timer starts here rather than in `next` because the Escape is
+    // what arrives late, after the read is already waiting.
+    if (this.buffer.startsWith(ESC) && this.timer === undefined) {
+      this.timer = setTimeout(() => {
+        this.timer = undefined;
+        const waiter = this.waiting;
+        if (waiter === undefined) {
+          return;
+        }
+        this.waiting = undefined;
+        this.buffer = this.buffer.slice(1);
+        waiter.resolve({ name: "cancel" });
+      }, ESCAPE_TIMEOUT_MS);
+      this.timer.unref?.();
+    }
   }
 
   /**
    * Removes and returns one key from the front of the buffer.
    *
    * Returns undefined when the buffer holds only the start of an escape
-   * sequence, because more bytes are still on the way.
+   * sequence, because more bytes may still be on the way.
    */
   private take(): KeyEvent | undefined {
+    if (this.buffer.length === 0) {
+      return undefined;
+    }
+
     if (this.buffer.startsWith(ARROW_UP)) {
       this.buffer = this.buffer.slice(ARROW_UP.length);
       return { name: "up" };
@@ -129,7 +171,27 @@ class KeyReader {
     }
 
     const first = this.buffer[0] ?? "";
-    if (first === ENTER || first === NEWLINE) {
+
+    if (first === ESC) {
+      // A lone Escape is ambiguous; `drain` resolves it with a timer.
+      // Anything longer that did not match an arrow is a real Escape with
+      // the next key already buffered.
+      if (this.buffer.length === 1) {
+        return undefined;
+      }
+      this.buffer = this.buffer.slice(1);
+      return { name: "cancel" };
+    }
+
+    // A terminal may send CRLF for Enter; consuming both stops the menu
+    // from seeing two Enters for one keypress.
+    if (first === ENTER) {
+      this.buffer = this.buffer.startsWith(`${ENTER}${NEWLINE}`)
+        ? this.buffer.slice(2)
+        : this.buffer.slice(1);
+      return { name: "enter" };
+    }
+    if (first === NEWLINE) {
       this.buffer = this.buffer.slice(1);
       return { name: "enter" };
     }
@@ -145,28 +207,31 @@ class KeyReader {
       this.buffer = this.buffer.slice(1);
       return { name: "cancel" };
     }
-    if (first === ESC) {
-      // A bare Escape: if an arrow sequence were coming it would already
-      // be in the buffer, so anything else cancels.
-      this.buffer = this.buffer.slice(1);
-      return { name: "cancel" };
-    }
 
     this.buffer = this.buffer.slice(1);
     return { name: "char", char: first };
   }
 
+  private clearTimer(): void {
+    if (this.timer !== undefined) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+  }
+
   /** Waits for the next key. */
   next(): Promise<KeyEvent> {
-    if (this.buffer.length > 0) {
-      const decoded = this.take();
-      if (decoded !== undefined) {
-        return Promise.resolve(decoded);
-      }
-    }
     return new Promise((resolve, reject) => {
       this.waiting = { resolve, reject };
+      this.drain();
     });
+  }
+
+  /** Releases any pending timer and this reader's listeners. */
+  close(): void {
+    this.clearTimer();
+    this.stream.off("data", this.onData);
+    this.stream.off("error", this.onError);
   }
 }
 
@@ -175,15 +240,26 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
   const output = options.output ?? process.stdout;
   const input = options.input ?? process.stdin;
 
-  // Not a TTY: there is no cursor to move, so the menu falls back to
-  // the numbered list the non-interactive prompts already use.
-  if (output.isTTY !== true) {
+  // Both streams must be terminals: a menu that can draw but cannot read
+  // keys would just sit there.
+  if (output.isTTY !== true || input.isTTY !== true) {
     return runNumberedList(options, output, input);
   }
 
   const width = options.width ?? output.columns ?? 80;
   const capabilities: Capabilities = { color: "none", unicode: true, width, interactive: true };
   void capabilities;
+
+  // Raw mode is what makes a keypress arrive immediately instead of being
+  // buffered until Enter, and what stops the terminal from echoing the
+  // arrow-key escape sequences onto the screen. Without it the arrow keys
+  // appear to do nothing.
+  const canRaw = typeof input.setRawMode === "function";
+  const wasRaw = input.isRaw === true;
+  if (canRaw) {
+    input.setRawMode(true);
+  }
+  input.resume();
 
   const multi = options.multi === true;
   const state = {
@@ -200,19 +276,28 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
       ? options.items
       : options.items.filter((item) => item.name.toLowerCase().includes(state.query.toLowerCase()));
 
-  const draw = (): void => {
-    const items = visible();
-    const rows = Math.min(items.length, MAX_ROWS);
+  // The region the menu occupies, so it can be erased exactly. The first
+  // draw must not clear anything: there is nothing of ours above it yet,
+  // and clearing would eat whatever the command printed first.
+  let drawnRows = 0;
 
-    for (let index = 0; index < rows + 2; index += 1) {
+  const erase = (): void => {
+    for (let index = 0; index < drawnRows; index += 1) {
       output.write(CLEAR_LINE);
     }
+    drawnRows = 0;
+  };
+
+  const draw = (): void => {
+    erase();
+
+    const items = visible();
+    const rows = Math.min(items.length, MAX_ROWS);
+    const hint = multi ? "  (space to toggle, enter to confirm)" : "";
+    const filtered = state.query.length > 0 ? `, filtered by "${state.query}"` : "";
 
     output.write(`? ${options.prompt}\n`);
-    const hint = multi ? "  (space to toggle, enter to confirm)" : "";
-    output.write(
-      `  ${String(items.length)} option(s)${state.query.length > 0 ? `, filtered by "${state.query}"` : ""}${hint}\n`,
-    );
+    output.write(`  ${String(items.length)} option(s)${filtered}${hint}\n`);
 
     for (let index = 0; index < rows; index += 1) {
       const item = items[index];
@@ -224,80 +309,93 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
       const desc = item.description === undefined ? "" : `  ${item.description}`;
       output.write(`${`${cursor} ${box}${item.name}${desc}`.slice(0, width)}\n`);
     }
-  };
 
-  draw();
+    drawnRows = rows + 2;
+  };
 
   const reader = new KeyReader(input);
 
-  for (;;) {
-    const key = await reader.next();
+  try {
+    draw();
 
-    const items = visible();
+    for (;;) {
+      const key = await reader.next();
+      const items = visible();
 
-    if (key.name === "enter") {
-      if (multi) {
-        // A filter can hide a selected row; keep every selection, not
-        // just the visible ones, so confirming after a filter is safe.
-        output.write(CLEAR_LINE);
-        return { selected: [...state.selected], cancelled: false };
-      }
-      const picked = items[state.cursor];
-      if (picked !== undefined) {
-        output.write(CLEAR_LINE);
-        return { selected: [picked.id], cancelled: false };
-      }
-      continue;
-    }
-
-    if (key.name === "cancel") {
-      output.write(CLEAR_LINE);
-      return { selected: [], cancelled: true };
-    }
-
-    if (key.name === "up" && state.cursor > 0) {
-      state.cursor -= 1;
-      draw();
-      continue;
-    }
-
-    if (key.name === "down" && state.cursor < items.length - 1) {
-      state.cursor += 1;
-      draw();
-      continue;
-    }
-
-    if (key.name === "backspace") {
-      state.query = state.query.slice(0, -1);
-      state.cursor = 0;
-      draw();
-      continue;
-    }
-
-    // Space and Tab toggle in multi mode; in single mode space is an
-    // ordinary character, because a single-select menu has no use for a
-    // toggle key.
-    if (multi && (key.name === "toggle" || key.char === " ")) {
-      const item = items[state.cursor];
-      if (item !== undefined) {
-        if (state.selected.has(item.id)) {
-          state.selected.delete(item.id);
-        } else {
-          state.selected.add(item.id);
+      if (key.name === "enter") {
+        if (multi) {
+          // A filter can hide a selected row; keep every selection, not
+          // just the visible ones, so confirming after a filter is safe.
+          erase();
+          return { selected: [...state.selected], cancelled: false };
         }
+        const picked = items[state.cursor];
+        if (picked !== undefined) {
+          erase();
+          return { selected: [picked.id], cancelled: false };
+        }
+        continue;
+      }
+
+      if (key.name === "cancel") {
+        erase();
+        return { selected: [], cancelled: true };
+      }
+
+      if (key.name === "up") {
+        if (state.cursor > 0) {
+          state.cursor -= 1;
+          draw();
+        }
+        continue;
+      }
+
+      if (key.name === "down") {
+        if (state.cursor < items.length - 1) {
+          state.cursor += 1;
+          draw();
+        }
+        continue;
+      }
+
+      if (key.name === "backspace") {
+        if (state.query.length > 0) {
+          state.query = state.query.slice(0, -1);
+          state.cursor = 0;
+          draw();
+        }
+        continue;
+      }
+
+      // Space and Tab toggle in multi mode; in single mode space is an
+      // ordinary character, because a single-select menu has no use for a
+      // toggle key.
+      if (multi && (key.name === "toggle" || key.char === " ")) {
+        const item = items[state.cursor];
+        if (item !== undefined) {
+          if (state.selected.has(item.id)) {
+            state.selected.delete(item.id);
+          } else {
+            state.selected.add(item.id);
+          }
+          draw();
+        }
+        continue;
+      }
+
+      if (key.name === "char" && key.char !== undefined) {
+        state.query += key.char;
+        state.cursor = 0;
         draw();
       }
-      continue;
     }
-
-    if (key.name === "char" && key.char !== undefined) {
-      state.query += key.char;
-      state.cursor = 0;
-      draw();
+  } finally {
+    reader.close();
+    if (canRaw) {
+      input.setRawMode(wasRaw);
     }
+    input.pause();
   }
-
-  return { selected: [], cancelled: false };
 }
 
 /** Numbered fallback: the same options as a plain list. */
