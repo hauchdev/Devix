@@ -48,18 +48,54 @@ function writeLine(streams: PromptStreams, line: string): void {
 /**
  * A prompt session: one readline + line queue shared by every question
  * so input typed ahead (or piped in) is never dropped between questions.
+ *
+ * On a TTY the choice questions are answered with the arrow-key menu
+ * instead, so the same prompts feel native in a terminal and stay
+ * scriptable in a pipe. The readline interface is created lazily, on
+ * first use of the line-based path, so an interactive session never
+ * opens two readers on the same stream.
  */
 export class PromptSession {
-  private readonly lines: { next(): Promise<string> };
-  private readonly rl: ReturnType<typeof createInterface>;
+  private lines: { next(): Promise<string> } | undefined;
+  private rl: ReturnType<typeof createInterface> | undefined;
 
-  constructor(private readonly streams: PromptStreams = DEFAULT_STREAMS) {
-    this.rl = createInterface({ input: streams.input, output: streams.output });
-    this.lines = createLineQueue(this.rl);
+  constructor(private readonly streams: PromptStreams = DEFAULT_STREAMS) {}
+
+  /** True when the input is an interactive terminal. */
+  private get isTty(): boolean {
+    return this.streams.input.isTTY === true;
   }
 
-  /** Renders a numbered single-choice list and re-asks until valid. */
+  /** Opens the line reader on first use. */
+  private ensureLines(): { next(): Promise<string> } {
+    if (this.lines === undefined) {
+      this.rl = createInterface({ input: this.streams.input, output: this.streams.output });
+      this.lines = createLineQueue(this.rl);
+    }
+    return this.lines;
+  }
+
+  /** Renders a single-choice list and returns the picked id. */
   async choice(question: string, choices: readonly PromptChoice[]): Promise<string> {
+    if (this.isTty) {
+      const { runMenu } = await import("@devix-cli/ui");
+      const result = await runMenu({
+        prompt: question,
+        items: choices.map((choice) => ({
+          id: choice.id,
+          name: choice.name,
+          ...(choice.description === undefined ? {} : { description: choice.description }),
+        })),
+        input: this.streams.input as NodeJS.ReadStream,
+        output: this.streams.output as NodeJS.WriteStream,
+      });
+      const picked = result.selected[0];
+      if (result.cancelled || picked === undefined) {
+        throw new PromptCancelledError();
+      }
+      return picked;
+    }
+
     for (;;) {
       writeLine(this.streams, `? ${question}:`);
       choices.forEach((choice, index) => {
@@ -86,15 +122,35 @@ export class PromptSession {
   }
 
   /**
-   * Renders a numbered multi-select list. Accepts comma/space
-   * separated numbers or ids; an empty answer (with a default)
-   * returns the default; `0` returns nothing.
+   * Renders a multi-select list. On a TTY the arrow-key menu is used;
+   * in a pipe it accepts comma/space separated numbers or ids, where an
+   * empty answer returns the defaults and `0` returns nothing.
    */
   async multiChoice(
     question: string,
     choices: readonly PromptChoice[],
     defaults: readonly string[] = [],
   ): Promise<string[]> {
+    if (this.isTty) {
+      const { runMenu } = await import("@devix-cli/ui");
+      const result = await runMenu({
+        prompt: question,
+        items: choices.map((choice) => ({
+          id: choice.id,
+          name: choice.name,
+          ...(choice.description === undefined ? {} : { description: choice.description }),
+          ...(defaults.includes(choice.id) ? { selected: true } : {}),
+        })),
+        multi: true,
+        input: this.streams.input as NodeJS.ReadStream,
+        output: this.streams.output as NodeJS.WriteStream,
+      });
+      if (result.cancelled) {
+        throw new PromptCancelledError();
+      }
+      return [...result.selected];
+    }
+
     for (;;) {
       writeLine(this.streams, `? ${question}:`);
       choices.forEach((choice, index) => {
@@ -142,7 +198,7 @@ export class PromptSession {
   private async ask(question: string): Promise<string> {
     this.streams.output.write(question);
     try {
-      return await this.lines.next();
+      return await this.ensureLines().next();
     } catch (error) {
       if (error instanceof PromptCancelledError) {
         writeLine(this.streams, "");
@@ -151,9 +207,9 @@ export class PromptSession {
     }
   }
 
-  /** Closes the underlying readline interface. */
+  /** Closes the line reader, when one was ever opened. */
   close(): void {
-    this.rl.close();
+    this.rl?.close();
   }
 }
 

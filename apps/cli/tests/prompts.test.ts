@@ -216,6 +216,66 @@ describe("promptScaffoldSpec", () => {
   });
 });
 
+describe("PromptSession on a TTY", () => {
+  /** A TTY-looking stream pair, with raw keys written and output captured. */
+  function makeTty(...keys: string[]): {
+    streams: { input: PassThrough & { isTTY?: boolean }; output: PassThrough };
+    outputText: () => string;
+  } {
+    const input = new PassThrough() as PassThrough & { isTTY?: boolean };
+    const output = new PassThrough();
+    input.isTTY = true;
+    output.isTTY = true;
+    let captured = "";
+    output.on("data", (chunk: Buffer) => {
+      captured += chunk.toString("utf8");
+    });
+    for (const key of keys) {
+      input.write(key);
+    }
+    return { streams: { input, output }, outputText: () => captured };
+  }
+
+  it("choice uses the arrow-key menu instead of a numbered list", async () => {
+    const { streams } = makeTty("\u001b[B", "\r");
+
+    const session = new PromptSession(streams);
+    const picked = await session.choice("Pick", CHOICES);
+    session.close();
+
+    // Down once from Fabric lands on Paper.
+    expect(picked).toBe("paper");
+  });
+
+  it("multiChoice toggles with space and confirms with enter", async () => {
+    const { streams } = makeTty(" ", "\u001b[B", " ", "\r");
+
+    const session = new PromptSession(streams);
+    const picked = await session.multiChoice("Pick", CHOICES);
+    session.close();
+
+    expect(picked.sort()).toEqual(["fabric", "paper"]);
+  });
+
+  it("multiChoice pre-selects the defaults", async () => {
+    const { streams } = makeTty("\r");
+
+    const session = new PromptSession(streams);
+    const picked = await session.multiChoice("Pick", CHOICES, ["spigot"]);
+    session.close();
+
+    expect(picked).toEqual(["spigot"]);
+  });
+
+  it("choice rejects with PromptCancelledError on Escape", async () => {
+    const { streams } = makeTty("\u001b");
+
+    const session = new PromptSession(streams);
+    await expect(session.choice("Pick", CHOICES)).rejects.toBeInstanceOf(PromptCancelledError);
+    session.close();
+  });
+});
+
 describe("promptMissingScaffoldArgs (legacy)", () => {
   it("passes provided values through without prompting", async () => {
     const { streams, outputText } = makeStreams();
