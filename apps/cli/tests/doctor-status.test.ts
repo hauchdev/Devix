@@ -38,7 +38,7 @@ describe("devix doctor and status", () => {
 
   it("doctor reports an empty directory without error", async () => {
     await withTempDir("devix-cli-doctor-empty-", async (dir) => {
-      const { stdout } = await runCli(["doctor", "--json"], dir);
+      const { stdout } = await runCli(["doctor", "--json", "--here"], dir);
 
       const parsed = JSON.parse(stdout) as { project: { isProject: boolean } };
       expect(parsed.project.isProject).toBe(false);

@@ -7,18 +7,28 @@ import {
 import type { ProjectReport } from "./types.js";
 
 /**
- * Inspects the project starting at `cwd` using the detector registry.
+ * Inspects the project at `options`.
  *
  * Reuses `@devix-cli/project-detector` entirely: the doctor only shapes
  * the result for reporting, it never duplicates detection logic.
+ *
+ * With `root` the inspection is limited to exactly that directory;
+ * with `cwd` the detector searches parents for the project root.
  */
 export async function checkProject(
   registry: DetectorRegistry,
-  cwd: string,
+  options: { readonly cwd?: string; readonly root?: string },
 ): Promise<ProjectReport> {
+  const detectionOptions: { cwd?: string; root?: string } =
+    options.root !== undefined
+      ? { root: options.root }
+      : options.cwd !== undefined
+        ? { cwd: options.cwd }
+        : {};
+
   const [summary, minecraft] = await Promise.all([
-    summarizeProject(registry, { cwd }),
-    detectMinecraftPlatforms(registry, { cwd }),
+    summarizeProject(registry, detectionOptions),
+    detectMinecraftPlatforms(registry, detectionOptions),
   ]);
 
   return {

@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -97,7 +97,10 @@ describe("runDoctor", () => {
   it("reports an empty project without error", async () => {
     const dir = await makeTempDir();
 
-    const report = await runDoctor({ cwd: dir, services: fakeServices });
+    // `root` pins the inspection to this directory: with `cwd` the
+    // detector walks up and a machine whose home has a stray marker
+    // reports a project that is not the one under test.
+    const report = await runDoctor({ root: dir, services: fakeServices });
 
     expect(report.project.isProject).toBe(false);
     expect(report.project.languages).toEqual([]);
@@ -111,5 +114,23 @@ describe("runDoctor", () => {
     const report = await runDoctor({ cwd: dir, registry, services: fakeServices });
 
     expect(report.project.isProject).toBe(true);
+  });
+
+  it("does not walk up to a parent project when given root", async () => {
+    const project = await makeTempDir();
+    await writeFile(join(project, "package.json"), "{}", "utf8");
+    const nested = join(project, "nested");
+    await mkdir(nested, { recursive: true });
+
+    const walked = await runDoctor({ cwd: nested, services: fakeServices });
+    const pinned = await runDoctor({ root: nested, services: fakeServices });
+
+    // Default: the nearest marker upward wins.
+    expect(walked.project.isProject).toBe(true);
+    expect(walked.project.root).toBe(project);
+
+    // Pinned: only the nested directory is inspected.
+    expect(pinned.project.isProject).toBe(false);
+    expect(pinned.project.root).toBe(nested);
   });
 });

@@ -2,7 +2,12 @@ import { basename } from "node:path";
 
 import { padEndVisible } from "@devix-cli/ui";
 
-import { DevixCommand, devixBaseFlags, type DevixBaseFlags } from "../lib/devix-command.js";
+import {
+  DevixCommand,
+  devixBaseFlags,
+  hereFlag,
+  type DevixBaseFlags,
+} from "../lib/devix-command.js";
 import {
   cards,
   detectedTree,
@@ -32,13 +37,13 @@ export default class Home extends DevixCommand {
   static override description =
     "Show what Devix sees here: the project, the tools, and what to do next.";
 
-  static override flags = devixBaseFlags;
+  static override flags = { ...devixBaseFlags, here: hereFlag };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Home);
     const cwd = resolveCwd(flags.cwd);
 
-    const snapshot = await this.gather(cwd);
+    const snapshot = await this.gather(cwd, flags.here);
 
     if (flags.json) {
       this.log(JSON.stringify(this.toJson(snapshot), null, 2));
@@ -59,14 +64,14 @@ export default class Home extends DevixCommand {
    * directory that is not a repository and Docker not installed are all
    * normal states that the panel renders as facts, not failures.
    */
-  private async gather(cwd: string): Promise<Snapshot> {
+  private async gather(cwd: string, here: boolean): Promise<Snapshot> {
     const [doctor, git, docker] = await Promise.all([
       import("@devix-cli/doctor"),
       import("@devix-cli/git"),
       import("@devix-cli/docker"),
     ]);
 
-    const report = await doctor.runDoctor({ cwd });
+    const report = await doctor.runDoctor(here ? { root: cwd } : { cwd });
 
     const sync = await git
       .syncState(cwd)

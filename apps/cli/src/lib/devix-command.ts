@@ -33,6 +33,19 @@ export const devixBaseFlags = {
   }),
 };
 
+/**
+ * Shared flag for commands that inspect a directory.
+ *
+ * By default detection walks up to find the project root, which is what
+ * you want inside a subdirectory of a project. `--here` pins the
+ * inspection to exactly the given directory instead, which is what you
+ * want in a directory that merely happens to sit under one.
+ */
+export const hereFlag = Flags.boolean({
+  description: "Inspect exactly this directory, without searching parent directories.",
+  default: false,
+});
+
 /** Shape of the common Devix flags after parsing. */
 export interface DevixBaseFlags {
   readonly json: boolean;

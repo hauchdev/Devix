@@ -1,12 +1,12 @@
 import { join } from "node:path";
 
-import { DevixCommand, devixBaseFlags, field } from "../lib/devix-command.js";
+import { DevixCommand, devixBaseFlags, field, hereFlag } from "../lib/devix-command.js";
 
 export default class Detect extends DevixCommand {
   static override description =
     "Detect the current project stack: languages, package managers and tools.";
 
-  static override flags = devixBaseFlags;
+  static override flags = { ...devixBaseFlags, here: hereFlag };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Detect);
@@ -15,9 +15,11 @@ export default class Detect extends DevixCommand {
     // detector stack at import time.
     const { createDefaultRegistry, summarizeProject } = await import("@devix-cli/project-detector");
 
-    const summary = await summarizeProject(createDefaultRegistry(), {
-      cwd: join(flags.cwd),
-    });
+    const target = join(flags.cwd);
+    const summary = await summarizeProject(
+      createDefaultRegistry(),
+      flags.here ? { root: target } : { cwd: target },
+    );
 
     if (flags.json) {
       this.log(

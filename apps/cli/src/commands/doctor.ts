@@ -1,12 +1,12 @@
 import { join } from "node:path";
 
-import { DevixCommand, devixBaseFlags, field, toUiStatus } from "../lib/devix-command.js";
+import { DevixCommand, devixBaseFlags, field, hereFlag, toUiStatus } from "../lib/devix-command.js";
 
 export default class Doctor extends DevixCommand {
   static override description =
     "Diagnose your environment and project: tool versions, detected stack and health.";
 
-  static override flags = devixBaseFlags;
+  static override flags = { ...devixBaseFlags, here: hereFlag };
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Doctor);
@@ -14,7 +14,8 @@ export default class Doctor extends DevixCommand {
     // Lazy: keep --help/--version free of the doctor dependency graph.
     const { runDoctor } = await import("@devix-cli/doctor");
 
-    const report = await runDoctor({ cwd: join(flags.cwd) });
+    const target = join(flags.cwd);
+    const report = await runDoctor(flags.here ? { root: target } : { cwd: target });
 
     if (flags.json) {
       this.log(JSON.stringify(report, null, 2));

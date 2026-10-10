@@ -8,6 +8,11 @@ import type { DoctorReport, DoctorServices } from "./types.js";
 export interface RunDoctorOptions {
   /** Directory whose project is inspected. Defaults to `process.cwd()`. */
   cwd?: string;
+  /**
+   * Inspect exactly this directory instead of searching parents for the
+   * project root. Mutually exclusive with `cwd`.
+   */
+  root?: string;
   /** Detector registry to use. Defaults to `createDefaultRegistry()`. */
   registry?: DetectorRegistry;
   /**
@@ -28,7 +33,7 @@ export async function runDoctor(options: RunDoctorOptions = {}): Promise<DoctorR
 
   const [environment, project] = await Promise.all([
     checkEnvironment(services),
-    checkProject(registry, cwd),
+    checkProject(registry, options.root === undefined ? { cwd } : { root: options.root }),
   ]);
 
   return { environment: { checks: environment }, project };

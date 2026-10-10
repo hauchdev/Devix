@@ -35,7 +35,7 @@ describe("devix with no arguments", () => {
   it("reports a directory with no project markers without failing", async () => {
     const empty = await mkdtemp(join(tmpdir(), "devix-cli-home-empty-"));
 
-    const { stdout } = await runCli(["-d", empty]);
+    const { stdout } = await runCli(["--here", "-d", empty]);
 
     expect(stdout).toContain("Not a project");
     expect(stdout).toContain("nothing detected");
@@ -143,7 +143,7 @@ describe("devix with no arguments", () => {
   it("says so rather than drawing an empty tree when nothing is detected", async () => {
     const empty = await mkdtemp(join(tmpdir(), "devix-cli-home-tree-empty-"));
 
-    const { stdout } = await runCli(["--verbose", "-d", empty]);
+    const { stdout } = await runCli(["--verbose", "--here", "-d", empty]);
 
     expect(stdout).toContain("Detected");
     expect(stdout).toContain("No markers found");
