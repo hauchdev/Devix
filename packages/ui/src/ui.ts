@@ -3,13 +3,10 @@ import { detectCapabilities } from "./capabilities.js";
 import { Deck } from "./deck.js";
 import { Styler, padEndVisible, padStartVisible, truncateVisible, visibleWidth } from "./style.js";
 import { symbolsFor, type SymbolSet } from "./symbols.js";
-import { createPainter, type Painter } from "./theme.js";
+import { createPainter, type Painter, type Theme } from "./theme.js";
 
 /** Semantic state of a single row, item or check. */
 export type Status = "ok" | "warn" | "error" | "info" | "muted";
-
-/** Longest hairline drawn after a heading. */
-const RULE_LENGTH = 28;
 
 /** Columns reserved for the status marker in `fields` and `table`. */
 const MARKER_WIDTH = 2;
@@ -160,30 +157,70 @@ export class Ui {
   }
 
   /**
-   * A section heading: bold accent label with an optional count, and a
-   * short hairline after it.
+   * A section: a box whose title sits in the top border, with its body
+   * rendered at the width the frame leaves.
    *
-   * The rule is deliberately short. A full-width rule frames the output
-   * like a table; a short one marks where a section starts and leaves
-   * the rest of the line as breathing room.
+   * This is the one shape every report uses, so `status`, `doctor` and
+   * the rest stop looking like three different programs. The body is
+   * drawn into a buffer first because a box needs to know its content
+   * before it can size its border, and because the body must wrap to the
+   * inner width rather than the terminal's.
+   *
+   * ```ts
+   * ui.section("Project", (ui) => ui.fields([field("Root", root)]));
+   * ```
+   */
+  section(
+    title: string,
+    body: (ui: Ui) => void,
+    options: {
+      readonly count?: number;
+      readonly role?: keyof Theme;
+      readonly footer?: string;
+    } = {},
+  ): this {
+    const buffer: string[] = [];
+    const inner = new Ui({
+      capabilities: { ...this.capabilities, width: Math.max(8, this.capabilities.width - 4) },
+      write: (text) => void buffer.push(text),
+    });
+
+    body(inner);
+
+    const lines = buffer.join("").split("\n").slice(0, -1);
+
+    const label = options.count === undefined ? title : `${title} · ${String(options.count)}`;
+
+    this.deck.box(label, lines, {
+      ...(options.role === undefined ? {} : { role: options.role }),
+      ...(options.footer === undefined ? {} : { footer: options.footer }),
+    });
+
+    return this;
+  }
+
+  /**
+   * A section heading: the label embedded in a full-width rule.
+   *
+   * For places a box would be too heavy — a one-line aside between two
+   * boxed sections — the rule still spans the terminal, because a short
+   * rule that dangles reads as an unfinished table.
    */
   heading(label: string, options: { readonly count?: number } = {}): this {
     const suffix = options.count === undefined ? "" : ` ${String(options.count)}`;
-    const gap = 2;
-
-    // The label itself must fit: on a narrow terminal a long title is
-    // truncated rather than allowed to wrap into the next row.
-    const budget = Math.max(1, this.capabilities.width - gap);
-    const shown = truncateVisible(label, Math.max(1, budget - suffix.length));
-    const styled = `${this.style.bold(this.style.accent(shown))}${this.style.muted(suffix)}`;
-
-    const available = Math.max(
-      0,
-      this.capabilities.width - visibleWidth(shown) - suffix.length - gap,
+    const lead = `${this.symbols.rule.repeat(2)} `;
+    const shown = truncateVisible(
+      label,
+      Math.max(1, this.capabilities.width - lead.length - suffix.length - 2),
     );
-    const rule = this.symbols.rule.repeat(Math.min(RULE_LENGTH, available));
+    const tail = Math.max(
+      0,
+      this.capabilities.width - lead.length - visibleWidth(shown) - suffix.length - 1,
+    );
 
-    this.line(`${styled}${" ".repeat(gap)}${this.style.muted(rule)}`);
+    this.line(
+      `${this.style.muted(lead)}${this.style.bold(this.style.accent(shown))}${this.style.muted(suffix)} ${this.style.muted(this.symbols.rule.repeat(tail))}`,
+    );
     return this;
   }
 

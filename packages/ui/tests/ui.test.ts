@@ -119,19 +119,74 @@ describe("Ui output", () => {
     expect(render((ui) => ui.line("a").blank().line("b"))).toEqual(["a", "", "b"]);
   });
 
-  it("draws a heading with a short hairline that fits the width", () => {
+  it("draws a heading as a full-width rule with the label embedded", () => {
     const lines = render((ui) => ui.heading("Environment", { count: 6 }), { width: 40 });
 
-    expect(plain(lines)[0]).toContain("Environment 6");
-    // The rule is capped so a heading never becomes a full-width frame.
-    expect(visibleWidth(lines[0] ?? "")).toBeLessThanOrEqual(40);
-    expect(visibleWidth(lines[0] ?? "")).toBeGreaterThan(18);
+    const line = plain(lines)[0] ?? "";
+    expect(line).toContain("Environment 6");
+    // The rule spans the terminal: a short one that dangles reads as an
+    // unfinished table.
+    expect(visibleWidth(lines[0] ?? "")).toBe(40);
+    expect(line.startsWith("── ")).toBe(true);
   });
 
   it("truncates a heading that cannot fit the terminal", () => {
     const lines = render((ui) => ui.heading("A very long section title here"), { width: 12 });
 
     expect(visibleWidth(lines[0] ?? "")).toBeLessThanOrEqual(12);
+  });
+
+  it("draws a section as a box with its title in the top border", () => {
+    const lines = plain(
+      render((ui) => ui.section("Project", (u) => u.fields([{ label: "Root", value: "/x" }]))),
+    );
+
+    expect(lines[0]?.startsWith("╭─ Project ─")).toBe(true);
+    expect(lines[0]?.endsWith("╮")).toBe(true);
+    expect(lines.some((line) => line.includes("Root"))).toBe(true);
+    expect(lines[lines.length - 1]?.startsWith("╰")).toBe(true);
+  });
+
+  it("appends the count to a section title", () => {
+    const lines = plain(
+      render((ui) =>
+        ui.section("Environment", (u) => u.fields([{ label: "a", value: "b" }]), { count: 6 }),
+      ),
+    );
+
+    expect(lines[0]).toContain("Environment · 6");
+  });
+
+  it("renders a section body at the width the frame leaves", () => {
+    const lines = render(
+      (ui) => ui.section("T", (u) => u.fields([{ label: "Root", value: "x".repeat(300) }])),
+      { width: 40 },
+    );
+
+    // The border, the padding and the content all fit inside the width.
+    for (const line of lines) {
+      expect(visibleWidth(line)).toBeLessThanOrEqual(40);
+    }
+    expect(visibleWidth(lines[0] ?? "")).toBe(40);
+  });
+
+  it("draws a section footer in the bottom border", () => {
+    const lines = plain(
+      render((ui) =>
+        ui.section("T", (u) => u.fields([{ label: "a", value: "b" }]), { footer: "3 of 6 ready" }),
+      ),
+    );
+
+    const last = lines[lines.length - 1] ?? "";
+    expect(last).toContain("3 of 6 ready");
+    expect(last.startsWith("╰")).toBe(true);
+  });
+
+  it("accepts an empty section body", () => {
+    const lines = plain(render((ui) => ui.section("Empty", () => {})));
+
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain("Empty");
   });
 
   it("draws a title without a rule", () => {
