@@ -43,8 +43,7 @@ export default class Detect extends DevixCommand {
       return;
     }
 
-    ui.title("devix detect");
-    ui.blank();
+    this.header(ui, "devix detect");
 
     if (!summary.isProject) {
       ui.section("Project", (ui) =>

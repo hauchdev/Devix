@@ -7,6 +7,9 @@ export default class GitSync extends DevixCommand {
   static override description =
     "Show how the current branch differs from its upstream. Never runs push or pull: it prints the exact commands for you to run.";
 
+  static override tagline =
+    "How this branch differs from its upstream, and the commands to fix it.";
+
   static override flags = devixBaseFlags;
 
   async run(): Promise<void> {
@@ -28,8 +31,7 @@ export default class GitSync extends DevixCommand {
         return;
       }
 
-      ui.title("devix git sync");
-      ui.blank();
+      this.header(ui, "devix git sync");
 
       const synced = state.ahead === 0 && state.behind === 0;
 

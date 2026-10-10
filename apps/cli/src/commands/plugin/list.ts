@@ -25,8 +25,7 @@ export default class PluginList extends DevixCommand {
       return;
     }
 
-    ui.title("devix plugin list");
-    ui.blank();
+    this.header(ui, "devix plugin list");
 
     if (plugins.length === 0) {
       ui.section("Plugins", (ui) => ui.fields([field("Plugins", "none", "muted")]));

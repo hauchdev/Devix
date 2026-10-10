@@ -37,9 +37,21 @@ export default class Docker extends DevixCommand {
       return;
     }
 
-    ui.title(`devix docker ${args.operation}`);
-    ui.blank();
-    ui.line(String(result.data));
+    this.header(ui, `devix docker ${args.operation}`);
+
+    // The plugin formats its own output (it is the layer that knows the
+    // docker command shapes); the CLI frames it like every other report.
+    const text = String(result.data);
+    const titles: Record<string, string> = {
+      status: "Status",
+      ps: "Containers",
+      images: "Images",
+    };
+    ui.section(titles[args.operation] ?? "Output", (ui) => {
+      for (const line of text.split("\n")) {
+        ui.line(line);
+      }
+    });
     ui.blank();
   }
 }

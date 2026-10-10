@@ -55,6 +55,8 @@ export default class Minecraft extends DevixCommand {
   static override description =
     "Scaffold and inspect Minecraft projects: mods (fabric, forge, neoforge, architectury), plugins (paper, folia, spigot) and proxies (velocity, bungeecord) — with multi-loader, multi-module and multi-version support.";
 
+  static override tagline = "Scaffold and inspect Minecraft mods, plugins and proxies.";
+
   static override args = {
     operation: Args.string({
       description: "Operation to run. Omitted on a TTY, a menu asks which one to run.",
@@ -235,8 +237,7 @@ export default class Minecraft extends DevixCommand {
       const written = result.files.filter((entry) => !entry.skipped).length;
       const skipped = result.files.length - written;
 
-      ui.title(result.dryRun ? "devix minecraft init — dry run" : "devix minecraft init");
-      ui.blank();
+      this.header(ui, result.dryRun ? "devix minecraft init — dry run" : "devix minecraft init");
 
       ui.section(
         "Project",

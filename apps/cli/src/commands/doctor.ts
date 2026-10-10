@@ -6,6 +6,8 @@ export default class Doctor extends DevixCommand {
   static override description =
     "Diagnose your environment and project: tool versions, detected stack and health.";
 
+  static override tagline = "Tool versions, the detected stack, and what is missing.";
+
   static override flags = { ...devixBaseFlags, here: hereFlag };
 
   async run(): Promise<void> {
@@ -27,8 +29,7 @@ export default class Doctor extends DevixCommand {
       return;
     }
 
-    ui.title("devix doctor");
-    ui.blank();
+    this.header(ui, "devix doctor");
 
     ui.section("Environment", (ui) => ui.fields(report.environment.checks.map(checkField)), {
       count: report.environment.checks.length,

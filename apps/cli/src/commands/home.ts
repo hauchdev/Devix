@@ -3,7 +3,9 @@ import { padEndVisible } from "@devix-cli/ui";
 import {
   DevixCommand,
   devixBaseFlags,
+  field,
   hereFlag,
+  reportHeader,
   type DevixBaseFlags,
 } from "../lib/devix-command.js";
 import {
@@ -133,18 +135,16 @@ export default class Home extends DevixCommand {
     const ui = this.renderer(flags);
     const { deck, theme, symbols } = ui;
 
-    deck.banner("devix", "your environment, your project, your next step");
-    ui.blank();
-
+    reportHeader(ui, "devix", "your environment, your project, your next step");
     ui.section(
       `Here (${rootLabel(snapshot)})`,
-      (ui) => {
-        ui.line(projectLine(snapshot));
-        const repo = repositoryLine(snapshot);
-        if (repo !== undefined) {
-          ui.line(repo);
-        }
-      },
+      (ui) =>
+        ui.fields([
+          field("Project", projectLine(snapshot)),
+          ...(snapshot.isRepository
+            ? [field("Repository", repositoryLine(snapshot))]
+            : [field("Repository", "not a git repository", "muted")]),
+        ]),
       { role: "primary" },
     );
     ui.blank();

@@ -1,5 +1,7 @@
 import type { Ui } from "@devix-cli/ui";
 
+import { reportHeader } from "./devix-command.js";
+
 export interface ListData {
   readonly kinds: { readonly id: string; readonly description: string }[];
   readonly platforms: {
@@ -32,8 +34,11 @@ export interface RunData {
 
 /** Renders the `minecraft list` catalog. */
 export function renderMinecraftList(ui: Ui, data: ListData): void {
-  ui.title("devix minecraft list");
-  ui.blank();
+  reportHeader(
+    ui,
+    "devix minecraft list",
+    "Every project kind, platform and module the scaffolder knows.",
+  );
 
   ui.section(
     "Project kinds",
@@ -67,8 +72,7 @@ export function renderMinecraftList(ui: Ui, data: ListData): void {
 
 /** Renders the `minecraft check` detection result. */
 export function renderMinecraftCheck(ui: Ui, data: CheckData): void {
-  ui.title("devix minecraft check");
-  ui.blank();
+  reportHeader(ui, "devix minecraft check", "What this directory looks like to the detector.");
 
   if (!data.isMinecraft) {
     ui.section("Project", (ui) =>
@@ -128,17 +132,35 @@ function fieldRequested(
 
 /** Renders the `minecraft run` launch plan. */
 export function renderMinecraftRun(ui: Ui, data: RunData): void {
-  renderTaskPlan(ui, "devix minecraft run", "Run with", data);
+  renderTaskPlan(
+    ui,
+    "devix minecraft run",
+    "How to launch this project without Devix starting it for you.",
+    "Run with",
+    data,
+  );
 }
 
 /** Renders the `minecraft build` plan. */
 export function renderMinecraftBuild(ui: Ui, data: RunData): void {
-  renderTaskPlan(ui, "devix minecraft build", "Build with", data);
+  renderTaskPlan(
+    ui,
+    "devix minecraft build",
+    "How to build this project without Devix running the build.",
+    "Build with",
+    data,
+  );
 }
 
 /** Renders the `minecraft clean` plan. */
 export function renderMinecraftClean(ui: Ui, data: RunData): void {
-  renderTaskPlan(ui, "devix minecraft clean", "Clean with", data);
+  renderTaskPlan(
+    ui,
+    "devix minecraft clean",
+    "How to remove this project's build output.",
+    "Clean with",
+    data,
+  );
 }
 
 /**
@@ -148,9 +170,14 @@ export function renderMinecraftClean(ui: Ui, data: RunData): void {
  * the command, so they share this rather than three near-identical
  * functions that drift apart.
  */
-function renderTaskPlan(ui: Ui, title: string, label: string, data: RunData): void {
-  ui.title(title);
-  ui.blank();
+function renderTaskPlan(
+  ui: Ui,
+  title: string,
+  tagline: string,
+  label: string,
+  data: RunData,
+): void {
+  reportHeader(ui, title, tagline);
 
   ui.section("Target", (ui) =>
     ui.fields([
@@ -206,8 +233,11 @@ export interface DoctorData {
 
 /** Renders the `minecraft doctor` report. */
 export function renderMinecraftDoctor(ui: Ui, data: DoctorData): void {
-  ui.title("devix minecraft doctor");
-  ui.blank();
+  reportHeader(
+    ui,
+    "devix minecraft doctor",
+    "Wrapper, Java and version checks for an existing project.",
+  );
 
   if (!data.isMinecraft) {
     ui.section("Project", (ui) =>

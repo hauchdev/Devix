@@ -76,6 +76,16 @@ export interface RendererOptions {
 export abstract class DevixCommand extends Command {
   static override baseFlags = devixBaseFlags;
 
+  /**
+   * A one-line purpose shown under the command name.
+   *
+   * Defaults to the command's `description`, which is written for
+   * `--help` and is often a full sentence. A command whose description
+   * does not fit one line sets this instead, so every report's header is
+   * the same shape.
+   */
+  static tagline: string | undefined;
+
   private cachedUi: Ui | undefined;
 
   /**
@@ -101,6 +111,19 @@ export abstract class DevixCommand extends Command {
       ...(flags["no-color"] ? { color: false as const } : {}),
       ...options,
     });
+  }
+
+  /**
+   * The header every report opens with.
+   *
+   * The landing panel's banner, reused: name, one line of purpose, a
+   * full-width rule, then a blank line. A command that renders a report
+   * calls this instead of `title`, so `devix status` and `devix` start
+   * the same way.
+   */
+  protected header(ui: Ui, name: string): void {
+    const ctor = this.constructor as typeof DevixCommand;
+    reportHeader(ui, name, ctor.tagline ?? ctor.description ?? "");
   }
 
   /**
@@ -155,6 +178,18 @@ export abstract class DevixCommand extends Command {
   ): ErrorOutput {
     return err(code, message, details);
   }
+}
+
+/**
+ * Draws the standard report header.
+ *
+ * Exported for the renderers that are plain functions rather than
+ * commands — the minecraft and web reports — so they open exactly the
+ * way a command does.
+ */
+export function reportHeader(ui: Ui, name: string, tagline: string): void {
+  ui.deck.banner(name, tagline);
+  ui.blank();
 }
 
 /** Maps a service status onto a renderer status. */

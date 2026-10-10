@@ -50,8 +50,7 @@ export default class Deps extends DevixCommand {
         return;
       }
 
-      ui.title(`devix deps ${args.operation}`);
-      ui.blank();
+      this.header(ui, `devix deps ${args.operation}`);
       ui.section("Run", (ui) =>
         ui.fields([
           field("Manager", manager),

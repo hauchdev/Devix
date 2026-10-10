@@ -28,8 +28,7 @@ export default class GitStatus extends DevixCommand {
         return;
       }
 
-      ui.title("devix git status");
-      ui.blank();
+      this.header(ui, "devix git status");
       ui.section("Repository", (ui) => {
         ui.fields([
           { label: "Branch", value: result.branch ?? "HEAD detached" },

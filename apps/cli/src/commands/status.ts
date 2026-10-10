@@ -48,8 +48,7 @@ export default class Status extends DevixCommand {
       return;
     }
 
-    ui.title("devix status");
-    ui.blank();
+    this.header(ui, "devix status");
 
     ui.section("Project", (ui) =>
       ui.fields([

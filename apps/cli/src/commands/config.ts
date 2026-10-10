@@ -118,8 +118,7 @@ export default class Config extends DevixCommand {
     }
 
     const ui = this.renderer(flags);
-    ui.title("devix config list");
-    ui.blank();
+    this.header(ui, "devix config list");
 
     const keys = Object.keys(entries);
     if (keys.length === 0) {
@@ -193,6 +192,7 @@ export default class Config extends DevixCommand {
     }
 
     const ui = this.renderer(flags);
+    this.header(ui, "devix config set");
     ui.section("Written", (ui) =>
       ui.fields([field("Key", key, "ok"), field("Value", renderValue(getConfigValue(next, key)))]),
     );

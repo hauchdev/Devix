@@ -26,8 +26,7 @@ export default class GitBranches extends DevixCommand {
         return;
       }
 
-      ui.title("devix git branches");
-      ui.blank();
+      this.header(ui, "devix git branches");
 
       if (list.length === 0) {
         ui.section("Branches", (ui) =>

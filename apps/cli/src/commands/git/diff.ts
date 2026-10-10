@@ -27,8 +27,7 @@ export default class GitDiff extends DevixCommand {
         return;
       }
 
-      ui.title("devix git diff");
-      ui.blank();
+      this.header(ui, "devix git diff");
 
       if (result.entries.length === 0) {
         ui.section("Changes", (ui) =>

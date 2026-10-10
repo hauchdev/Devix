@@ -402,13 +402,16 @@ export class Deck {
    * A brand banner: a name, a tagline and a rule under them.
    *
    * This is the one place the CLI uses its loudest styling, because it
-   * is the first thing a new user sees.
+   * is the first thing a user sees — and the header every command opens
+   * with, so a report starts the same way wherever it comes from.
    */
   banner(name: string, tagline: string, version?: string): this {
     this.put(
       `${this.p.strong("primary", name)}${version === undefined ? "" : this.p.faint("muted", ` ${version}`)}`,
     );
-    this.put(this.p.faint("muted", tagline));
+    // The tagline is one line by contract: a wrapped tagline would push
+    // the rule down and break the shape every report shares.
+    this.put(this.p.faint("muted", this.cut(tagline, this.width)));
     this.put(this.p.paint("border", this.sym.rule.repeat(this.width)));
     return this;
   }

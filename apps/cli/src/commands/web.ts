@@ -4,7 +4,7 @@ import { isAbsolute, resolve } from "node:path";
 
 import type { Ui } from "@devix-cli/ui";
 
-import { DevixCommand, devixBaseFlags, field, row } from "../lib/devix-command.js";
+import { DevixCommand, devixBaseFlags, field, reportHeader, row } from "../lib/devix-command.js";
 import { pluginCommandRegistry } from "../lib/plugin-commands.js";
 
 interface DetectData {
@@ -50,6 +50,8 @@ interface WebDoctorData {
 export default class Web extends DevixCommand {
   static override description =
     "Inspect web projects: detect frameworks, review environment variable names, list scripts and print build/serve commands.";
+
+  static override tagline = "Frameworks, scripts, environment and build output.";
 
   static override args = {
     operation: Args.string({
@@ -122,8 +124,7 @@ export default class Web extends DevixCommand {
 }
 
 function renderDetect(ui: Ui, data: DetectData): void {
-  ui.title("devix web detect");
-  ui.blank();
+  reportHeader(ui, "devix web detect", "Which frameworks this project uses, and how they build.");
 
   if (!data.isWeb) {
     ui.section("Project", (ui) =>
@@ -158,8 +159,7 @@ function renderDetect(ui: Ui, data: DetectData): void {
 }
 
 function renderEnv(ui: Ui, data: EnvData): void {
-  ui.title("devix web env");
-  ui.blank();
+  reportHeader(ui, "devix web env", "The variable names a project expects, never their values.");
 
   if (data.count === 0) {
     ui.section("Variables", (ui) =>
@@ -184,8 +184,7 @@ function renderEnv(ui: Ui, data: EnvData): void {
 }
 
 function renderScripts(ui: Ui, data: ScriptsData): void {
-  ui.title("devix web scripts");
-  ui.blank();
+  reportHeader(ui, "devix web scripts", "The npm scripts this project declares.");
 
   if (data.count === 0) {
     ui.section("Scripts", (ui) =>
@@ -208,8 +207,7 @@ function renderScripts(ui: Ui, data: ScriptsData): void {
 }
 
 function renderServe(ui: Ui, data: ServeData): void {
-  ui.title("devix web serve");
-  ui.blank();
+  reportHeader(ui, "devix web serve", "How to serve the build output.");
 
   ui.section("Target", (ui) =>
     ui.fields([
@@ -232,8 +230,7 @@ function renderServe(ui: Ui, data: ServeData): void {
 }
 
 function renderBuild(ui: Ui, data: BuildData): void {
-  ui.title("devix web build");
-  ui.blank();
+  reportHeader(ui, "devix web build", "How to build this project.");
 
   if (data.frameworks !== undefined && data.frameworks.length > 0) {
     ui.section("Frameworks", (ui) =>
@@ -256,8 +253,7 @@ function renderBuild(ui: Ui, data: BuildData): void {
 }
 
 function renderWebDoctor(ui: Ui, data: WebDoctorData): void {
-  ui.title("devix web doctor");
-  ui.blank();
+  reportHeader(ui, "devix web doctor", "Scripts, build output and environment checks.");
 
   if (!data.isWeb) {
     ui.section("Frameworks", (ui) =>

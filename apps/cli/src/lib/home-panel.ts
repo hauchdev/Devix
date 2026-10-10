@@ -107,7 +107,7 @@ export function projectLine(snapshot: Snapshot): string {
 }
 
 /**
- * A one-line summary of the repository, or null outside one.
+ * A one-line summary of the repository, or undefined outside one.
  *
  * Prose rather than fields: the cards below already carry the structured
  * facts, and repeating them here is what made the panel read as two
@@ -115,15 +115,15 @@ export function projectLine(snapshot: Snapshot): string {
  */
 export function repositoryLine(snapshot: Snapshot): string | undefined {
   if (!snapshot.isRepository) {
-    return "Not a git repository.";
+    return undefined;
   }
   const upstream = snapshot.gitUpstream ?? "no upstream";
   const ahead = snapshot.gitAhead ?? 0;
   const behind = snapshot.gitBehind ?? 0;
   if (ahead === 0 && behind === 0) {
-    return `On ${upstream}, in sync with the remote.`;
+    return `${upstream}, in sync with the remote`;
   }
-  return `On ${upstream}, +${String(ahead)} ahead and ${String(behind)} behind.`;
+  return `${upstream}, +${String(ahead)} ahead and ${String(behind)} behind`;
 }
 
 /** How many checks passed, out of the total. */
