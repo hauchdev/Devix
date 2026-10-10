@@ -33,15 +33,17 @@ export default class GitSync extends DevixCommand {
 
       const synced = state.ahead === 0 && state.behind === 0;
 
-      ui.fields([
-        field("Upstream", state.upstream),
-        field("Ahead", String(state.ahead), state.ahead > 0 ? "warn" : "muted"),
-        field("Behind", String(state.behind), state.behind > 0 ? "warn" : "muted"),
-      ]);
+      ui.section("Upstream", (ui) =>
+        ui.fields([
+          field("Remote", state.upstream),
+          field("Ahead", String(state.ahead), state.ahead > 0 ? "warn" : "muted"),
+          field("Behind", String(state.behind), state.behind > 0 ? "warn" : "muted"),
+        ]),
+      );
 
       if (synced) {
         ui.blank();
-        ui.line(`  ${ui.style.success(ui.symbols.success)}  Up to date with ${state.upstream}.`);
+        ui.section("State", (ui) => ui.fields([field("In sync with", state.upstream, "ok")]));
         ui.blank();
         return;
       }
@@ -55,9 +57,14 @@ export default class GitSync extends DevixCommand {
       }
 
       ui.blank();
-      ui.panel("Run these yourself", commands, {
-        status: state.ahead > 0 && state.behind > 0 ? "error" : "warn",
-      });
+      ui.section(
+        "Run these yourself",
+        (ui) =>
+          ui.fields(
+            commands.map((command) => ({ label: "", value: command, status: "warn" as const })),
+          ),
+        { role: state.ahead > 0 && state.behind > 0 ? "danger" : "warning" },
+      );
 
       if (state.ahead > 0 && state.behind > 0) {
         ui.blank();

@@ -47,30 +47,37 @@ export default class Detect extends DevixCommand {
     ui.blank();
 
     if (!summary.isProject) {
-      ui.fields([
-        field("Root", summary.root),
-        field("Markers", "none", "warn", "No project markers in this directory tree."),
-      ]);
+      ui.section("Project", (ui) =>
+        ui.fields([
+          field("Root", summary.root),
+          field("Markers", "none", "warn", "No project markers in this directory tree."),
+        ]),
+      );
       ui.blank();
       return;
     }
 
-    ui.heading("Project");
-    ui.fields([
-      field("Root", summary.root),
-      field("Languages", summary.languages.map((entry) => entry.id).join(", ") || "none"),
-      field("Managers", summary.packageManagers.map((entry) => entry.id).join(", ") || "none"),
-      field("Tools", summary.tools.map((entry) => entry.id).join(", ") || "none"),
-    ]);
+    ui.section("Project", (ui) =>
+      ui.fields([
+        field("Root", summary.root),
+        field("Languages", summary.languages.map((entry) => entry.id).join(", ") || "none"),
+        field("Managers", summary.packageManagers.map((entry) => entry.id).join(", ") || "none"),
+        field("Tools", summary.tools.map((entry) => entry.id).join(", ") || "none"),
+      ]),
+    );
 
     if (flags.verbose) {
       const evidence = [...summary.languages, ...summary.packageManagers, ...summary.tools];
       ui.blank();
-      ui.heading("Evidence", { count: evidence.length });
-      ui.fields(
-        evidence.map((entry) =>
-          field(entry.id, entry.detection?.marker, "muted", entry.detection?.path),
-        ),
+      ui.section(
+        "Evidence",
+        (ui) =>
+          ui.fields(
+            evidence.map((entry) =>
+              field(entry.id, entry.detection?.marker, "muted", entry.detection?.path),
+            ),
+          ),
+        { count: evidence.length },
       );
     }
 

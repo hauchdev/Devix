@@ -1,6 +1,6 @@
 import { join } from "node:path";
 
-import { DevixCommand, devixBaseFlags, field, hereFlag, toUiStatus } from "../lib/devix-command.js";
+import { DevixCommand, devixBaseFlags, checkField, field, hereFlag } from "../lib/devix-command.js";
 
 export default class Doctor extends DevixCommand {
   static override description =
@@ -30,25 +30,18 @@ export default class Doctor extends DevixCommand {
     ui.title("devix doctor");
     ui.blank();
 
-    ui.heading("Environment", { count: report.environment.checks.length });
-    ui.fields(
-      report.environment.checks.map((check) =>
-        field(
-          check.name,
-          check.detail,
-          toUiStatus(check.status),
-          check.status === "missing" ? "Not found on PATH." : undefined,
-        ),
-      ),
-    );
+    ui.section("Environment", (ui) => ui.fields(report.environment.checks.map(checkField)), {
+      count: report.environment.checks.length,
+    });
     ui.blank();
 
-    ui.heading("Project");
-    if (!report.project.isProject) {
-      ui.fields([
-        field("Markers", "none", "warn", `Nothing recognized under ${report.project.root}`),
-      ]);
-    } else {
+    ui.section("Project", (ui) => {
+      if (!report.project.isProject) {
+        ui.fields([
+          field("Markers", "none", "warn", `Nothing recognized under ${report.project.root}`),
+        ]);
+        return;
+      }
       ui.fields([
         field("Root", report.project.root),
         field("Languages", report.project.languages.join(", ") || "none"),
@@ -58,23 +51,25 @@ export default class Doctor extends DevixCommand {
           ? [field("Minecraft", report.project.minecraft.join(", "))]
           : []),
       ]);
-    }
+    });
+    ui.blank();
 
     const missing = report.environment.checks.filter((check) => check.status !== "ok");
 
-    ui.blank();
-    ui.divider();
-    if (missing.length === 0) {
-      ui.line(`  ${ui.style.success(ui.symbols.success)}  Every environment tool was found.`);
-    } else {
-      ui.line(
-        `  ${ui.style.warn(ui.symbols.warn)}  ${String(missing.length)} tool(s) not found: ${missing
-          .map((check) => check.name)
-          .join(", ")}`,
-      );
-      ui.blank();
-      ui.hint("Devix degrades gracefully: missing tools become warnings, not failures.");
-    }
+    ui.section("Verdict", (ui) => {
+      if (missing.length === 0) {
+        ui.fields([field("Tools", "every environment tool was found", "ok")]);
+        return;
+      }
+      ui.fields([
+        field(
+          "Missing",
+          missing.map((check) => check.name).join(", "),
+          "warn",
+          "Devix degrades gracefully: missing tools become warnings, not failures.",
+        ),
+      ]);
+    });
     ui.blank();
   }
 }

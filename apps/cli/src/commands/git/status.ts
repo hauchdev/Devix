@@ -30,32 +30,41 @@ export default class GitStatus extends DevixCommand {
 
       ui.title("devix git status");
       ui.blank();
-      ui.fields([
-        { label: "Branch", value: result.branch ?? "HEAD detached" },
-        ...(result.hasCommits
-          ? []
-          : [{ label: "Commits", value: "none yet", status: "warn" as const }]),
-        { label: "Changes", value: String(result.entries.length) },
-      ]);
+      ui.section("Repository", (ui) => {
+        ui.fields([
+          { label: "Branch", value: result.branch ?? "HEAD detached" },
+          ...(result.hasCommits
+            ? []
+            : [{ label: "Commits", value: "none yet", status: "warn" as const }]),
+          { label: "Changes", value: String(result.entries.length) },
+        ]);
+      });
 
       if (result.entries.length === 0) {
         ui.blank();
-        ui.line(`  ${ui.style.success(ui.symbols.success)}  Working tree clean.`);
+        ui.section("Working tree", (ui) =>
+          ui.fields([{ label: "State", value: "clean", status: "ok" }]),
+        );
         ui.blank();
         return;
       }
 
       ui.blank();
-      ui.table(
-        ["ST", "PATH", "STATE"],
-        result.entries.map((entry) => ({
-          cells: [
-            `${shortCode(entry.index)}${shortCode(entry.workingTree)}`,
-            entry.path,
-            entry.conflicted ? "conflict" : "changed",
-          ],
-          status: (entry.conflicted ? "error" : "warn") as "error" | "warn",
-        })),
+      ui.section(
+        "Changed files",
+        (ui) =>
+          ui.table(
+            ["ST", "PATH", "STATE"],
+            result.entries.map((entry) => ({
+              cells: [
+                `${shortCode(entry.index)}${shortCode(entry.workingTree)}`,
+                entry.path,
+                entry.conflicted ? "conflict" : "changed",
+              ],
+              status: (entry.conflicted ? "error" : "warn") as "error" | "warn",
+            })),
+          ),
+        { count: result.entries.length },
       );
       ui.blank();
     } catch (error) {

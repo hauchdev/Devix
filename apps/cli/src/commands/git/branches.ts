@@ -30,18 +30,24 @@ export default class GitBranches extends DevixCommand {
       ui.blank();
 
       if (list.length === 0) {
-        ui.fields([{ label: "Branches", value: "none", status: "muted" }]);
+        ui.section("Branches", (ui) =>
+          ui.fields([{ label: "Branches", value: "none", status: "muted" }]),
+        );
         ui.blank();
         return;
       }
 
-      ui.heading("Local branches", { count: list.length });
-      ui.table(
-        ["BRANCH", "COMMIT"],
-        list.map((branch) => ({
-          cells: [branch.name, branch.commit.slice(0, 9)],
-          ...(branch.current ? { status: "ok" as const } : {}),
-        })),
+      ui.section(
+        "Local branches",
+        (ui) =>
+          ui.table(
+            ["BRANCH", "COMMIT"],
+            list.map((branch) => ({
+              cells: [branch.name, branch.commit.slice(0, 9)],
+              ...(branch.current ? { status: "ok" as const } : {}),
+            })),
+          ),
+        { count: list.length },
       );
       ui.blank();
     } catch (error) {

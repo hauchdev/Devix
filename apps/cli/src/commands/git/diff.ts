@@ -31,7 +31,9 @@ export default class GitDiff extends DevixCommand {
       ui.blank();
 
       if (result.entries.length === 0) {
-        ui.line(`  ${ui.style.success(ui.symbols.success)}  No changes against HEAD.`);
+        ui.section("Changes", (ui) =>
+          ui.fields([{ label: "Against HEAD", value: "no changes", status: "ok" }]),
+        );
         ui.blank();
         return;
       }
@@ -39,21 +41,23 @@ export default class GitDiff extends DevixCommand {
       const additions = result.entries.reduce((sum, entry) => sum + entry.additions, 0);
       const deletions = result.entries.reduce((sum, entry) => sum + entry.deletions, 0);
 
-      ui.heading("Changed files", { count: result.entries.length });
-      ui.table(
-        ["+ADDED", "-REMOVED", "FILE"],
-        result.entries.map((entry) => ({
-          cells: [
-            entry.binary ? "—" : `+${String(entry.additions)}`,
-            entry.binary ? "—" : `-${String(entry.deletions)}`,
-            entry.path,
-          ],
-        })),
-      );
-
-      ui.blank();
-      ui.line(
-        `  ${ui.style.success(`+${String(additions)}`)}  ${ui.style.error(`-${String(deletions)}`)}  across ${String(result.entries.length)} file(s)`,
+      ui.section(
+        "Changed files",
+        (ui) =>
+          ui.table(
+            ["+ADDED", "-REMOVED", "FILE"],
+            result.entries.map((entry) => ({
+              cells: [
+                entry.binary ? "—" : `+${String(entry.additions)}`,
+                entry.binary ? "—" : `-${String(entry.deletions)}`,
+                entry.path,
+              ],
+            })),
+          ),
+        {
+          count: result.entries.length,
+          footer: `+${String(additions)} -${String(deletions)} across ${String(result.entries.length)} file(s)`,
+        },
       );
       ui.blank();
     } catch (error) {

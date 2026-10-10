@@ -184,6 +184,24 @@ export function field(label: string, value?: string, status?: Status, hint?: str
   };
 }
 
+/**
+ * Maps a doctor check onto a field.
+ *
+ * A missing tool with no version reads as "not found" rather than an em
+ * dash: "missing" is the fact worth stating, and a dash makes the reader
+ * guess whether it is missing or merely unreported.
+ */
+export function checkField(check: {
+  readonly name: string;
+  readonly status: string;
+  readonly detail?: string;
+}): Field {
+  const value =
+    check.detail ??
+    (check.status === "missing" ? "not found" : check.status === "warn" ? "unknown" : undefined);
+  return field(check.name, value, toUiStatus(check.status));
+}
+
 /** Builds a table row without repeating the shape everywhere. */
 export function row(cells: readonly string[], status?: Status): Row {
   return { cells, ...(status === undefined ? {} : { status }) };

@@ -29,26 +29,30 @@ export default class PluginList extends DevixCommand {
     ui.blank();
 
     if (plugins.length === 0) {
-      ui.fields([field("Plugins", "none", "muted")]);
+      ui.section("Plugins", (ui) => ui.fields([field("Plugins", "none", "muted")]));
       ui.blank();
       return;
     }
 
-    ui.heading("Installed plugins", { count: plugins.length });
-    ui.fields(
-      plugins.map((plugin) => {
-        const capabilityCommands =
-          plugin.capabilities?.commands?.map((command) => command.id) ?? [];
-        const legacyCommands = plugin.commands ?? [];
-        const commands = [...new Set([...capabilityCommands, ...legacyCommands])];
+    ui.section(
+      "Installed plugins",
+      (ui) =>
+        ui.fields(
+          plugins.map((plugin) => {
+            const capabilityCommands =
+              plugin.capabilities?.commands?.map((command) => command.id) ?? [];
+            const legacyCommands = plugin.commands ?? [];
+            const commands = [...new Set([...capabilityCommands, ...legacyCommands])];
 
-        return field(
-          `${plugin.name}  ${plugin.version}`,
-          commands.join(", ") || "no commands",
-          "info",
-          plugin.description,
-        );
-      }),
+            return field(
+              `${plugin.name}  ${plugin.version}`,
+              commands.join(", ") || "no commands",
+              "info",
+              plugin.description,
+            );
+          }),
+        ),
+      { count: plugins.length },
     );
 
     ui.blank();

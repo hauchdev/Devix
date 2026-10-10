@@ -35,21 +35,31 @@ export function renderMinecraftList(ui: Ui, data: ListData): void {
   ui.title("devix minecraft list");
   ui.blank();
 
-  ui.heading("Project kinds", { count: data.kinds.length });
-  ui.fields(data.kinds.map((kind) => ({ label: kind.id, value: kind.description })));
-  ui.blank();
-
-  ui.heading("Platforms", { count: data.platforms.length });
-  ui.table(
-    ["ID", "KIND", "DESCRIPTION"],
-    data.platforms.map((platform) => ({
-      cells: [platform.id, platform.kind, platform.description],
-    })),
+  ui.section(
+    "Project kinds",
+    (ui) => ui.fields(data.kinds.map((kind) => ({ label: kind.id, value: kind.description }))),
+    { count: data.kinds.length },
   );
   ui.blank();
 
-  ui.heading("Optional modules", { count: data.modules.length });
-  ui.fields(data.modules.map((module) => ({ label: module.id, value: module.name })));
+  ui.section(
+    "Platforms",
+    (ui) =>
+      ui.table(
+        ["ID", "KIND", "DESCRIPTION"],
+        data.platforms.map((platform) => ({
+          cells: [platform.id, platform.kind, platform.description],
+        })),
+      ),
+    { count: data.platforms.length },
+  );
+  ui.blank();
+
+  ui.section(
+    "Optional modules",
+    (ui) => ui.fields(data.modules.map((module) => ({ label: module.id, value: module.name }))),
+    { count: data.modules.length },
+  );
   ui.blank();
 
   ui.hint("devix minecraft init <platforms> <name>");
@@ -61,30 +71,37 @@ export function renderMinecraftCheck(ui: Ui, data: CheckData): void {
   ui.blank();
 
   if (!data.isMinecraft) {
-    ui.fields([
-      { label: "Root", value: data.root },
-      { label: "Platforms", value: "none", status: "muted", hint: "Not a Minecraft project." },
-    ]);
+    ui.section("Project", (ui) =>
+      ui.fields([
+        { label: "Root", value: data.root },
+        { label: "Platforms", value: "none", status: "muted", hint: "Not a Minecraft project." },
+      ]),
+    );
     ui.blank();
     return;
   }
 
-  ui.fields([{ label: "Root", value: data.root }]);
-  ui.blank();
-
-  ui.heading("Detected platforms", { count: data.platforms.length });
-  ui.fields(
-    data.platforms.map((platform) => ({
-      label: platform.id,
-      value: platform.detail ?? platform.name,
-      status: "ok" as const,
-      hint: platform.markers.join(", "),
-    })),
+  ui.section(
+    "Detected platforms",
+    (ui) => {
+      ui.fields([
+        { label: "Root", value: data.root },
+        ...data.platforms.map((platform) => ({
+          label: platform.id,
+          value: platform.detail ?? platform.name,
+          status: "ok" as const,
+          hint: platform.markers.join(", "),
+        })),
+      ]);
+    },
+    { count: data.platforms.length },
   );
 
   if (data.requested !== undefined) {
     ui.blank();
-    ui.fields([fieldRequested(data.requested.id, data.requested.detected)]);
+    ui.section("Requested", (ui) =>
+      ui.fields([fieldRequested(data.requested?.id ?? "", data.requested?.detected ?? false)]),
+    );
   }
 
   ui.blank();
@@ -135,26 +152,38 @@ function renderTaskPlan(ui: Ui, title: string, label: string, data: RunData): vo
   ui.title(title);
   ui.blank();
 
-  ui.fields([
-    { label: "Root", value: data.cwd },
-    { label: "Platforms", value: data.platforms.join(", ") },
-  ]);
+  ui.section("Target", (ui) =>
+    ui.fields([
+      { label: "Root", value: data.cwd },
+      { label: "Platforms", value: data.platforms.join(", ") },
+    ]),
+  );
   ui.blank();
 
-  ui.panel(
+  ui.section(
     label,
-    data.windowsCommand === undefined
-      ? [data.command]
-      : [data.command, `${data.windowsCommand}   (Windows)`],
-    { status: "info" },
+    (ui) =>
+      ui.fields(
+        data.windowsCommand === undefined
+          ? [{ label: "Command", value: data.command, status: "info" }]
+          : [
+              { label: "Command", value: data.command, status: "info" },
+              { label: "Windows", value: data.windowsCommand, status: "info" },
+            ],
+      ),
+    { role: "secondary" },
   );
 
   if (data.warnings.length > 0) {
     ui.blank();
-    ui.heading("Notes", { count: data.warnings.length });
-    for (const warning of data.warnings) {
-      ui.line(`  ${ui.style.muted(ui.symbols.arrow)} ${ui.style.muted(warning)}`);
-    }
+    ui.section(
+      "Notes",
+      (ui) =>
+        ui.fields(
+          data.warnings.map((warning) => ({ label: "", value: warning, status: "warn" as const })),
+        ),
+      { count: data.warnings.length, role: "warning" },
+    );
   }
 
   ui.blank();
@@ -181,36 +210,50 @@ export function renderMinecraftDoctor(ui: Ui, data: DoctorData): void {
   ui.blank();
 
   if (!data.isMinecraft) {
-    ui.fields([
-      { label: "Root", value: data.root },
-      { label: "Project", value: "none", status: "warn", hint: "Not a Minecraft project." },
-    ]);
+    ui.section("Project", (ui) =>
+      ui.fields([
+        { label: "Root", value: data.root },
+        { label: "Project", value: "none", status: "warn", hint: "Not a Minecraft project." },
+      ]),
+    );
     ui.blank();
     return;
   }
 
   const ready = data.checks.filter((check) => check.status === "ok").length;
-  ui.fields([
-    { label: "Root", value: data.root },
-    { label: "Platforms", value: data.platforms.join(", ") },
-    { label: "Build", value: data.buildSystem },
-    { label: "Checks", value: `${String(ready)} of ${String(data.checks.length)} passing` },
-  ]);
+  ui.section("Project", (ui) =>
+    ui.fields([
+      { label: "Root", value: data.root },
+      { label: "Platforms", value: data.platforms.join(", ") },
+      { label: "Build", value: data.buildSystem },
+    ]),
+  );
   ui.blank();
 
-  ui.heading("Checks", { count: data.checks.length });
-  ui.fields(
-    data.checks.map((check) => ({
-      label: check.name,
-      ...(check.detail === undefined ? {} : { value: check.detail }),
-      status:
-        check.status === "ok"
-          ? ("ok" as const)
-          : check.status === "warn"
-            ? ("warn" as const)
-            : ("error" as const),
-      ...(check.hint === undefined ? {} : { hint: check.hint }),
-    })),
+  ui.section(
+    "Checks",
+    (ui) =>
+      ui.fields(
+        data.checks.map((check) => ({
+          label: check.name,
+          ...(check.detail !== undefined
+            ? { value: check.detail }
+            : check.status === "ok"
+              ? {}
+              : { value: "check failed" }),
+          status:
+            check.status === "ok"
+              ? ("ok" as const)
+              : check.status === "warn"
+                ? ("warn" as const)
+                : ("error" as const),
+          ...(check.hint === undefined ? {} : { hint: check.hint }),
+        })),
+      ),
+    {
+      count: data.checks.length,
+      footer: `${String(ready)} of ${String(data.checks.length)} passing`,
+    },
   );
   ui.blank();
 }

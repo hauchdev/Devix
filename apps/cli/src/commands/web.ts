@@ -126,26 +126,33 @@ function renderDetect(ui: Ui, data: DetectData): void {
   ui.blank();
 
   if (!data.isWeb) {
-    ui.fields([
-      field("Root", data.root),
-      field("Frameworks", "none", "muted", data.message ?? "No web framework detected."),
-    ]);
+    ui.section("Project", (ui) =>
+      ui.fields([
+        field("Root", data.root),
+        field("Frameworks", "none", "muted", data.message ?? "No web framework detected."),
+      ]),
+    );
     ui.blank();
     return;
   }
 
-  ui.fields([field("Root", data.root)]);
-  ui.blank();
-  ui.heading("Frameworks", { count: data.frameworks?.length ?? 0 });
-  ui.table(
-    // The label is what a human reads; the machine id stays in --json.
-    ["FRAMEWORK", "OUTPUT", "PROVEN BY"],
-    (data.frameworks ?? []).map((framework) =>
-      row(
-        [framework.label, framework.static ? "static" : "dynamic", framework.package],
-        framework.static ? "ok" : "info",
-      ),
-    ),
+  ui.section(
+    "Frameworks",
+    (ui) => {
+      ui.fields([field("Root", data.root)]);
+      ui.blank();
+      ui.table(
+        // The label is what a human reads; the machine id stays in --json.
+        ["FRAMEWORK", "OUTPUT", "PROVEN BY"],
+        (data.frameworks ?? []).map((framework) =>
+          row(
+            [framework.label, framework.static ? "static" : "dynamic", framework.package],
+            framework.static ? "ok" : "info",
+          ),
+        ),
+      );
+    },
+    { count: data.frameworks?.length ?? 0 },
   );
   ui.blank();
 }
@@ -154,21 +161,25 @@ function renderEnv(ui: Ui, data: EnvData): void {
   ui.title("devix web env");
   ui.blank();
 
-  ui.fields([field("Declared", String(data.count))]);
-
   if (data.count === 0) {
-    ui.blank();
-    ui.hint("No .env file in this directory.");
-  } else {
-    ui.blank();
-    ui.table(
-      ["VARIABLE", "SOURCE"],
-      (data.variables ?? []).map((variable) => row([variable.name, variable.source])),
+    ui.section("Variables", (ui) =>
+      ui.fields([field("Declared", "0", "muted", "No .env file in this directory.")]),
     );
+    ui.blank();
+    ui.note(data.note ?? "Values are never read or shown, only variable names.");
+    ui.blank();
+    return;
   }
 
-  ui.blank();
-  ui.note(data.note ?? "Values are never read or shown, only variable names.");
+  ui.section(
+    "Variables",
+    (ui) =>
+      ui.table(
+        ["VARIABLE", "SOURCE"],
+        (data.variables ?? []).map((variable) => row([variable.name, variable.source])),
+      ),
+    { count: data.count, footer: data.note ?? "Only variable names, never values." },
+  );
   ui.blank();
 }
 
@@ -177,15 +188,21 @@ function renderScripts(ui: Ui, data: ScriptsData): void {
   ui.blank();
 
   if (data.count === 0) {
-    ui.fields([field("Scripts", "none", "muted", "Nothing declared in package.json.")]);
+    ui.section("Scripts", (ui) =>
+      ui.fields([field("Scripts", "none", "muted", "Nothing declared in package.json.")]),
+    );
     ui.blank();
     return;
   }
 
-  ui.heading("Scripts", { count: data.count });
-  ui.table(
-    ["NAME", "COMMAND"],
-    (data.scripts ?? []).map((script) => row([script.name, script.command])),
+  ui.section(
+    "Scripts",
+    (ui) =>
+      ui.table(
+        ["NAME", "COMMAND"],
+        (data.scripts ?? []).map((script) => row([script.name, script.command])),
+      ),
+    { count: data.count },
   );
   ui.blank();
 }
@@ -194,16 +211,23 @@ function renderServe(ui: Ui, data: ServeData): void {
   ui.title("devix web serve");
   ui.blank();
 
-  ui.fields([
-    field("Output", data.directory),
-    field("Framework", data.framework),
-    field("Port", String(data.port)),
-  ]);
+  ui.section("Target", (ui) =>
+    ui.fields([
+      field("Output", data.directory),
+      field("Framework", data.framework),
+      field("Port", String(data.port)),
+    ]),
+  );
 
   ui.blank();
-  ui.panel("Serve it with", [data.command], { status: "warn" });
-  ui.blank();
-  ui.note(data.note ?? "Serve is print-first: Devix does not start a server for you.");
+  ui.section(
+    "Serve it with",
+    (ui) => ui.fields([{ label: "Command", value: data.command, status: "info" }]),
+    {
+      role: "secondary",
+      footer: data.note ?? "Print-first: Devix does not start a server for you.",
+    },
+  );
   ui.blank();
 }
 
@@ -212,15 +236,22 @@ function renderBuild(ui: Ui, data: BuildData): void {
   ui.blank();
 
   if (data.frameworks !== undefined && data.frameworks.length > 0) {
-    ui.fields([field("Frameworks", data.frameworks.join(", "))]);
+    ui.section("Frameworks", (ui) =>
+      ui.fields([field("Frameworks", (data.frameworks ?? []).join(", "))]),
+    );
     ui.blank();
   }
 
   const commands =
     data.alternative === undefined ? [data.command] : [data.command, data.alternative];
-  ui.panel("Build it with", commands, { status: "warn" });
-  ui.blank();
-  ui.note(data.note ?? "Build is print-first.");
+  ui.section(
+    "Build it with",
+    (ui) =>
+      ui.fields(
+        commands.map((command) => ({ label: "Command", value: command, status: "info" as const })),
+      ),
+    { role: "secondary", footer: data.note ?? "Build is print-first." },
+  );
   ui.blank();
 }
 
@@ -229,19 +260,27 @@ function renderWebDoctor(ui: Ui, data: WebDoctorData): void {
   ui.blank();
 
   if (!data.isWeb) {
-    ui.fields([field("Frameworks", "none", "muted", data.message ?? "Nothing to diagnose.")]);
+    ui.section("Frameworks", (ui) =>
+      ui.fields([field("Frameworks", "none", "muted", data.message ?? "Nothing to diagnose.")]),
+    );
     ui.blank();
     return;
   }
 
-  ui.fields([field("Frameworks", (data.frameworks ?? []).join(", "))]);
+  ui.section("Frameworks", (ui) =>
+    ui.fields([field("Frameworks", (data.frameworks ?? []).join(", "))]),
+  );
   ui.blank();
 
-  ui.heading("Checks", { count: data.checks?.length ?? 0 });
-  ui.fields(
-    (data.checks ?? []).map((check) =>
-      field(check.name, check.detail, check.status === "ok" ? "ok" : "warn"),
-    ),
+  ui.section(
+    "Checks",
+    (ui) =>
+      ui.fields(
+        (data.checks ?? []).map((check) =>
+          field(check.name, check.detail, check.status === "ok" ? "ok" : "warn"),
+        ),
+      ),
+    { count: data.checks?.length ?? 0 },
   );
   ui.blank();
 }

@@ -1,5 +1,3 @@
-import { basename } from "node:path";
-
 import { padEndVisible } from "@devix-cli/ui";
 
 import {
@@ -13,6 +11,7 @@ import {
   detectedTree,
   health,
   projectLine,
+  repositoryLine,
   resolveCwd,
   rootLabel,
   suggestions,
@@ -137,36 +136,20 @@ export default class Home extends DevixCommand {
     deck.banner("devix", "your environment, your project, your next step");
     ui.blank();
 
-    deck.box(
-      `Here · ${rootLabel(snapshot)}`,
-      [
-        projectLine(snapshot),
-        ...(snapshot.isRepository
-          ? [
-              `Repository  ${snapshot.gitUpstream ?? "no upstream"}`,
-              `Branch      ${
-                (snapshot.gitAhead ?? 0) + (snapshot.gitBehind ?? 0) === 0
-                  ? "in sync with the remote"
-                  : `+${String(snapshot.gitAhead ?? 0)} ahead, ${String(snapshot.gitBehind ?? 0)} behind`
-              }`,
-            ]
-          : ["Repository  not a git repository"]),
-      ],
+    ui.section(
+      `Here (${rootLabel(snapshot)})`,
+      (ui) => {
+        ui.line(projectLine(snapshot));
+        const repo = repositoryLine(snapshot);
+        if (repo !== undefined) {
+          ui.line(repo);
+        }
+      },
       { role: "primary" },
     );
     ui.blank();
 
     deck.cards(cards(snapshot));
-    ui.blank();
-
-    const { good, total } = health(snapshot);
-    deck.meter({
-      label: "tools ready",
-      value: good,
-      total,
-      role: good === total ? "success" : "warning",
-    });
-    ui.blank();
 
     const next = suggestions(snapshot);
     // Pad on visible width, not string length: the command is already
@@ -190,7 +173,7 @@ export default class Home extends DevixCommand {
       ui.blank();
     }
 
-    ui.footnote(`${basename(snapshot.root)} · devix doctor for the full report`);
+    ui.footnote("devix doctor for the full report");
   }
 
   /**

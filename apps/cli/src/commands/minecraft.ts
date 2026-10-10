@@ -238,20 +238,22 @@ export default class Minecraft extends DevixCommand {
       ui.title(result.dryRun ? "devix minecraft init — dry run" : "devix minecraft init");
       ui.blank();
 
-      ui.fields([
-        field("Name", result.name),
-        field("Kind", result.kind),
-        field("Platforms", result.platforms.join(" + ")),
-        field("Minecraft", result.minecraftVersion),
-        field("Java", String(result.javaVersion)),
-        ...(result.modules.length > 1 ? [field("Modules", result.modules.join(", "))] : []),
-        field("Root", result.root),
-        field(
-          "Files",
-          `${String(written)} written${skipped > 0 ? `, ${String(skipped)} skipped` : ""}`,
-          "ok",
-        ),
-      ]);
+      ui.section(
+        "Project",
+        (ui) =>
+          ui.fields([
+            field("Name", result.name),
+            field("Kind", result.kind),
+            field("Platforms", result.platforms.join(" + ")),
+            field("Minecraft", result.minecraftVersion),
+            field("Java", String(result.javaVersion)),
+            ...(result.modules.length > 1 ? [field("Modules", result.modules.join(", "))] : []),
+            field("Root", result.root),
+          ]),
+        {
+          footer: `${String(written)} written${skipped > 0 ? `, ${String(skipped)} skipped` : ""}`,
+        },
+      );
 
       for (const note of result.targetPlatforms) {
         ui.blank();

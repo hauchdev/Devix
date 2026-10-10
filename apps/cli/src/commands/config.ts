@@ -123,20 +123,23 @@ export default class Config extends DevixCommand {
 
     const keys = Object.keys(entries);
     if (keys.length === 0) {
-      ui.fields([
-        field("File", path),
-        field("Settings", "none", "muted", "Nothing has been set yet."),
-      ]);
+      ui.section("Config", (ui) =>
+        ui.fields([
+          field("File", path),
+          field("Settings", "none", "muted", "Nothing has been set yet."),
+        ]),
+      );
       ui.blank();
       ui.hint("devix config set <key> <value>");
       ui.blank();
       return;
     }
 
-    ui.heading("Settings", { count: keys.length });
-    ui.fields(keys.map((key) => field(key, renderValue(entries[key]))));
-    ui.blank();
-    ui.footnote(path);
+    ui.section(
+      "Settings",
+      (ui) => ui.fields(keys.map((key) => field(key, renderValue(entries[key])))),
+      { count: keys.length, footer: path },
+    );
     ui.blank();
   }
 
@@ -190,7 +193,9 @@ export default class Config extends DevixCommand {
     }
 
     const ui = this.renderer(flags);
-    ui.fields([field("Key", key, "ok"), field("Value", renderValue(getConfigValue(next, key)))]);
+    ui.section("Written", (ui) =>
+      ui.fields([field("Key", key, "ok"), field("Value", renderValue(getConfigValue(next, key)))]),
+    );
     ui.blank();
     ui.hint(`Written to ${path}`);
     ui.blank();

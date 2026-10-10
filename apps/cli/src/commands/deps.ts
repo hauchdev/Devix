@@ -52,29 +52,31 @@ export default class Deps extends DevixCommand {
 
       ui.title(`devix deps ${args.operation}`);
       ui.blank();
-      ui.fields([
-        field("Manager", manager),
-        field(
-          "Exit",
-          String(output.exitCode),
-          output.exitCode === 0 ? "ok" : "warn",
-          output.exitCode === 0 ? undefined : "Non-zero is a result here, not a failure.",
-        ),
-      ]);
+      ui.section("Run", (ui) =>
+        ui.fields([
+          field("Manager", manager),
+          field(
+            "Exit",
+            String(output.exitCode),
+            output.exitCode === 0 ? "ok" : "warn",
+            output.exitCode === 0 ? undefined : "Non-zero is a result here, not a failure.",
+          ),
+        ]),
+      );
       ui.blank();
-      ui.divider();
-
-      // The manager output is passed through verbatim: Devix does not
-      // reformat another tool's report.
-      for (const line of output.stdout.split("\n")) {
-        ui.line(line);
-      }
-      if (output.stderr.trim().length > 0) {
-        ui.blank();
-        for (const line of output.stderr.trim().split("\n")) {
-          ui.line(ui.style.muted(line));
+      ui.section("Output", (ui) => {
+        // The manager output is passed through verbatim: Devix does not
+        // reformat another tool's report.
+        for (const line of output.stdout.split("\n")) {
+          ui.line(line);
         }
-      }
+        if (output.stderr.trim().length > 0) {
+          ui.blank();
+          for (const line of output.stderr.trim().split("\n")) {
+            ui.line(ui.style.muted(line));
+          }
+        }
+      });
 
       ui.blank();
     } catch (error) {
