@@ -55,6 +55,7 @@ export default class Home extends DevixCommand {
     }
 
     this.render(snapshot, flags, flags.verbose);
+    await this.offerNextStep(snapshot, flags);
   }
 
   /**
@@ -190,5 +191,62 @@ export default class Home extends DevixCommand {
     }
 
     ui.footnote(`${basename(snapshot.root)} · devix doctor for the full report`);
+  }
+
+  /**
+   * Offers the suggested next steps as a menu and runs the picked one.
+   *
+   * Only on a terminal: the panel is the one place a bare `devix` can
+   * move the user forward, and a menu that cannot read keys would just
+   * hang. Off a TTY the printed list is the whole answer.
+   */
+  private async offerNextStep(snapshot: Snapshot, flags: DevixBaseFlags): Promise<void> {
+    if (flags.json || flags.quiet || process.stdin.isTTY !== true) {
+      return;
+    }
+
+    const steps = suggestions(snapshot);
+    if (steps.length === 0) {
+      return;
+    }
+
+    const { runMenu } = await import("@devix-cli/ui");
+    const result = await runMenu({
+      prompt: "Run one now",
+      items: steps.map((item) => ({
+        id: item.command,
+        name: `devix ${item.command}`,
+        description: item.because,
+      })),
+    });
+
+    const picked = result.selected[0];
+    if (result.cancelled || picked === undefined) {
+      return;
+    }
+
+    const step = steps.find((item) => item.command === picked);
+    if (step === undefined) {
+      return;
+    }
+
+    await this.dispatch(step.id, step.args);
+  }
+
+  /**
+   * Runs one Devix command in the same process.
+   *
+   * Re-entering the command tree is what makes the menu feel like one
+   * program rather than a shell that shells out. A failing command
+   * raises, and its message is reported the same way the top-level entry
+   * point reports it, so the exit code still means something.
+   */
+  private async dispatch(id: string, args: readonly string[]): Promise<void> {
+    try {
+      await this.config.runCommand(id, [...args]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.error(message, { exit: 1 });
+    }
   }
 }
