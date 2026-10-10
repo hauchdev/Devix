@@ -45,9 +45,14 @@ devix plugin list
 
 - `--json` — machine-readable output on most commands
 - `--cwd <dir>` — inspect another directory
+- `--here` — inspect exactly that directory instead of walking up to the nearest project marker
 - `--version`, `--help` — available everywhere
 
 Errors are one line and actionable; exit codes are `0` on success and `1` on failure.
+
+## Interactive
+
+`devix` with no arguments opens a panel describing where you are. On a terminal, `devix minecraft` asks which operation to run and `devix minecraft init` asks for the project kind, platforms and modules with an arrow-key menu — type to filter, space to toggle, Enter to confirm. Off a terminal the same questions become a numbered list, so every command stays scriptable.
 
 ## How it works
 
