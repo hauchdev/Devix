@@ -91,6 +91,17 @@ export class Deck {
     this.put = options.line;
   }
 
+  /**
+   * Truncates to a visible width, using this renderer's ellipsis.
+   *
+   * Routing every cut through here is what keeps the ASCII symbol set
+   * printable: a hardcoded \`…\` would render as mojibake on a legacy
+   * console.
+   */
+  private cut(text: string, width: number): string {
+    return truncateVisible(text, width, this.sym.ellipsis);
+  }
+
   /** The usable width, with a floor so layout math never goes negative. */
   private get width(): number {
     return Math.max(8, this.cap.width);
@@ -107,7 +118,7 @@ export class Deck {
     const role = options.role ?? "border";
     const inner = this.width - 4;
 
-    const titleText = truncateVisible(title, Math.max(1, inner - 4));
+    const titleText = this.cut(title, Math.max(1, inner - 4));
     const lead = `${this.sym.topLeft}${this.sym.rule} `;
     const trail = this.sym.rule.repeat(Math.max(0, inner - visibleWidth(titleText) - 1));
     this.put(
@@ -117,7 +128,7 @@ export class Deck {
     );
 
     for (const raw of body) {
-      const text = truncateVisible(raw, inner);
+      const text = this.cut(raw, inner);
       this.put(
         `${this.p.paint(role, this.sym.bar)} ${padEndVisible(text, inner)} ${this.p.paint(role, this.sym.bar)}`,
       );
@@ -132,7 +143,7 @@ export class Deck {
         ),
       );
     } else {
-      const footerText = truncateVisible(footer, Math.max(1, inner - 1));
+      const footerText = this.cut(footer, Math.max(1, inner - 1));
       const fill = Math.max(0, inner - visibleWidth(footerText));
       this.put(
         this.p.paint(
@@ -194,16 +205,17 @@ export class Deck {
   private renderCardRow(slice: readonly Card[], cell: number): void {
     const widthFor = (): number => cell;
 
-    // One row for the top border, one per line of the tallest card, and
-    // one for the bottom border. The body loop reserves row 0 as the gap
-    // under the title, so the count is lines + 1, not lines.
-    const bodyRows = Math.max(...slice.map((item) => item.lines.length)) + 1;
+    // One row per line of the tallest card, plus the bottom border. There
+    // is no gap row under the title: the title already sits in the top
+    // border, and a blank row there would just push every card taller
+    // than its content.
+    const bodyRows = Math.max(...slice.map((item) => item.lines.length));
 
     const top = slice
       .map((item) => {
         const accent = item.accent ?? "border";
         const width = widthFor();
-        const head = truncateVisible(item.title, Math.max(1, width - 4));
+        const head = this.cut(item.title, Math.max(1, width - 4));
         // ╭ + ─ + space + title + space + rule + ╮: five fixed columns
         // around the title, and the rule takes whatever is left.
         const rule = this.sym.rule.repeat(Math.max(0, width - visibleWidth(head) - 5));
@@ -220,13 +232,13 @@ export class Deck {
       const cells = slice.map((item) => {
         const accent = item.accent ?? "border";
         const width = widthFor();
-        const raw = item.lines[row - 1];
+        const raw = item.lines[row];
         if (raw === undefined) {
           // A card shorter than the tallest one still needs its side
           // rails, or its content looks clipped rather than finished.
           return `${this.p.paint(accent, this.sym.bar)}${" ".repeat(width - 2)}${this.p.paint(accent, this.sym.bar)}`;
         }
-        const text = truncateVisible(raw, Math.max(1, width - 4));
+        const text = this.cut(raw, Math.max(1, width - 4));
         return `${this.p.paint(accent, this.sym.bar)} ${padEndVisible(text, width - 4)} ${this.p.paint(accent, this.sym.bar)}`;
       });
       this.put(cells.join(" ".repeat(CARD_GAP)).trimEnd());
@@ -265,7 +277,7 @@ export class Deck {
     // over-long label that is only truncated at print time leaves the
     // bar sized against a column that does not exist, which is how a
     // meter ends up wider than the terminal.
-    const label = padEndVisible(truncateVisible(row.label, cap), cap);
+    const label = padEndVisible(this.cut(row.label, cap), cap);
     const barRoom = this.width - visibleWidth(label) - visibleWidth(counter) - 4;
 
     if (barRoom < 6) {
@@ -306,10 +318,7 @@ export class Deck {
               ? `${this.sym.elbow}${this.sym.rule} `
               : `${this.sym.tee}${this.sym.rule} `;
         const lead = depth === 0 ? this.sym.bullet : connector;
-        const text = truncateVisible(
-          item.label,
-          Math.max(1, this.width - base - prefix.length - 2),
-        );
+        const text = this.cut(item.label, Math.max(1, this.width - base - prefix.length - 2));
         this.put(
           `${" ".repeat(base + prefix.length)}${this.p.paint(role, lead)} ${this.p.paint(role, text)}`,
         );
@@ -349,7 +358,7 @@ export class Deck {
         this.p.paint("secondary", `${this.sym.keyLeft}${hint.keys}${this.sym.keyRight}`),
         capWidth,
       );
-      this.put(`${cap}  ${truncateVisible(hint.description, budget)}`);
+      this.put(`${cap}  ${this.cut(hint.description, budget)}`);
     }
 
     return this;

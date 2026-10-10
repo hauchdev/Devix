@@ -110,13 +110,53 @@ export function padStartVisible(text: string, width: number): string {
   return padding > 0 ? `${" ".repeat(padding)}${text}` : text;
 }
 
-/** Truncates to `width` visible columns, appending an ellipsis when cut. */
-export function truncateVisible(text: string, width: number): string {
+/**
+ * Truncates to `width` visible columns, appending an ellipsis when cut.
+ *
+ * The ellipsis is a parameter because the ASCII symbol set must stay
+ * printable ASCII: a hardcoded `…` would render as mojibake on a legacy
+ * console, which is the exact failure the set exists to prevent.
+ */
+export function truncateVisible(text: string, width: number, ellipsis = "…"): string {
   if (visibleWidth(text) <= width) {
     return text;
   }
-  if (width <= 1) {
+  if (width <= ellipsis.length) {
+    // No room for the marker: a plain cut is better than a longer string.
     return text.slice(0, Math.max(0, width));
   }
-  return `${text.slice(0, width - 1)}…`;
+  return `${text.slice(0, width - ellipsis.length)}${ellipsis}`;
+}
+
+/**
+ * Wraps plain text to `width` visible columns.
+ *
+ * Only for unstyled prose — a hint, a note. Wrapping counts visible
+ * columns, so it would miscount if the text carried ANSI sequences;
+ * style each wrapped line afterwards if colour is needed.
+ */
+export function wrapVisible(text: string, width: number): string[] {
+  if (width < 1) {
+    return [text];
+  }
+
+  const lines: string[] = [];
+  for (const paragraph of text.split("\n")) {
+    let current = "";
+    for (const word of paragraph.split(/\s+/).filter((part) => part.length > 0)) {
+      if (current.length === 0) {
+        current = word;
+        continue;
+      }
+      if (current.length + 1 + word.length <= width) {
+        current = `${current} ${word}`;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    }
+    lines.push(current);
+  }
+
+  return lines;
 }

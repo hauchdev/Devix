@@ -154,7 +154,37 @@ describe("Ui output", () => {
       ),
     );
 
-    expect(lines[0]).toContain("Environment · 6");
+    expect(lines[0]).toContain("Environment (6)");
+  });
+
+  it("keeps the section title printable ascii when unicode is off", () => {
+    // The title is assembled in the renderer, not from the symbol set, so
+    // a decorative separator here would bypass the ASCII guarantee.
+    const lines = plain(
+      render((ui) => ui.section("T", (u) => u.fields([{ label: "a", value: "b" }]), { count: 3 }), {
+        unicode: false,
+      }),
+    );
+
+    for (const line of lines) {
+      expect(line).toMatch(/^[\x20-\x7E]*$/);
+    }
+  });
+
+  it("truncates with ascii when unicode is off", () => {
+    // A hardcoded `…` in the truncator would render as mojibake on a
+    // legacy console, which is the failure the ASCII set exists to stop.
+    const lines = plain(
+      render((ui) => ui.fields([{ label: "Root", value: "x".repeat(300) }]), {
+        unicode: false,
+        width: 40,
+      }),
+    );
+
+    for (const line of lines) {
+      expect(line).toMatch(/^[\x20-\x7E]*$/);
+    }
+    expect(lines[0]).toContain("...");
   });
 
   it("renders a section body at the width the frame leaves", () => {

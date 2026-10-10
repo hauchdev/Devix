@@ -1,7 +1,14 @@
 import type { Capabilities } from "./capabilities.js";
 import { detectCapabilities } from "./capabilities.js";
 import { Deck } from "./deck.js";
-import { Styler, padEndVisible, padStartVisible, truncateVisible, visibleWidth } from "./style.js";
+import {
+  Styler,
+  padEndVisible,
+  padStartVisible,
+  truncateVisible,
+  visibleWidth,
+  wrapVisible,
+} from "./style.js";
 import { symbolsFor, type SymbolSet } from "./symbols.js";
 import { createPainter, type Painter, type Theme } from "./theme.js";
 
@@ -105,6 +112,17 @@ export class Ui {
     return this.cachedDeck;
   }
 
+  /**
+   * Truncates to a visible width, using this renderer's ellipsis.
+   *
+   * Routing every cut through here is what keeps the ASCII symbol set
+   * printable: a hardcoded \`…\` would render as mojibake on a legacy
+   * console.
+   */
+  private cut(text: string, width: number): string {
+    return truncateVisible(text, width, this.symbols.ellipsis);
+  }
+
   /** Writes one line followed by a newline. */
   line(text = ""): this {
     this.write(`${text}\n`);
@@ -189,7 +207,10 @@ export class Ui {
 
     const lines = buffer.join("").split("\n").slice(0, -1);
 
-    const label = options.count === undefined ? title : `${title} · ${String(options.count)}`;
+    // Parentheses rather than a middle dot: the title is built here, not
+    // from the symbol set, so a non-ASCII separator would slip past the
+    // ASCII-only guarantee and render as mojibake on a legacy console.
+    const label = options.count === undefined ? title : `${title} (${String(options.count)})`;
 
     this.deck.box(label, lines, {
       ...(options.role === undefined ? {} : { role: options.role }),
@@ -209,7 +230,7 @@ export class Ui {
   heading(label: string, options: { readonly count?: number } = {}): this {
     const suffix = options.count === undefined ? "" : ` ${String(options.count)}`;
     const lead = `${this.symbols.rule.repeat(2)} `;
-    const shown = truncateVisible(
+    const shown = this.cut(
       label,
       Math.max(1, this.capabilities.width - lead.length - suffix.length - 2),
     );
@@ -282,13 +303,20 @@ export class Ui {
           ? this.style.muted("—")
           : this.paint(
               status,
-              truncateVisible(row.value, Math.max(4, this.capabilities.width - indent.length)),
+              this.cut(row.value, Math.max(4, this.capabilities.width - indent.length)),
             );
 
       this.line(`${lead}${label}  ${value}`);
 
       if (row.hint !== undefined) {
-        this.line(`${indent}${this.style.muted(row.hint)}`);
+        // A hint is prose: wrap it rather than truncate it, so the box
+        // never cuts a sentence in half.
+        for (const line of wrapVisible(
+          row.hint,
+          Math.max(8, this.capabilities.width - indent.length),
+        )) {
+          this.line(`${indent}${this.style.muted(line)}`);
+        }
       }
     }
 
@@ -402,10 +430,10 @@ export class Ui {
       const status = row.status;
       const cells = row.cells.map((cell, index) => {
         const width = widths[index] ?? visibleWidth(cell);
-        return padEndVisible(truncateVisible(cell, width), width);
+        return padEndVisible(this.cut(cell, width), width);
       });
 
-      const text = truncateVisible(
+      const text = this.cut(
         cells.join(" ".repeat(gap)).trimEnd(),
         Math.max(4, this.capabilities.width - MARKER_WIDTH),
       );
@@ -452,7 +480,7 @@ export class Ui {
     }
 
     for (const raw of body) {
-      const text = truncateVisible(raw, inner);
+      const text = this.cut(raw, inner);
       this.line(
         `${border(this.symbols.bar)} ${padEndVisible(text, inner)} ${border(this.symbols.bar)}`,
       );

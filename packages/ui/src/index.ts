@@ -12,7 +12,14 @@ export {
   type TerminalEnv,
 } from "./capabilities.js";
 
-export { Styler, padEndVisible, padStartVisible, truncateVisible, visibleWidth } from "./style.js";
+export {
+  Styler,
+  padEndVisible,
+  padStartVisible,
+  truncateVisible,
+  visibleWidth,
+  wrapVisible,
+} from "./style.js";
 
 export { Painter, createPainter, DEFAULT_THEME, type Theme, type ThemeColor } from "./theme.js";
 
