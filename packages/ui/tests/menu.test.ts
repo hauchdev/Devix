@@ -177,3 +177,101 @@ describe("runMenu on a TTY", () => {
     }
   });
 });
+
+describe("runMenu multi-select on a TTY", () => {
+  it("toggles with space and confirms with enter", async () => {
+    const output = fakeOutput({ tty: true });
+    const input = new PassThrough() as unknown as NodeJS.ReadStream;
+
+    const promise = runMenu({ prompt: "Pick", items: ITEMS, output, input, multi: true });
+    input.write(" "); // select Fabric
+    input.write("\u001b[B"); // down to Paper
+    input.write(" "); // select Paper
+    input.write("\r");
+    const result = await promise;
+
+    expect(result.selected.sort()).toEqual(["fabric", "paper"]);
+  });
+
+  it("toggles with tab as well as space", async () => {
+    const output = fakeOutput({ tty: true });
+    const input = new PassThrough() as unknown as NodeJS.ReadStream;
+
+    const promise = runMenu({ prompt: "Pick", items: ITEMS, output, input, multi: true });
+    input.write("\t"); // tab selects Fabric
+    input.write("\r");
+    const result = await promise;
+
+    expect(result.selected).toEqual(["fabric"]);
+  });
+
+  it("untoggles an item that is toggled twice", async () => {
+    const output = fakeOutput({ tty: true });
+    const input = new PassThrough() as unknown as NodeJS.ReadStream;
+
+    const promise = runMenu({ prompt: "Pick", items: ITEMS, output, input, multi: true });
+    input.write(" ");
+    input.write(" ");
+    input.write("\r");
+    const result = await promise;
+
+    expect(result.selected).toEqual([]);
+  });
+
+  it("seeds the selection from the items", async () => {
+    const output = fakeOutput({ tty: true });
+    const input = new PassThrough() as unknown as NodeJS.ReadStream;
+    const preseeded: readonly MenuItem[] = [
+      { id: "fabric", name: "Fabric", selected: true },
+      { id: "paper", name: "Paper" },
+    ];
+
+    const promise = runMenu({ prompt: "Pick", items: preseeded, output, input, multi: true });
+    input.write("\r");
+    const result = await promise;
+
+    expect(result.selected).toEqual(["fabric"]);
+  });
+
+  it("keeps a hidden selection when a filter hides it", async () => {
+    const output = fakeOutput({ tty: true });
+    const input = new PassThrough() as unknown as NodeJS.ReadStream;
+
+    const promise = runMenu({ prompt: "Pick", items: ITEMS, output, input, multi: true });
+    input.write(" "); // select Fabric (cursor 0)
+    input.write("pap"); // filter down to Paper
+    input.write("\r");
+    const result = await promise;
+
+    // Fabric is no longer visible, but it was selected and must survive.
+    expect(result.selected).toEqual(["fabric"]);
+  });
+});
+
+describe("runMenu multi-select off a TTY", () => {
+  it("parses a comma separated list of numbers", async () => {
+    const output = fakeOutput({ tty: false });
+    const input = new PassThrough() as unknown as NodeJS.ReadStream;
+
+    const promise = runMenu({ prompt: "Pick", items: ITEMS, output, input, multi: true });
+    input.write("1, 3\n");
+    const result = await promise;
+
+    expect(result.selected.sort()).toEqual(["fabric", "velocity"]);
+  });
+
+  it("keeps the pre-selected defaults on an empty answer", async () => {
+    const output = fakeOutput({ tty: false });
+    const input = new PassThrough() as unknown as NodeJS.ReadStream;
+    const preseeded: readonly MenuItem[] = [
+      { id: "fabric", name: "Fabric", selected: true },
+      { id: "paper", name: "Paper" },
+    ];
+
+    const promise = runMenu({ prompt: "Pick", items: preseeded, output, input, multi: true });
+    input.write("\n");
+    const result = await promise;
+
+    expect(result.selected).toEqual(["fabric"]);
+  });
+});

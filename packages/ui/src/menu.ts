@@ -52,7 +52,7 @@ export interface MenuOptions {
 
 /** A decoded key press. */
 interface KeyEvent {
-  readonly name: "enter" | "up" | "down" | "backspace" | "cancel" | "char";
+  readonly name: "enter" | "up" | "down" | "backspace" | "toggle" | "cancel" | "char";
   /** The character, when the key is a printable one. */
   readonly char?: string;
 }
@@ -63,6 +63,7 @@ const NEWLINE = "\n";
 const ARROW_UP = `${ESC}[A`;
 const ARROW_DOWN = `${ESC}[B`;
 const BACKSPACE = "\u007f";
+const TAB = "\t";
 const CTRL_C = "\u0003";
 
 /** Erases the current line and moves the cursor up one row. */
@@ -136,6 +137,10 @@ class KeyReader {
       this.buffer = this.buffer.slice(1);
       return { name: "backspace" };
     }
+    if (first === TAB) {
+      this.buffer = this.buffer.slice(1);
+      return { name: "toggle" };
+    }
     if (first === CTRL_C) {
       this.buffer = this.buffer.slice(1);
       return { name: "cancel" };
@@ -180,7 +185,15 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
   const capabilities: Capabilities = { color: "none", unicode: true, width, interactive: true };
   void capabilities;
 
-  const state = { cursor: 0, query: "" };
+  const multi = options.multi === true;
+  const state = {
+    cursor: 0,
+    query: "",
+    // Seeded from the items so a caller can pre-select defaults.
+    selected: new Set(
+      options.items.filter((item) => item.selected === true).map((item) => item.id),
+    ),
+  };
 
   const visible = (): readonly MenuItem[] =>
     state.query.length === 0
@@ -196,8 +209,9 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
     }
 
     output.write(`? ${options.prompt}\n`);
+    const hint = multi ? "  (space to toggle, enter to confirm)" : "";
     output.write(
-      `  ${String(items.length)} option(s)${state.query.length > 0 ? `, filtered by "${state.query}"` : ""}\n`,
+      `  ${String(items.length)} option(s)${state.query.length > 0 ? `, filtered by "${state.query}"` : ""}${hint}\n`,
     );
 
     for (let index = 0; index < rows; index += 1) {
@@ -205,9 +219,10 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
       if (item === undefined) {
         continue;
       }
-      const marker = index === state.cursor ? ">" : " ";
+      const cursor = index === state.cursor ? ">" : " ";
+      const box = multi ? (state.selected.has(item.id) ? "[x] " : "[ ] ") : "";
       const desc = item.description === undefined ? "" : `  ${item.description}`;
-      output.write(`${`${marker} ${item.name}${desc}`.slice(0, width)}\n`);
+      output.write(`${`${cursor} ${box}${item.name}${desc}`.slice(0, width)}\n`);
     }
   };
 
@@ -221,6 +236,12 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
     const items = visible();
 
     if (key.name === "enter") {
+      if (multi) {
+        // A filter can hide a selected row; keep every selection, not
+        // just the visible ones, so confirming after a filter is safe.
+        output.write(CLEAR_LINE);
+        return { selected: [...state.selected], cancelled: false };
+      }
       const picked = items[state.cursor];
       if (picked !== undefined) {
         output.write(CLEAR_LINE);
@@ -248,12 +269,30 @@ export async function runMenu(options: MenuOptions): Promise<MenuResult> {
 
     if (key.name === "backspace") {
       state.query = state.query.slice(0, -1);
+      state.cursor = 0;
       draw();
+      continue;
+    }
+
+    // Space and Tab toggle in multi mode; in single mode space is an
+    // ordinary character, because a single-select menu has no use for a
+    // toggle key.
+    if (multi && (key.name === "toggle" || key.char === " ")) {
+      const item = items[state.cursor];
+      if (item !== undefined) {
+        if (state.selected.has(item.id)) {
+          state.selected.delete(item.id);
+        } else {
+          state.selected.add(item.id);
+        }
+        draw();
+      }
       continue;
     }
 
     if (key.name === "char" && key.char !== undefined) {
       state.query += key.char;
+      state.cursor = 0;
       draw();
     }
   }
@@ -267,20 +306,44 @@ async function runNumberedList(
   output: NodeJS.WriteStream,
   input: NodeJS.ReadStream,
 ): Promise<MenuResult> {
+  const multi = options.multi === true;
+
   output.write(`? ${options.prompt}\n`);
   options.items.forEach((item, index) => {
+    const box = multi ? (item.selected === true ? "[x] " : "[ ] ") : "";
     const desc = item.description === undefined ? "" : `  ${item.description}`;
-    output.write(`  ${String(index + 1)}) ${item.name}${desc}\n`);
+    output.write(`  ${String(index + 1)}) ${box}${item.name}${desc}\n`);
   });
 
   const readline = await import("node:readline/promises");
   const rl = readline.createInterface({ input, output });
   try {
-    const answer = await rl.question("  Pick a number: ");
-    const item = options.items[Number.parseInt(answer.trim(), 10) - 1];
-    return item === undefined
-      ? { selected: [], cancelled: false }
-      : { selected: [item.id], cancelled: false };
+    const prompt = multi ? "  Pick numbers, comma separated: " : "  Pick a number: ";
+    const answer = await rl.question(prompt);
+
+    if (!multi) {
+      const item = options.items[Number.parseInt(answer.trim(), 10) - 1];
+      return item === undefined
+        ? { selected: [], cancelled: false }
+        : { selected: [item.id], cancelled: false };
+    }
+
+    // An empty answer keeps the pre-selected defaults, which is what a
+    // caller passing `selected` items means by them.
+    if (answer.trim().length === 0) {
+      return {
+        selected: options.items.filter((item) => item.selected === true).map((item) => item.id),
+        cancelled: false,
+      };
+    }
+
+    const selected = answer
+      .split(/[,\s]+/)
+      .map((token) => options.items[Number.parseInt(token, 10) - 1])
+      .filter((item): item is MenuItem => item !== undefined)
+      .map((item) => item.id);
+
+    return { selected: [...new Set(selected)], cancelled: false };
   } finally {
     rl.close();
   }
