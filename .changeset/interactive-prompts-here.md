@@ -16,3 +16,10 @@ have but never implemented.
 exactly the given directory instead of walking up to the nearest project
 marker. Walking up is right inside a project; it is wrong for a
 directory that merely happens to sit under one.
+
+On a terminal, `devix` with no arguments now offers its suggested next
+steps as a menu and runs the picked one, so the welcome panel is
+something you can act on rather than only read. Its suggestions also
+carry the exact command to run: the panel used to offer a `docker
+doctor` that does not exist, and a test now runs every suggestion and
+fails on an unrecognised command.

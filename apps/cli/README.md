@@ -52,7 +52,7 @@ Errors are one line and actionable; exit codes are `0` on success and `1` on fai
 
 ## Interactive
 
-`devix` with no arguments opens a panel describing where you are. On a terminal, `devix minecraft` asks which operation to run and `devix minecraft init` asks for the project kind, platforms and modules with an arrow-key menu — type to filter, space to toggle, Enter to confirm. Off a terminal the same questions become a numbered list, so every command stays scriptable.
+`devix` with no arguments opens a panel describing where you are. On a terminal, it then offers the suggested next steps as a menu and runs the one you pick; `devix minecraft` asks which operation to run and `devix minecraft init` asks for the project kind, platforms and modules with the same arrow-key menu — type to filter, space to toggle, Enter to confirm. Off a terminal the same questions become a numbered list and the suggestions are just printed, so every command stays scriptable.
 
 ## How it works
 
