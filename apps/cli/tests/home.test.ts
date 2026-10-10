@@ -119,6 +119,30 @@ describe("devix with no arguments", () => {
     expect(stdout).toContain("Here");
   }, 30_000);
 
+  it("only suggests commands the CLI actually recognises", async () => {
+    // A suggestion that points at a command which does not exist is
+    // worse than no suggestion: the user follows it and hits an error.
+    // `docker doctor` was exactly that, so every suggestion is run and
+    // checked for a "not found" / "Expected ... one of" failure.
+    const home = await runCli(["--json"]);
+    const parsed = JSON.parse(home.stdout) as { next: { command: string }[] };
+
+    expect(parsed.next.length).toBeGreaterThan(0);
+
+    for (const entry of parsed.next) {
+      const args = entry.command.split(/\s+/);
+      let message = "";
+      try {
+        await runCli(args);
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      expect(message, `devix ${entry.command} was not recognised`).not.toMatch(
+        /not found|Expected .* to be one of|Nonexistent flag/i,
+      );
+    }
+  }, 120_000);
+
   it("shows the detected stack as a tree with --verbose", async () => {
     const dir = await mkdtemp(join(tmpdir(), "devix-cli-home-tree-"));
     await writeFile(

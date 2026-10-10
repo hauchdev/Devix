@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   cards,
   detectedTree,
+  displayCommand,
   health,
   projectLine,
   rootLabel,
@@ -168,6 +169,35 @@ describe("suggestions", () => {
 
     expect(suggestions(clean)[0]?.because).toBe("1 unpushed commit");
     expect(suggestions({ ...clean, gitAhead: 2 })[0]?.because).toBe("2 unpushed commits");
+  });
+
+  it("derives the display command from the id and args", () => {
+    // A suggestion that displays one thing and runs another is worse
+    // than no suggestion at all, so the two cannot be stored apart.
+    for (const item of suggestions(healthy({ gitAhead: 1, isProject: false }))) {
+      expect(item.command).toBe(displayCommand(item.id, item.args));
+    }
+  });
+
+  it("runs `docker status`, which exists, rather than a `docker doctor`", () => {
+    const step = suggestions(healthy({ dockerAvailable: false })).find(
+      (item) => item.id === "docker",
+    );
+
+    expect(step?.args).toEqual(["status"]);
+    expect(step?.command).toBe("docker status");
+  });
+
+  it("runs `git sync` through the topic id oclif resolves", () => {
+    const clean = healthy({
+      gitAhead: 1,
+      checks: [{ id: "node", name: "Node.js", status: "ok", detail: "22" }],
+    });
+
+    const step = suggestions(clean).find((item) => item.id === "git:sync");
+
+    expect(step?.args).toEqual([]);
+    expect(step?.command).toBe("git sync");
   });
 
   it("does not suggest syncing when nothing is unpushed", () => {

@@ -48,12 +48,28 @@ export interface Snapshot {
 
 /** One next step, with the reason it is being suggested. */
 export interface Suggestion {
-  /** The command to run, without the `devix` prefix. */
+  /** The oclif command id, e.g. `git:sync`, `doctor`, `minecraft`. */
+  readonly id: string;
+  /** Arguments for the command, e.g. `["init"]`. */
+  readonly args: readonly string[];
+  /** The command as the user would type it, e.g. `devix git sync`. */
   readonly command: string;
   /** What it will do for this user, right now. */
   readonly because: string;
   /** How strongly to push it. Drives the ordering. */
   readonly priority: "now" | "next" | "later";
+}
+
+/**
+ * The command as the user would type it.
+ *
+ * Derived from the id and args rather than stored next to them, because
+ * a suggestion that displays one thing and runs another is worse than no
+ * suggestion at all.
+ */
+export function displayCommand(id: string, args: readonly string[]): string {
+  const base = id.replaceAll(":", " ");
+  return args.length === 0 ? base : `${base} ${args.join(" ")}`;
 }
 
 /**
@@ -187,52 +203,52 @@ export function detectedTree(snapshot: Snapshot): TreeNode[] {
 export function suggestions(snapshot: Snapshot): Suggestion[] {
   const result: Suggestion[] = [];
 
+  /** Builds a suggestion, deriving the display form from the id and args. */
+  const step = (
+    id: string,
+    args: readonly string[],
+    because: string,
+    priority: Suggestion["priority"],
+  ): Suggestion => ({ id, args, command: displayCommand(id, args), because, priority });
+
   if (!snapshot.isProject) {
-    result.push({
-      command: "minecraft init",
-      because: "scaffold a project here",
-      priority: "next",
-    });
+    result.push(step("minecraft", ["init"], "scaffold a project here", "next"));
   }
 
   const missing = snapshot.checks.filter((check) => check.status === "missing");
   if (missing.length > 0) {
-    result.push({
-      command: "doctor",
-      because: `explain the ${String(missing.length)} missing tool${missing.length === 1 ? "" : "s"}`,
-      priority: "now",
-    });
+    result.push(
+      step(
+        "doctor",
+        [],
+        `explain the ${String(missing.length)} missing tool${missing.length === 1 ? "" : "s"}`,
+        "now",
+      ),
+    );
   }
 
   if (snapshot.isRepository && (snapshot.gitAhead ?? 0) > 0) {
-    result.push({
-      command: "git sync",
-      because: `${String(snapshot.gitAhead ?? 0)} unpushed commit${(snapshot.gitAhead ?? 0) === 1 ? "" : "s"}`,
-      priority: "now",
-    });
+    result.push(
+      step(
+        "git:sync",
+        [],
+        `${String(snapshot.gitAhead ?? 0)} unpushed commit${(snapshot.gitAhead ?? 0) === 1 ? "" : "s"}`,
+        "now",
+      ),
+    );
   }
 
   if (snapshot.minecraft.length > 0) {
-    result.push({
-      command: "minecraft run",
-      because: "launch the project",
-      priority: "next",
-    });
+    result.push(step("minecraft", ["run"], "launch the project", "next"));
   }
 
   if (!snapshot.dockerAvailable) {
-    result.push({
-      command: "docker doctor",
-      because: "check whether Docker is usable here",
-      priority: "later",
-    });
+    // `docker status` is the operation that reports availability; there
+    // is no `docker doctor`.
+    result.push(step("docker", ["status"], "check whether Docker is usable here", "later"));
   }
 
-  result.push({
-    command: "detect",
-    because: "see the evidence behind this summary",
-    priority: "later",
-  });
+  result.push(step("detect", [], "see the evidence behind this summary", "later"));
 
   const order: Record<Suggestion["priority"], number> = { now: 0, next: 1, later: 2 };
   return result.sort((a, b) => order[a.priority] - order[b.priority]);
