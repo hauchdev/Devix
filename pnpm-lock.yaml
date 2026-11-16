@@ -236,8 +236,8 @@ importers:
         specifier: workspace:*
         version: link:../../plugins/web
       '@oclif/core':
-        specifier: ^5.0.0
-        version: 5.0.1
+        specifier: ^5.1.12
+        version: 5.1.12
     devDependencies:
       eslint:
         specifier: 9.39.1
@@ -729,6 +729,9 @@ packages:
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
 
+  '@isaacs/nonrecursive-glob-match@1.1.0':
+    resolution: {integrity: sha512-GPm/Dbvk5RLmhRnxXIa7nTpK0xtl4E0wj0MslsuNiJ1FIROU+2+9lgUC/dgF7Ey4QCWhfEsgxilMRMCdHPfDfw==}
+
   '@istanbuljs/schema@0.1.6':
     resolution: {integrity: sha512-+Sg6GCR/wy1oSmQDFq4LQDAhm3ETKnorxN+y5nbLULOR3P0c14f2Wurzj3/xqPXtasLFfHd5iRFQ7AJt4KH2cw==}
     engines: {node: '>=8'}
@@ -777,8 +780,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@oclif/core@5.0.1':
-    resolution: {integrity: sha512-vJajq85xNxu6lheUEJ046lh9V61EAAGGDn1H+EOJzFL528iEr2iVY0OyHZjDmRteT/SvhlQbfhRpugKnCsT4yw==}
+  '@oclif/core@5.1.12':
+    resolution: {integrity: sha512-t8W/ljOb9DIsFNXbfLU4UpZ8+C/X0QuvJOuQXQVCthiw5zSdwKnKoq7HmyBUJwwo28302eiN0rRj8vN9k1U1Mw==}
     engines: {node: '>=22.0.0'}
 
   '@pkgjs/parseargs@0.11.0':
@@ -1528,6 +1531,10 @@ packages:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
 
+  minimatch@11.0.8:
+    resolution: {integrity: sha512-nFQuYSTVrGvysVBps5Ih+0BdnYFN/Cj3C816r6+p7yK+FHrVLGE4O4N9AFwykrlNlvM2HYt+Rad1Uiro6h88Ig==}
+    engines: {node: 20 || >=22}
+
   minimatch@3.1.5:
     resolution: {integrity: sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==}
 
@@ -2182,6 +2189,8 @@ snapshots:
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
 
+  '@isaacs/nonrecursive-glob-match@1.1.0': {}
+
   '@istanbuljs/schema@0.1.6': {}
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -2228,7 +2237,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.3
 
-  '@oclif/core@5.0.1':
+  '@oclif/core@5.1.12':
     dependencies:
       ansi-escapes: 4.3.2
       ansis: 3.17.0
@@ -2239,7 +2248,7 @@ snapshots:
       get-package-type: 0.1.0
       indent-string: 4.0.0
       lilconfig: 3.1.3
-      minimatch: 10.2.6
+      minimatch: 11.0.8
       semver: 7.8.5
       string-width: 4.2.3
       supports-color: 8.1.1
@@ -2966,6 +2975,11 @@ snapshots:
 
   minimatch@10.2.6:
     dependencies:
+      brace-expansion: 5.0.12
+
+  minimatch@11.0.8:
+    dependencies:
+      '@isaacs/nonrecursive-glob-match': 1.1.0
       brace-expansion: 5.0.12
 
   minimatch@3.1.5:
